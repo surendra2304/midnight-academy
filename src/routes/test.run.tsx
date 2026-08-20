@@ -85,36 +85,38 @@ function RunTest() {
   const draftStorageKey = attemptId ? `${DRAFT_KEY_PREFIX}${attemptId}-${index}` : "";
 
   // 1. Initial attempt initialization & question fetch
-  const loadQuestionForPosition = useCallback(async (pos: number, attId: string) => {
+  const loadQuestionForPosition = useCallback(async (initialPos: number, attId: string) => {
     setLoading(true);
+    let currentPos = initialPos;
     try {
-      const res = await revealQuestion({ data: { attemptId: attId, position: pos } });
+      while (true) {
+        const res = await revealQuestion({ data: { attemptId: attId, position: currentPos } });
 
-      if (res.state === "finished") {
-        setStage("evaluating");
-        return;
+        if (res.state === "finished") {
+          setStage("evaluating");
+          break;
+        }
+
+        if (res.state === "submitted") {
+          currentPos++;
+          setIndex(currentPos);
+          continue;
+        }
+
+        if (res.state === "consumed") {
+          setQuestion(res.meta ?? null);
+          setStage("respond");
+          const savedDraft = sessionStorage.getItem(`${DRAFT_KEY_PREFIX}${attId}-${currentPos}`) || "";
+          setDraft(savedDraft);
+          break;
+        }
+
+        // Ready to read
+        setQuestion(res.question);
+        setRemaining(res.remainingSeconds || 45);
+        setStage("read");
+        break;
       }
-
-      if (res.state === "submitted") {
-        // Already submitted this position, move forward immediately
-        const nextPos = pos + 1;
-        setIndex(nextPos);
-        return loadQuestionForPosition(nextPos, attId);
-      }
-
-      if (res.state === "consumed") {
-        // Time expired or already read; proceed directly to respond
-        setQuestion(res.meta ?? null);
-        setStage("respond");
-        const savedDraft = sessionStorage.getItem(`${DRAFT_KEY_PREFIX}${attId}-${pos}`) || "";
-        setDraft(savedDraft);
-        return;
-      }
-
-      // Ready to read
-      setQuestion(res.question);
-      setRemaining(res.remainingSeconds || 45);
-      setStage("read");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to load question";
       toast.error(message);
@@ -156,6 +158,7 @@ function RunTest() {
         }
 
         if (state.currentIndex >= state.total) {
+          setLoading(false);
           setStage("evaluating");
         } else {
           await loadQuestionForPosition(state.currentIndex, attemptId!);
