@@ -146,3 +146,58 @@ export function renderEvaluationCompletedEmail({
 </html>
   `.trim();
 }
+
+/**
+ * Pre-formatted HTML template for OTP verification emails.
+ */
+export function renderOtpVerificationEmail({
+  otp,
+  expiresInMinutes = 10,
+}: {
+  otp: string;
+  expiresInMinutes?: number;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verification Code — Midnight Academy</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f1f5f9;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0b0f19; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" max-width="540" style="max-width: 540px; background-color: #131b2e; border: 1px solid #202b42; border-radius: 12px; overflow: hidden; padding: 32px;">
+          <tr>
+            <td align="center" style="padding-bottom: 20px;">
+              <span style="font-size: 20px; font-weight: 800; color: #38bdf8; letter-spacing: 0.05em; text-transform: uppercase;">Midnight Academy</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-top: 0; margin-bottom: 12px; text-align: center;">Verify Your Email</h1>
+              <p style="font-size: 15px; line-height: 24px; color: #94a3b8; margin-top: 0; margin-bottom: 24px; text-align: center;">
+                Use the following 6-digit verification code to confirm your email and complete your Midnight Academy account setup:
+              </p>
+              <div style="background-color: #0b0f19; border: 1px solid #2d3b5e; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
+                <span style="font-size: 36px; font-weight: 800; letter-spacing: 0.3em; color: #38bdf8; font-family: monospace;">${otp}</span>
+              </div>
+              <p style="font-size: 13px; color: #94a3b8; text-align: center; margin-top: 0; margin-bottom: 16px;">
+                This code expires in <strong>${expiresInMinutes} minutes</strong>. If you did not request this verification, you can safely ignore this email.
+              </p>
+              <hr style="border: 0; border-top: 1px solid #202b42; margin: 24px 0 16px 0;" />
+              <p style="font-size: 12px; color: #64748b; text-align: center; margin: 0;">
+                Midnight Academy — Understand Before You Solve
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}

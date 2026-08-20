@@ -1,6 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { GraduationCap, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  GraduationCap,
+  KeyRound,
+  Mail,
+  RefreshCw,
+  ShieldCheck,
+} from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +17,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-
 import { requireUnauth } from "@/lib/auth-guard";
+import {
+  completeRegistrationWithPassword,
+  requestRegistrationOtp,
+  verifyRegistrationOtp,
+} from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: ({ location }) => requireUnauth({ location }),
@@ -47,14 +59,36 @@ const roles = [
   },
 ];
 
+type SignupStep = "email" | "otp" | "password" | "done";
+
 function AuthPage() {
   const [role, setRole] = useState<"student" | "admin">("student");
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { login, register, signInWithGoogle } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Signup multi-step states
+  const [signupStep, setSignupStep] = useState<SignupStep>("email");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupOtp, setSignupOtp] = useState("");
+  const [verificationToken, setVerificationToken] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupPasswordConfirm, setSignupPasswordConfirm] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  const navigate = useNavigate();
+  const { login, signInWithGoogle } = useAuth();
+
+  // Cooldown countdown timer for OTP resend
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
+
+  // Handle Login form
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
@@ -63,19 +97,7 @@ function AuthPage() {
     const password = (form.elements.namedItem("password") as HTMLInputElement).value;
 
     try {
-      let res;
-      if (isLogin) {
-        res = await login({ email, password });
-      } else {
-        const namePrefix = email.split("@")[0] ?? "Student";
-        res = await register({
-          email,
-          password,
-          fullName: namePrefix,
-          role: role,
-        });
-      }
-
+      const res = await login({ email, password });
       const returnedRole = res?.user?.role;
       if (returnedRole === "ADMIN") {
         navigate({ to: "/admin" });
@@ -84,6 +106,108 @@ function AuthPage() {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Authentication failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 1: Send OTP to Email
+  const handleSendOtp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!signupEmail.trim()) return;
+
+    setLoading(true);
+    try {
+      const res = await requestRegistrationOtp({ data: { email: signupEmail.trim() } });
+
+      if ("error" in res) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success("Verification code sent! Check your inbox.");
+      setSignupStep("otp");
+      setResendCooldown(res.resendInSeconds || 60);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send verification code";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: Verify OTP
+  const handleVerifyOtp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (signupOtp.trim().length !== 6) {
+      toast.error("Please enter a valid 6-digit code.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await verifyRegistrationOtp({
+        data: {
+          email: signupEmail.trim(),
+          otp: signupOtp.trim(),
+        },
+      });
+
+      if ("error" in res) {
+        toast.error(res.message);
+        return;
+      }
+
+      setVerificationToken(res.verificationToken);
+      setSignupStep("password");
+      toast.success("Email verified successfully! Now create your password.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Verification failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 3: Set Password & Create Account
+  const handleCreatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (signupPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (signupPassword !== signupPasswordConfirm) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await completeRegistrationWithPassword({
+        data: {
+          email: signupEmail.trim(),
+          verificationToken,
+          password: signupPassword,
+          role,
+          fullName: signupEmail.split("@")[0] || "Student",
+        },
+      });
+
+      // Automatically sign in the user
+      const loginRes = await login({ email: signupEmail.trim(), password: signupPassword });
+      toast.success("Account created successfully!");
+
+      const returnedRole = loginRes?.user?.role;
+      if (returnedRole === "ADMIN") {
+        navigate({ to: "/admin" });
+      } else {
+        navigate({ to: "/onboarding" });
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to create account";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -108,51 +232,75 @@ function AuthPage() {
 
         <div className="panel mt-8 p-6 lg:p-8">
           <h1 className="text-xl font-bold text-foreground">Welcome to Midnight Academy</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">Choose your workspace.</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {isLogin
+              ? "Choose your workspace and sign in."
+              : signupStep === "email"
+                ? "Create a new verified account."
+                : signupStep === "otp"
+                  ? "Enter the verification code sent to your email."
+                  : "Create a secure password."}
+          </p>
 
-          <div className="mt-6 grid gap-3">
-            {roles.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => setRole(r.id)}
-                className={cn(
-                  "flex items-start gap-3 rounded-xl border p-4 text-left transition-colors",
-                  role === r.id
-                    ? "border-primary/60 bg-primary/8"
-                    : "border-border bg-surface-2/50 hover:border-border-strong",
-                )}
-              >
-                <span
+          {/* Workspace Role Selector */}
+          {(isLogin || signupStep === "email") && (
+            <div className="mt-6 grid gap-3">
+              {roles.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setRole(r.id)}
                   className={cn(
-                    "mt-0.5 grid size-8 place-items-center rounded-lg",
+                    "flex items-start gap-3 rounded-xl border p-4 text-left transition-colors",
                     role === r.id
-                      ? "bg-primary/15 text-primary"
-                      : "bg-surface text-muted-foreground",
+                      ? "border-primary/60 bg-primary/8"
+                      : "border-border bg-surface-2/50 hover:border-border-strong",
                   )}
                 >
-                  <r.icon className="size-4" />
-                </span>
-                <span>
-                  <span className="block text-sm font-semibold text-foreground">{r.title}</span>
-                  <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                    {r.body}
+                  <span
+                    className={cn(
+                      "mt-0.5 grid size-8 place-items-center rounded-lg",
+                      role === r.id
+                        ? "bg-primary/15 text-primary"
+                        : "bg-surface text-muted-foreground",
+                    )}
+                  >
+                    <r.icon className="size-4" />
                   </span>
-                </span>
-              </button>
-            ))}
-          </div>
+                  <span>
+                    <span className="block text-sm font-semibold text-foreground">{r.title}</span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                      {r.body}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
 
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@university.edu" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" required />
-            </div>
-            {isLogin && (
+          {/* 1. Login View */}
+          {isLogin ? (
+            <form className="mt-6 space-y-4" onSubmit={handleLogin}>
+              <div className="space-y-2">
+                <Label htmlFor="login-email">Email</Label>
+                <Input
+                  id="login-email"
+                  name="email"
+                  type="email"
+                  placeholder="you@university.edu"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">Password</Label>
+                <Input
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center gap-2 text-muted-foreground">
                   <Checkbox id="remember" defaultChecked /> Remember me
@@ -161,54 +309,195 @@ function AuthPage() {
                   Forgot password?
                 </a>
               </div>
-            )}
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {isLogin ? "Continue" : "Sign Up"}
-            </Button>
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? "Signing in..." : "Continue"}
+              </Button>
 
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                </div>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                size="lg"
+                onClick={handleGoogleLogin}
+              >
+                <svg className="mr-2 size-4" viewBox="0 0 24 24">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
+                </svg>
+                Google
+              </Button>
+            </form>
+          ) : (
+            /* 2. Signup Multi-Step OTP Flow */
+            <div className="mt-6">
+              {signupStep === "email" && (
+                <form onSubmit={handleSendOtp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Enter your Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="you@university.edu"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      We will send a 6-digit verification code to confirm your email.
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                    {loading ? "Sending code..." : "Send Verification Code"}
+                  </Button>
+                </form>
+              )}
+
+              {signupStep === "otp" && (
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div className="rounded-lg border border-border bg-surface-2/40 p-3 text-sm">
+                    <span className="text-muted-foreground">Code sent to: </span>
+                    <strong className="text-foreground">{signupEmail}</strong>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-otp">6-Digit Verification Code</Label>
+                    <Input
+                      id="signup-otp"
+                      type="text"
+                      maxLength={6}
+                      placeholder="123456"
+                      value={signupOtp}
+                      onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ""))}
+                      className="text-center font-mono text-2xl tracking-[0.3em]"
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={loading || signupOtp.length !== 6}
+                  >
+                    {loading ? "Verifying..." : "Verify Code"}
+                  </Button>
+
+                  <div className="flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setSignupStep("email")}
+                      className="inline-flex items-center text-muted-foreground hover:text-foreground"
+                    >
+                      <ArrowLeft className="mr-1 size-3" /> Change email
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0 || loading}
+                      onClick={() =>
+                        requestRegistrationOtp({ data: { email: signupEmail.trim() } })
+                          .then((r) => {
+                            if ("error" in r) {
+                              toast.error(r.message);
+                            } else {
+                              toast.success("New code sent!");
+                              setResendCooldown(r.resendInSeconds || 60);
+                            }
+                          })
+                          .catch(() => toast.error("Could not resend code"))
+                      }
+                      className="inline-flex items-center text-primary hover:underline disabled:text-muted-foreground disabled:no-underline"
+                    >
+                      <RefreshCw className="mr-1 size-3" />
+                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend code"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {signupStep === "password" && (
+                <form onSubmit={handleCreatePassword} className="space-y-4">
+                  <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-3 text-xs text-primary">
+                    <CheckCircle2 className="size-4 shrink-0" />
+                    <span>Email verified! Choose a password to secure your account.</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="create-password">Create Password</Label>
+                    <Input
+                      id="create-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupPasswordConfirm}
+                      onChange={(e) => setSignupPasswordConfirm(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={loading || signupPassword.length < 6}
+                  >
+                    {loading ? "Creating Account..." : "Create Account & Sign In"}
+                  </Button>
+                </form>
+              )}
             </div>
+          )}
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              size="lg"
-              onClick={handleGoogleLogin}
-            >
-              <svg className="mr-2 size-4" viewBox="0 0 24 24">
-                <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
-              </svg>
-              Google
-            </Button>
-          </form>
-
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-6 text-center text-sm">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setSignupStep("email");
+                setSignupOtp("");
+                setSignupPassword("");
+                setSignupPasswordConfirm("");
+              }}
               className="text-primary hover:underline"
             >
               {isLogin ? "Sign up" : "Sign in"}

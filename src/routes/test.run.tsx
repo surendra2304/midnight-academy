@@ -106,7 +106,8 @@ function RunTest() {
         if (res.state === "consumed") {
           setQuestion(res.meta ?? null);
           setStage("respond");
-          const savedDraft = sessionStorage.getItem(`${DRAFT_KEY_PREFIX}${attId}-${currentPos}`) || "";
+          const savedDraft =
+            sessionStorage.getItem(`${DRAFT_KEY_PREFIX}${attId}-${currentPos}`) || "";
           setDraft(savedDraft);
           break;
         }
