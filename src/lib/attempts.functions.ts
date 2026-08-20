@@ -346,6 +346,46 @@ export const finishAttempt = createServerFn({ method: "POST" })
         })
         .eq("id", attempt.id);
 
+      // Asynchronous email notification to student (non-blocking for UI)
+      (async () => {
+        try {
+          const { data: studentProfile } = await supabaseAdmin
+            .from("profiles")
+            .select("full_name, email")
+            .eq("id", attempt.student_id)
+            .maybeSingle();
+
+          const { data: testData } = await supabaseAdmin
+            .from("tests")
+            .select("name")
+            .eq("id", attempt.test_id)
+            .maybeSingle();
+
+          if (studentProfile?.email) {
+            const { sendEmail, renderEvaluationCompletedEmail } = await import("./email.server");
+            const appUrl = process.env["APP_URL"] || "https://midnight-academy-one.vercel.app";
+            const html = renderEvaluationCompletedEmail({
+              studentName: studentProfile.full_name || "Student",
+              testName: testData?.name || "Comprehension Test",
+              score: overall,
+              attemptId: attempt.id,
+              appUrl,
+            });
+
+            await sendEmail({
+              to: studentProfile.email,
+              subject: `Evaluation Ready: ${testData?.name || "Comprehension Test"} (${Math.round(overall)}%)`,
+              html,
+            });
+          }
+        } catch (mailErr) {
+          console.warn(
+            "[finishAttempt] Evaluation email dispatch notice:",
+            mailErr instanceof Error ? mailErr.message : mailErr,
+          );
+        }
+      })();
+
       return { attemptId: attempt.id };
     } catch (error) {
       await supabaseAdmin.from("attempts").update({ status: "in_progress" }).eq("id", attempt.id);

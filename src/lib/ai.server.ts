@@ -17,7 +17,7 @@ type Message = { role: "system" | "user"; content: string };
 export async function chatJson<T>(messages: Message[]): Promise<T> {
   const primaryKey = process.env["GEMINI_API_KEY"];
   const fallbackKey = process.env["GEMINI_FALLBACK_API_KEY"];
-  
+
   const apiKeys = [primaryKey, fallbackKey].filter(Boolean) as string[];
   if (apiKeys.length === 0) {
     throw new AiError(
@@ -39,7 +39,7 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
   let lastError: unknown;
 
   for (let keyIdx = 0; keyIdx < apiKeys.length; keyIdx++) {
-    const currentApiKey = apiKeys[keyIdx];
+    const currentApiKey = apiKeys[keyIdx]!;
     const ai = new GoogleGenAI({ apiKey: currentApiKey });
 
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -98,7 +98,10 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
         if (!isQuotaOrDemand || attempt === 2) {
           if (keyIdx === apiKeys.length - 1) {
             if (errorMsg.includes("429") || errorMsg.toLowerCase().includes("quota")) {
-              throw new AiError("The evaluator is busy right now. Please try again in a moment.", 429);
+              throw new AiError(
+                "The evaluator is busy right now. Please try again in a moment.",
+                429,
+              );
             }
             throw new AiError("The evaluator could not be reached.", 502);
           }
