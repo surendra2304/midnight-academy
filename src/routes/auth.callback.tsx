@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { authStore } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/auth/callback")({
   component: AuthCallbackPage,
@@ -11,57 +12,93 @@ function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+
     const handleAuthCallback = async () => {
       try {
-        // Supabase client automatically processes hash and query params on getSession
         const {
           data: { session },
           error: sessionError,
         } = await supabase.auth.getSession();
 
         if (sessionError) {
-          setError(sessionError.message);
+          if (active) setError(sessionError.message);
           return;
         }
 
-        if (!session?.user) {
-          // If session is not immediately ready, check if user exists
-          const {
-            data: { user },
-            error: userError,
-          } = await supabase.auth.getUser();
-          if (userError || !user) {
-            setError("Could not complete authentication. Please try signing in again.");
+        const user = session?.user;
+        if (!user) {
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          if (userError || !userData?.user) {
+            if (active) setError("Could not complete authentication. Please try signing in again.");
             return;
           }
         }
 
-        const userId = session?.user?.id;
-        if (!userId) {
-          navigate({ to: "/dashboard" });
+        const activeUser = session?.user || (await supabase.auth.getUser()).data.user;
+        if (!activeUser) {
+          if (active) setError("Session could not be established.");
           return;
         }
 
-        // Check role in user_roles table
-        const { data: roleRow } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId)
-          .maybeSingle();
+        // Ensure new Google user has a default profile and student role if not present
+        try {
+          const metadata = activeUser.user_metadata as Record<string, unknown> | undefined;
+          const fullName =
+            typeof metadata?.["full_name"] === "string"
+              ? metadata["full_name"]
+              : activeUser.email?.split("@")[0] || "";
 
-        const role = roleRow?.role;
-        if (role === "admin") {
+          await supabase.from("profiles").upsert(
+            {
+              id: activeUser.id,
+              email: activeUser.email ?? "",
+              full_name: fullName,
+            },
+            { onConflict: "id", ignoreDuplicates: true },
+          );
+
+          // Check if any role exists
+          const { data: existingRoles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", activeUser.id);
+
+          if (!existingRoles || existingRoles.length === 0) {
+            // Safely assign student role by default for new OAuth sign-ins
+            await supabase.from("user_roles").insert({
+              user_id: activeUser.id,
+              role: "student",
+            });
+          }
+        } catch {
+          // Handled gracefully if triggers/policies manage it
+        }
+
+        // Synchronize auth-store with authoritative server role
+        await authStore.restoreSession();
+        const storedUser = authStore.getUser();
+
+        if (!active) return;
+
+        if (storedUser?.role === "ADMIN") {
           navigate({ to: "/admin" });
         } else {
           navigate({ to: "/onboarding" });
         }
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Failed to complete authentication";
-        setError(message);
+        if (active) {
+          const message = err instanceof Error ? err.message : "Failed to complete authentication";
+          setError(message);
+        }
       }
     };
 
     handleAuthCallback();
+
+    return () => {
+      active = false;
+    };
   }, [navigate]);
 
   if (error) {

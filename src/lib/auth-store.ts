@@ -38,12 +38,14 @@ function updateState(newState: Partial<AuthState>) {
  */
 async function fetchUserProfileAndRole(userId: string, email: string): Promise<User> {
   try {
-    const [{ data: profile }, { data: roleRow }] = await Promise.all([
+    const [{ data: profile }, { data: roleRows }] = await Promise.all([
       supabase.from("profiles").select("full_name, email").eq("id", userId).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
 
-    const resolvedRole: AppRole = roleRow?.role === "admin" ? "ADMIN" : "STUDENT";
+    const hasAdminRole = (roleRows ?? []).some((r) => r.role === "admin");
+    const hasStudentRole = (roleRows ?? []).some((r) => r.role === "student");
+    const resolvedRole: AppRole = hasAdminRole ? "ADMIN" : hasStudentRole ? "STUDENT" : "STUDENT";
 
     return {
       id: userId,
@@ -128,6 +130,11 @@ export const authStore = {
     if (!restorePromise) {
       restorePromise = doRestoreSession();
     }
+    return restorePromise;
+  },
+
+  async restoreSession(): Promise<void> {
+    restorePromise = doRestoreSession();
     return restorePromise;
   },
 
