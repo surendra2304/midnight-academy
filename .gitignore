@@ -20,6 +20,16 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Environment
+.env
+.env*.local
+.env.production
+.env.development
+
+# Supabase CLI local artifacts
+supabase/.temp/
+
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

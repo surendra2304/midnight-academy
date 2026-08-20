@@ -1,9 +1,7 @@
-/** Server-only helpers for calling the AI Gateway or OpenAI-compatible endpoint. */
+/** Server-only helpers for calling Google Gemini using the official @google/genai SDK. */
+import { GoogleGenAI, type GenerateContentConfig, ThinkingLevel } from "@google/genai";
 
-const GATEWAY_URL = process.env["AI_GATEWAY_URL"] || "https://api.openai.com/v1/chat/completions";
-const MODEL = process.env["AI_MODEL"] || "gpt-4o-mini";
-
-type Message = { role: "system" | "user"; content: string };
+const MODEL_NAME = process.env["GEMINI_MODEL"] || "gemini-3.7-flash";
 
 export class AiError extends Error {
   status: number;
@@ -13,50 +11,67 @@ export class AiError extends Error {
   }
 }
 
-/** Calls the gateway and parses the model's reply as JSON. */
+type Message = { role: "system" | "user"; content: string };
+
+/** Calls Google Gemini and parses the model's reply as JSON. */
 export async function chatJson<T>(messages: Message[]): Promise<T> {
-  const apiKey = process.env["AI_API_KEY"] || process.env["OPENAI_API_KEY"];
-  if (!apiKey) throw new AiError("AI API key is not configured. Please set AI_API_KEY or OPENAI_API_KEY in your environment.", 500);
-
-  const response = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      response_format: { type: "json_object" },
-    }),
-  });
-
-  if (response.status === 429) {
-    throw new AiError("The evaluator is busy right now. Please try again in a moment.", 429);
-  }
-  if (response.status === 402) {
-    throw new AiError("AI credits are exhausted for this account.", 402);
-  }
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    console.error("[ai] gateway error", response.status, detail.slice(0, 500));
-    throw new AiError("The evaluator could not be reached.", 502);
+  const apiKey = process.env["GEMINI_API_KEY"];
+  if (!apiKey) {
+    throw new AiError(
+      "GEMINI_API_KEY is not configured. Please set GEMINI_API_KEY in your environment.",
+      500,
+    );
   }
 
-  const payload = (await response.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const content = payload.choices?.[0]?.message?.content;
-  if (!content) throw new AiError("The evaluator returned an empty response.", 502);
+  const ai = new GoogleGenAI({ apiKey });
+
+  const systemInstruction = messages
+    .filter((m) => m.role === "system")
+    .map((m) => m.content)
+    .join("\n\n");
+
+  const userPrompt = messages
+    .filter((m) => m.role === "user")
+    .map((m) => m.content)
+    .join("\n\n");
 
   try {
-    return JSON.parse(content) as T;
-  } catch {
-    const start = content.indexOf("{");
-    const end = content.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      return JSON.parse(content.slice(start, end + 1)) as T;
+    // Use the official ThinkingLevel enum from @google/genai
+    const config: GenerateContentConfig = {
+      responseMimeType: "application/json",
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+      ...(systemInstruction ? { systemInstruction } : {}),
+    };
+
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: userPrompt,
+      config,
+    });
+
+    const content = response.text;
+    if (!content) {
+      throw new AiError("The evaluator returned an empty response.", 502);
     }
-    throw new AiError("The evaluator returned malformed output.", 502);
+
+    try {
+      return JSON.parse(content) as T;
+    } catch {
+      const start = content.indexOf("{");
+      const end = content.lastIndexOf("}");
+      if (start >= 0 && end > start) {
+        return JSON.parse(content.slice(start, end + 1)) as T;
+      }
+      throw new AiError("The evaluator returned malformed output.", 502);
+    }
+  } catch (err: unknown) {
+    if (err instanceof AiError) throw err;
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[gemini] generation error:", errorMsg);
+
+    if (errorMsg.includes("429") || errorMsg.toLowerCase().includes("quota")) {
+      throw new AiError("The evaluator is busy right now. Please try again in a moment.", 429);
+    }
+    throw new AiError("The evaluator could not be reached.", 502);
   }
 }

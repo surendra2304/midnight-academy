@@ -1,13 +1,10 @@
 import { redirect } from "@tanstack/react-router";
 import { authStore, type AppRole } from "./auth-store";
 
-export async function requireAuth(args: { 
-  role?: AppRole; 
-  location: any; 
-}) {
+export async function requireAuth(args: { role?: AppRole; location: { pathname: string } }) {
   await authStore.getRestorePromise();
   const user = authStore.getUser();
-  
+
   // Rule: Unauthenticated users are redirected to /auth
   if (!user) {
     throw redirect({
@@ -15,7 +12,7 @@ export async function requireAuth(args: {
       search: { redirect: args.location.pathname },
     });
   }
-  
+
   // Rule: STUDENT and ADMIN are treated as mutually exclusive experiences.
   // A student hitting an admin-only route is redirected to /dashboard.
   // An admin hitting a student-only route is redirected to /admin.
@@ -26,10 +23,10 @@ export async function requireAuth(args: {
   }
 }
 
-export async function requireUnauth(args: { location: any }) {
+export async function requireUnauth(_args?: { location?: { pathname: string } }) {
   await authStore.getRestorePromise();
   const user = authStore.getUser();
-  
+
   // Rule: Logged-in users visiting /auth are redirected to their respective dashboard
   if (user) {
     throw redirect({

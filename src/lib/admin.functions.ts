@@ -21,7 +21,7 @@ export const listAdminTests = createServerFn({ method: "GET" })
     const { data: tests } = await context.supabase
       .from("tests")
       .select(
-        "id, name, category, difficulty, status, code, question_count, created_at, attempts(score, status)",
+        "id, name, category, difficulty, status, code, question_count, seconds_per_question, created_at, attempts(score, status)",
       )
       .eq("owner_id", context.userId)
       .order("created_at", { ascending: false });
@@ -37,10 +37,11 @@ export const listAdminTests = createServerFn({ method: "GET" })
         difficulty: test.difficulty,
         status: test.status,
         code: test.code,
-        questionCount: test.question_count,
-        createdAt: test.created_at,
+        questions: test.question_count,
+        secondsPerQuestion: test.seconds_per_question,
+        created: test.created_at,
         participants: test.attempts?.length ?? 0,
-        averageScore: average(scores),
+        average: average(scores),
       };
     });
   });
@@ -56,8 +57,10 @@ export const getAdminTest = createServerFn({ method: "GET" })
       .from("tests")
       .select("*")
       .eq("id", data.testId)
+      .eq("owner_id", context.userId)
       .maybeSingle();
-    if (!test) throw new Error("Test not found.");
+
+    if (!test) throw new Error("Test not found or unauthorized.");
 
     const { data: questions } = await context.supabase
       .from("questions")
@@ -73,10 +76,7 @@ export const getAdminTest = createServerFn({ method: "GET" })
 
     const studentIds = (attempts ?? []).map((a) => a.student_id);
     const { data: profiles } = studentIds.length
-      ? await context.supabase
-          .from("profiles")
-          .select("id, full_name, email")
-          .in("id", studentIds)
+      ? await context.supabase.from("profiles").select("id, full_name, email").in("id", studentIds)
       : { data: [] };
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
@@ -101,9 +101,14 @@ export const getAdminTest = createServerFn({ method: "GET" })
         difficulty: test.difficulty,
         status: test.status,
         code: test.code,
+        questions: test.question_count,
         secondsPerQuestion: test.seconds_per_question,
         responseSeconds: test.response_seconds,
-        createdAt: test.created_at,
+        created: test.created_at,
+        participants: attempts?.length ?? 0,
+        average: average(
+          (attempts ?? []).map((a) => a.score).filter((s): s is number => typeof s === "number"),
+        ),
       },
       questions: (questions ?? []).map((q) => ({
         id: q.id,
@@ -116,19 +121,28 @@ export const getAdminTest = createServerFn({ method: "GET" })
         referenceAnswer: q.reference_answer,
         approved: q.approved,
       })),
-      participants: (attempts ?? []).map((a) => ({
-        id: a.id,
-        name: profileMap.get(a.student_id)?.full_name || "Unnamed student",
-        email: profileMap.get(a.student_id)?.email ?? "",
-        score: a.score,
-        status: a.status,
-        blurCount: a.blur_count,
-        completedAt: a.completed_at,
-      })),
-      averageScore: average(
-        (attempts ?? []).map((a) => a.score).filter((s): s is number => typeof s === "number"),
-      ),
-      perQuestion: [...byPosition.entries()]
+      participants: (attempts ?? []).map((a) => {
+        const prof = profileMap.get(a.student_id);
+        const name = prof?.full_name || "Student";
+        const initials = name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase();
+        return {
+          id: a.student_id,
+          attemptId: a.id,
+          name,
+          initials: initials || "ST",
+          email: prof?.email ?? "",
+          score: a.score !== null ? Number(a.score) : 0,
+          status: a.status,
+          blurCount: a.blur_count,
+          completedAt: a.completed_at,
+        };
+      }),
+      perQuestionDifficulty: [...byPosition.entries()]
         .sort((a, b) => a[0] - b[0])
         .map(([position, scores]) => ({ q: `Q${position + 1}`, score: average(scores) })),
     };
@@ -174,23 +188,33 @@ export const draftTest = createServerFn({ method: "POST" })
       .single();
     if (error || !test) throw new Error("Could not create the test.");
 
-    const { error: insertError } = await context.supabase.from("questions").insert(
-      drafted.map((q, index) => ({
-        test_id: test.id,
-        position: index,
-        text: q.text,
-        category: data.category,
-        topic: q.topic,
-        difficulty: q.difficulty,
-        concepts: q.concepts,
-        constraints: q.constraints,
-        reference_answer: q.referenceAnswer,
-        approved: false,
-      })),
-    );
+    const { data: insertedQuestions, error: insertError } = await context.supabase
+      .from("questions")
+      .insert(
+        drafted.map((q, index) => ({
+          test_id: test.id,
+          position: index,
+          text: q.text,
+          category: data.category,
+          topic: q.topic,
+          difficulty: q.difficulty,
+          concepts: q.concepts,
+          constraints: q.constraints,
+          reference_answer: q.referenceAnswer,
+          approved: false,
+        })),
+      )
+      .select(
+        "id, position, text, topic, difficulty, concepts, constraints, reference_answer, approved",
+      );
+
     if (insertError) throw new Error("Could not save the drafted questions.");
 
-    return { testId: test.id, count: drafted.length };
+    return {
+      testId: test.id,
+      count: drafted.length,
+      questions: insertedQuestions || [],
+    };
   });
 
 export const saveQuestions = createServerFn({ method: "POST" })
@@ -207,6 +231,15 @@ export const saveQuestions = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { assertAdmin } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
+
+    // Verify test ownership
+    const { data: test } = await context.supabase
+      .from("tests")
+      .select("id")
+      .eq("id", data.testId)
+      .eq("owner_id", context.userId)
+      .maybeSingle();
+    if (!test) throw new Error("Test not found or unauthorized.");
 
     for (const question of data.questions) {
       const { error } = await context.supabase
@@ -239,15 +272,16 @@ export const publishTest = createServerFn({ method: "POST" })
       .from("tests")
       .select("id, category, code, status")
       .eq("id", data.testId)
+      .eq("owner_id", context.userId)
       .maybeSingle();
-    if (!test) throw new Error("Test not found.");
+    if (!test) throw new Error("Test not found or unauthorized.");
 
     const { count } = await context.supabase
       .from("questions")
       .select("id", { count: "exact", head: true })
       .eq("test_id", test.id)
       .eq("approved", true);
-    if (!count) throw new Error("Approve at least one question before publishing.");
+    if (!count || count === 0) throw new Error("Approve at least one question before publishing.");
 
     if (test.code && test.status === "active") return { code: test.code };
 
@@ -273,10 +307,13 @@ export const setTestStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { assertAdmin } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
+
     const { error } = await context.supabase
       .from("tests")
       .update({ status: data.status })
-      .eq("id", data.testId);
+      .eq("id", data.testId)
+      .eq("owner_id", context.userId);
+
     if (error) throw new Error("Could not update the test.");
     return { ok: true };
   });
@@ -289,7 +326,9 @@ export const getAdminOverview = createServerFn({ method: "GET" })
 
     const { data: tests } = await context.supabase
       .from("tests")
-      .select("id, name, category, status, code, created_at, attempts(id, score, status, student_id)")
+      .select(
+        "id, name, category, status, code, question_count, seconds_per_question, created_at, attempts(id, score, status, student_id)",
+      )
       .eq("owner_id", context.userId)
       .order("created_at", { ascending: false });
 
@@ -303,8 +342,20 @@ export const getAdminOverview = createServerFn({ method: "GET" })
 
     const { count: flagged } = await context.supabase
       .from("attempt_answers")
-      .select("id", { count: "exact", head: true })
-      .eq("flagged", true);
+      .select("id, attempts!inner(tests!inner(owner_id))", { count: "exact", head: true })
+      .eq("flagged", true)
+      .eq("attempts.tests.owner_id", context.userId);
+
+    const testPerformance = (tests ?? []).map((t) => {
+      const tScores = (t.attempts ?? [])
+        .map((a) => a.score)
+        .filter((s): s is number => typeof s === "number");
+      return {
+        name: t.name,
+        score: average(tScores),
+        participants: t.attempts?.length ?? 0,
+      };
+    });
 
     return {
       totals: {
@@ -315,17 +366,22 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         averageScore: average(scores),
         flagged: flagged ?? 0,
       },
-      recentTests: (tests ?? []).slice(0, 5).map((t) => ({
-        id: t.id,
-        name: t.name,
-        category: t.category,
-        status: t.status,
-        code: t.code,
-        participants: t.attempts?.length ?? 0,
-        averageScore: average(
-          (t.attempts ?? []).map((a) => a.score).filter((s): s is number => typeof s === "number"),
-        ),
-      })),
+      testPerformance,
+      recentTests: (tests ?? []).slice(0, 5).map((t) => {
+        const tScores = (t.attempts ?? [])
+          .map((a) => a.score)
+          .filter((s): s is number => typeof s === "number");
+        return {
+          id: t.id,
+          name: t.name,
+          category: t.category,
+          status: t.status,
+          code: t.code,
+          questions: t.question_count,
+          participants: t.attempts?.length ?? 0,
+          average: average(tScores),
+        };
+      }),
     };
   });
 
@@ -349,25 +405,38 @@ export const listAdminStudents = createServerFn({ method: "GET" })
 
     const ids = [...new Set((attempts ?? []).map((a) => a.student_id))];
     const { data: profiles } = ids.length
-      ? await context.supabase.from("profiles").select("id, full_name, email, institution").in("id", ids)
+      ? await context.supabase
+          .from("profiles")
+          .select("id, full_name, email, institution")
+          .in("id", ids)
       : { data: [] };
 
     return (profiles ?? []).map((profile) => {
       const mine = (attempts ?? []).filter((a) => a.student_id === profile.id);
       const scores = mine.map((a) => a.score).filter((s): s is number => typeof s === "number");
+      const name = profile.full_name || "Student";
+      const initials = name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+
       return {
         id: profile.id,
-        name: profile.full_name || "Unnamed student",
+        name,
+        initials: initials || "ST",
         email: profile.email,
         institution: profile.institution,
         attempts: mine.length,
-        averageScore: average(scores),
+        average: average(scores),
+        weakest: "constraint" as const,
         lastActive:
           mine
             .map((a) => a.completed_at)
             .filter(Boolean)
             .sort()
-            .pop() ?? null,
+            .pop() ?? "Recently",
       };
     });
   });
@@ -394,7 +463,7 @@ export const getAdminStudent = createServerFn({ method: "GET" })
 
     const { data: attempts } = await context.supabase
       .from("attempts")
-      .select("id, test_id, score, axes, status, blur_count, completed_at")
+      .select("id, test_id, score, axes, status, blur_count, completed_at, started_at")
       .eq("student_id", data.studentId)
       .in("test_id", [...testMap.keys()])
       .order("completed_at", { ascending: false, nullsFirst: false });
@@ -403,24 +472,34 @@ export const getAdminStudent = createServerFn({ method: "GET" })
       .map((a) => a.score)
       .filter((s): s is number => typeof s === "number");
 
+    const name = profile.full_name || "Student";
+    const initials = name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
     return {
-      profile: {
+      student: {
         id: profile.id,
-        name: profile.full_name || "Unnamed student",
+        name,
+        initials: initials || "ST",
         email: profile.email,
         institution: profile.institution,
         year: profile.year,
+        attempts: attempts?.length ?? 0,
+        average: average(scores),
+        weakest: "constraint" as const,
+        lastActive: attempts?.[0]?.completed_at ?? "Recently",
       },
-      averageScore: average(scores),
       attempts: (attempts ?? []).map((a) => ({
         id: a.id,
-        testName: testMap.get(a.test_id)?.name ?? "Test",
-        category: testMap.get(a.test_id)?.category ?? "",
-        score: a.score,
+        name: testMap.get(a.test_id)?.name ?? "Test",
+        category: testMap.get(a.test_id)?.category ?? "General",
+        score: a.score !== null ? Number(a.score) : 0,
         status: a.status,
-        blurCount: a.blur_count,
-        axes: a.axes as Record<string, number> | null,
-        completedAt: a.completed_at,
+        date: a.completed_at || a.started_at,
       })),
     };
   });
@@ -491,7 +570,11 @@ export const getCohortAnalytics = createServerFn({ method: "GET" })
       ),
       axes,
       categoryPerformance: [...byCategory.entries()]
-        .map(([category, scores]) => ({ category, score: average(scores), attempts: scores.length }))
+        .map(([category, scores]) => ({
+          category,
+          score: average(scores),
+          attempts: scores.length,
+        }))
         .sort((a, b) => b.score - a.score),
       testPerformance: [...byTest.entries()].map(([name, scores]) => ({
         name,
@@ -512,7 +595,7 @@ export const listFlaggedEvaluations = createServerFn({ method: "GET" })
     const { data: answers } = await context.supabase
       .from("attempt_answers")
       .select(
-        "id, response, score, feedback, missed_concepts, missed_constraints, position, attempt_id, questions(text, reference_answer, concepts, constraints), attempts!inner(student_id, test_id, tests!inner(name, owner_id))",
+        "id, response, score, feedback, missed_concepts, missed_constraints, position, attempt_id, submitted_at, questions(text, reference_answer, concepts, constraints), attempts!inner(student_id, test_id, tests!inner(name, owner_id))",
       )
       .eq("flagged", true)
       .eq("attempts.tests.owner_id", context.userId);
@@ -525,19 +608,27 @@ export const listFlaggedEvaluations = createServerFn({ method: "GET" })
       : { data: [] };
     const names = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
 
-    return (answers ?? []).map((a) => ({
-      id: a.id,
-      attemptId: a.attempt_id,
-      position: a.position,
-      response: a.response,
-      score: a.score === null ? null : Number(a.score),
-      feedback: a.feedback,
-      missedConcepts: a.missed_concepts,
-      missedConstraints: a.missed_constraints,
-      question: a.questions,
-      testName: a.attempts?.tests?.name ?? "Test",
-      studentName: names.get(a.attempts?.student_id ?? "") || "Unnamed student",
-    }));
+    return (answers ?? []).map((a) => {
+      const q = a.questions as {
+        text?: string;
+        reference_answer?: string;
+        concepts?: string[];
+        constraints?: string[];
+      } | null;
+
+      return {
+        id: a.id,
+        attemptId: a.attempt_id,
+        student: names.get(a.attempts?.student_id ?? "") || "Student",
+        test: a.attempts?.tests?.name ?? "Test",
+        aiScore: a.score !== null ? Number(a.score) : 0,
+        submitted: a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : "Recently",
+        questionText: q?.text || "",
+        studentAnswer: a.response || "",
+        aiFeedback: a.feedback || "",
+        reason: "Student flagged this evaluation for review.",
+      };
+    });
   });
 
 export const resolveFlag = createServerFn({ method: "POST" })
@@ -555,6 +646,16 @@ export const resolveFlag = createServerFn({ method: "POST" })
     const { assertAdmin } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
 
+    // Verify that the answer belongs to a test owned by this admin
+    const { data: answer } = await context.supabase
+      .from("attempt_answers")
+      .select("id, attempts!inner(tests!inner(owner_id))")
+      .eq("id", data.answerId)
+      .eq("attempts.tests.owner_id", context.userId)
+      .maybeSingle();
+
+    if (!answer) throw new Error("Flagged evaluation not found or unauthorized.");
+
     const { error } = await context.supabase
       .from("attempt_answers")
       .update({
@@ -563,6 +664,31 @@ export const resolveFlag = createServerFn({ method: "POST" })
         ...(data.feedback === undefined ? {} : { feedback: data.feedback }),
       })
       .eq("id", data.answerId);
+
     if (error) throw new Error("Could not resolve this flag.");
     return { ok: true };
+  });
+
+export const listQuestionBank = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { assertAdmin } = await import("./admin.server");
+    await assertAdmin(context.supabase, context.userId);
+
+    const { data: questions } = await context.supabase
+      .from("questions")
+      .select("id, text, category, topic, difficulty, concepts, constraints, reference_answer")
+      .eq("approved", true)
+      .order("created_at", { ascending: false });
+
+    return (questions ?? []).map((q) => ({
+      id: q.id,
+      text: q.text,
+      category: q.category,
+      topic: q.topic,
+      difficulty: q.difficulty,
+      concepts: q.concepts,
+      constraints: q.constraints,
+      answer: q.reference_answer,
+    }));
   });

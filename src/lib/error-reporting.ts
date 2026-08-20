@@ -6,6 +6,6 @@ export function reportError(error: unknown, context: Record<string, unknown> = {
       : error instanceof Error
         ? error.message
         : String(error);
-  
+
   console.error("[Midnight Academy Error]", message, context);
 }

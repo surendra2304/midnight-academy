@@ -134,7 +134,12 @@ export function ScoreBars({
           <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
           {layout === "vertical" ? (
             <>
-              <XAxis type="number" domain={[0, 100]} tick={axisStyle.tick} stroke={axisStyle.stroke} />
+              <XAxis
+                type="number"
+                domain={[0, 100]}
+                tick={axisStyle.tick}
+                stroke={axisStyle.stroke}
+              />
               <YAxis
                 type="category"
                 dataKey={xKey}

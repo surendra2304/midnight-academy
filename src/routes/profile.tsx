@@ -1,7 +1,8 @@
 import { requireAuth } from "@/lib/auth-guard";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
 import { PageShell, Panel, SectionHeading } from "@/components/kit";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { studentProfile } from "@/lib/mock-data";
+import {
+  getStudentDashboardData,
+  updateStudentProfile,
+  type StudentAnalytics,
+} from "@/lib/student.functions";
 
 export const Route = createFileRoute("/profile")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
@@ -24,8 +29,7 @@ export const Route = createFileRoute("/profile")({
       { title: "Profile & Settings — Midnight Academy" },
       {
         name: "description",
-        content:
-          "Update your details, notification preferences and reading-time accommodations.",
+        content: "Update your details, notification preferences and reading-time accommodations.",
       },
       { property: "og:title", content: "Profile & Settings — Midnight Academy" },
       {
@@ -58,41 +62,121 @@ function Row({
 }
 
 function ProfilePage() {
+  const [data, setData] = useState<StudentAnalytics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [extraTime, setExtraTime] = useState("none");
+  const [name, setName] = useState("");
+  const [inst, setInst] = useState("");
+  const [year, setYear] = useState("");
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const res = await getStudentDashboardData();
+        setData(res);
+        setName(res.profile.fullName);
+        setInst(res.profile.institution || "");
+        setYear(res.profile.year || "");
+      } catch {
+        // Fallback
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await updateStudentProfile({
+        data: {
+          fullName: name.trim(),
+          institution: inst.trim() || undefined,
+          year: year.trim() || undefined,
+        },
+      });
+      toast.success("Profile updated successfully");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to update profile";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <AppNav />
+        <PageShell className="max-w-[900px]">
+          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading your profile...</p>
+          </div>
+        </PageShell>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
       <AppNav />
       <PageShell className="max-w-[900px]">
-        <SectionHeading title="Profile & Settings" subtitle="Your account, alerts and accommodations." />
+        <SectionHeading
+          title="Profile & Settings"
+          subtitle="Your account, alerts and accommodations."
+        />
 
         <Panel>
           <h2 className="text-base font-semibold text-foreground">Profile</h2>
-          <form
-            className="mt-5 grid gap-4 sm:grid-cols-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              toast.success("Profile updated");
-            }}
-          >
+          <form className="mt-5 grid gap-4 sm:grid-cols-2" onSubmit={handleSave}>
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
-              <Input id="name" defaultValue={studentProfile.name} />
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={saving}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="pemail">Email</Label>
-              <Input id="pemail" type="email" defaultValue={studentProfile.email} />
+              <Input id="pemail" type="email" value={data?.profile.email || ""} disabled />
             </div>
             <div className="space-y-2">
               <Label htmlFor="inst">Institution</Label>
-              <Input id="inst" defaultValue={studentProfile.institution} />
+              <Input
+                id="inst"
+                value={inst}
+                onChange={(e) => setInst(e.target.value)}
+                placeholder="e.g. Stanford University"
+                disabled={saving}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="year">Year & programme</Label>
-              <Input id="year" defaultValue={studentProfile.year} />
+              <Input
+                id="year"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                placeholder="e.g. 3rd Year B.Tech CSE"
+                disabled={saving}
+              />
             </div>
             <div className="sm:col-span-2">
-              <Button type="submit">Save changes</Button>
+              <Button type="submit" disabled={saving || !name.trim()}>
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  "Save changes"
+                )}
+              </Button>
             </div>
           </form>
         </Panel>
@@ -122,7 +206,9 @@ function ProfilePage() {
         </Panel>
 
         <Panel className="mt-6">
-          <h2 className="text-base font-semibold text-foreground">Accessibility & accommodations</h2>
+          <h2 className="text-base font-semibold text-foreground">
+            Accessibility & accommodations
+          </h2>
           <div className="mt-3">
             <Row
               title="Extended reading time"

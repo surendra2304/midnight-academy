@@ -1,12 +1,20 @@
 import { requireAuth } from "@/lib/auth-guard";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { AlertTriangle, ArrowRight, CalendarClock, CheckCircle2, Info } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarClock,
+  CheckCircle2,
+  Info,
+  Loader2,
+} from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { DifficultyTag, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sampleTest, testQuestions } from "@/lib/mock-data";
+import { startAttempt } from "@/lib/attempts.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/test/")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
@@ -37,28 +45,71 @@ const instructions = [
   "Each test code allows one attempt. Submitting the final question ends the test.",
 ];
 
-type Problem = "invalid" | "completed" | "closed" | null;
+type Problem = "invalid" | "completed" | "closed" | "expired" | "empty" | null;
+
+type VerifiedTestData = {
+  attemptId: string;
+  answered: number;
+  total: number;
+  test: {
+    id: string;
+    name: string;
+    category: string;
+    difficulty: string;
+    code: string;
+    secondsPerQuestion: number;
+    responseSeconds: number;
+  };
+};
 
 function EnterTest() {
   const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
   const [problem, setProblem] = useState<Problem>(null);
-  const [validated, setValidated] = useState(false);
+  const [existingAttemptId, setExistingAttemptId] = useState<string | null>(null);
+  const [verifiedData, setVerifiedData] = useState<VerifiedTestData | null>(null);
   const navigate = useNavigate();
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const value = code.trim().toUpperCase();
-    if (value === sampleTest.code) {
-      setProblem(null);
-      setValidated(true);
-      return;
+    if (!value) return;
+
+    setLoading(true);
+    setProblem(null);
+
+    try {
+      const res = await startAttempt({ data: { code: value } });
+
+      if ("error" in res) {
+        if (res.error === "completed") {
+          setProblem("completed");
+          if ("attemptId" in res && typeof res.attemptId === "string") {
+            setExistingAttemptId(res.attemptId);
+          }
+        } else if (res.error === "closed") {
+          setProblem("closed");
+        } else if (res.error === "expired") {
+          setProblem("expired");
+        } else if (res.error === "empty") {
+          setProblem("empty");
+        } else {
+          setProblem("invalid");
+        }
+        return;
+      }
+
+      setVerifiedData(res as VerifiedTestData);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to validate test code";
+      toast.error(message);
+      setProblem("invalid");
+    } finally {
+      setLoading(false);
     }
-    if (value === "DB-Q9R47") return setProblem("completed");
-    if (value === "CN-T2L88") return setProblem("closed");
-    setProblem("invalid");
   }
 
-  if (validated) {
+  if (verifiedData) {
     return (
       <main className="min-h-screen">
         <header className="border-b border-border px-5 py-4 lg:px-8">
@@ -66,13 +117,18 @@ function EnterTest() {
         </header>
         <div className="mx-auto max-w-2xl px-5 py-14">
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground lg:text-3xl">
-            {sampleTest.name}
+            {verifiedData.test.name}
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Tag tone="primary">{sampleTest.category}</Tag>
-            <DifficultyTag difficulty={sampleTest.difficulty} />
-            <Tag>{testQuestions.length} questions</Tag>
-            <Tag>{sampleTest.secondsPerQuestion}s per question</Tag>
+            <Tag tone="primary">{verifiedData.test.category}</Tag>
+            <DifficultyTag
+              difficulty={verifiedData.test.difficulty as "Easy" | "Medium" | "Hard"}
+            />
+            <Tag>{verifiedData.total} questions</Tag>
+            <Tag>{verifiedData.test.secondsPerQuestion}s per question</Tag>
+            {verifiedData.answered > 0 ? (
+              <Tag tone="violet">{verifiedData.answered} answered</Tag>
+            ) : null}
           </div>
 
           <section className="panel mt-8 p-6">
@@ -97,12 +153,20 @@ function EnterTest() {
           </section>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg" className="glow-ring">
-              <Link to="/test/run">
-                Start Test <ArrowRight className="size-4" />
-              </Link>
+            <Button
+              size="lg"
+              className="glow-ring"
+              onClick={() => {
+                navigate({
+                  to: "/test/run",
+                  search: { attemptId: verifiedData.attemptId },
+                });
+              }}
+            >
+              {verifiedData.answered > 0 ? "Resume Test" : "Start Test"}{" "}
+              <ArrowRight className="size-4" />
             </Button>
-            <Button variant="ghost" size="lg" onClick={() => setValidated(false)}>
+            <Button variant="ghost" size="lg" onClick={() => setVerifiedData(null)}>
               Use a different code
             </Button>
           </div>
@@ -142,6 +206,7 @@ function EnterTest() {
               placeholder="DSA-X7K29"
               className="mt-3 h-12 text-center text-lg font-bold uppercase tracking-[0.22em]"
               autoComplete="off"
+              disabled={loading}
             />
 
             {problem === "invalid" ? (
@@ -159,6 +224,22 @@ function EnterTest() {
                 tone="warning"
               />
             ) : null}
+            {problem === "expired" ? (
+              <ErrorNote
+                icon={<CalendarClock className="size-4 shrink-0 text-destructive" />}
+                title="This test has expired"
+                body="The deadline for this test has passed. Reach out to your instructor if you need an extension."
+                tone="danger"
+              />
+            ) : null}
+            {problem === "empty" ? (
+              <ErrorNote
+                icon={<AlertTriangle className="size-4 shrink-0 text-warning" />}
+                title="This test has no questions yet"
+                body="The instructor has not approved any questions for this test code yet."
+                tone="warning"
+              />
+            ) : null}
             {problem === "completed" ? (
               <ErrorNote
                 icon={<CheckCircle2 className="size-4 shrink-0 text-primary" />}
@@ -166,19 +247,37 @@ function EnterTest() {
                 body="Each code allows one attempt. You can revisit your evaluation instead."
                 tone="primary"
                 action={
-                  <Button
-                    size="sm"
-                    className="mt-3"
-                    onClick={() => navigate({ to: "/result/$attemptId", params: { attemptId: "at-112" } })}
-                  >
-                    View my result
-                  </Button>
+                  existingAttemptId ? (
+                    <Button
+                      size="sm"
+                      className="mt-3"
+                      onClick={() =>
+                        navigate({
+                          to: "/result/$attemptId",
+                          params: { attemptId: existingAttemptId },
+                        })
+                      }
+                    >
+                      View my result
+                    </Button>
+                  ) : null
                 }
               />
             ) : null}
 
-            <Button type="submit" size="lg" className="mt-6 w-full">
-              Continue
+            <Button
+              type="submit"
+              size="lg"
+              className="mt-6 w-full"
+              disabled={loading || !code.trim()}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" /> Verifying...
+                </>
+              ) : (
+                "Continue"
+              )}
             </Button>
             <p className="mt-4 text-center text-xs text-muted-foreground">
               No code?{" "}

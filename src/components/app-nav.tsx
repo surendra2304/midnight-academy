@@ -10,7 +10,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { studentProfile } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 type NavItem = { label: string; to: string };
@@ -37,8 +36,7 @@ function NavLinks({ items }: { items: NavItem[] }) {
   return (
     <nav className="flex items-center gap-1 overflow-x-auto">
       {items.map((item) => {
-        const active =
-          item.to === "/admin" ? pathname === "/admin" : pathname.startsWith(item.to);
+        const active = item.to === "/admin" ? pathname === "/admin" : pathname.startsWith(item.to);
         return (
           <Link
             key={item.to}
@@ -59,23 +57,33 @@ function NavLinks({ items }: { items: NavItem[] }) {
 }
 
 function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const displayName = user?.fullName || (admin ? "Instructor" : "Student");
+  const email = user?.email || "";
+  const initials =
+    displayName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || (admin ? "IN" : "ST");
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2 py-1.5 text-left transition-colors hover:border-border-strong">
         <span className="grid size-7 place-items-center rounded-full bg-primary/15 text-[11px] font-bold text-primary">
-          {admin ? "RK" : studentProfile.initials}
+          {initials}
         </span>
         <span className="hidden text-sm font-medium text-foreground sm:block">
-          {admin ? "R. Kaur" : studentProfile.name.split(" ")[0]}
+          {displayName.split(" ")[0]}
         </span>
         <ChevronDown className="size-4 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-          {admin ? "admin@midnight.academy" : studentProfile.email}
+          {email}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {admin ? null : (
@@ -92,10 +100,12 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
             </DropdownMenuItem>
           </>
         )}
-        <DropdownMenuItem onClick={async () => {
-          await signOut();
-          navigate({ to: "/auth" });
-        }}>
+        <DropdownMenuItem
+          onClick={async () => {
+            await signOut();
+            navigate({ to: "/auth" });
+          }}
+        >
           <LogOut className="mr-2 size-4" /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,14 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { AxisTrend, ScoreBars } from "@/components/charts";
 import { ComprehensionBreakdown } from "@/components/comprehension";
 import { PageShell, Panel, SectionHeading, StatCard } from "@/components/kit";
-import {
-  axisTrend,
-  categoryPerformance,
-  perQuestionDifficulty,
-  studentAxes,
-  testPerformance,
-} from "@/lib/mock-data";
+import { getCohortAnalytics } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/analytics")({
   head: () => ({
@@ -29,7 +25,63 @@ export const Route = createFileRoute("/admin/analytics")({
   component: Analytics,
 });
 
+type CohortData = {
+  attempts: number;
+  cohortAverage: number;
+  axes: Record<string, number>;
+  categoryPerformance: Array<{
+    category: string;
+    score: number;
+    attempts: number;
+  }>;
+  testPerformance: Array<{
+    name: string;
+    score: number;
+  }>;
+  perQuestionDifficulty: Array<{
+    q: string;
+    score: number;
+  }>;
+};
+
 function Analytics() {
+  const [data, setData] = useState<CohortData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await getCohortAnalytics();
+        setData(res as CohortData);
+      } catch {
+        // Fallback
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <PageShell>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+          <Loader2 className="size-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading cohort analytics...</p>
+        </div>
+      </PageShell>
+    );
+  }
+
+  const {
+    attempts = 0,
+    cohortAverage = 0,
+    axes = { objective: 0, constraint: 0, io: 0, concept: 0, interpretation: 0 },
+    categoryPerformance = [],
+    testPerformance = [],
+    perQuestionDifficulty = [],
+  } = data || {};
+
   return (
     <PageShell>
       <SectionHeading
@@ -37,55 +89,89 @@ function Analytics() {
         subtitle="Cohort comprehension, using the same five axes students see."
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Cohort Average" value="74%" hint="All active tests" />
-        <StatCard label="Weakest Axis" value="Constraints" hint="61% cohort average" />
-        <StatCard label="Strongest Axis" value="Objective" hint="86% cohort average" />
-        <StatCard label="Attempts This Month" value="486" />
+        <StatCard
+          label="Cohort Average"
+          value={`${cohortAverage}%`}
+          hint="Across all evaluated attempts"
+        />
+        <StatCard
+          label="Weakest Axis"
+          value="Constraints"
+          hint={`${axes["constraint"] ?? 0}% cohort average`}
+        />
+        <StatCard
+          label="Strongest Axis"
+          value="Objective"
+          hint={`${axes["objective"] ?? 0}% cohort average`}
+        />
+        <StatCard label="Total Attempts" value={attempts} />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <Panel>
           <SectionHeading title="Cohort Comprehension Profile" />
-          <ComprehensionBreakdown axes={studentAxes} highlight="constraint" />
+          <ComprehensionBreakdown
+            axes={{
+              objective: axes["objective"] ?? 0,
+              constraint: axes["constraint"] ?? 0,
+              io: axes["io"] ?? 0,
+              concept: axes["concept"] ?? 0,
+              interpretation: axes["interpretation"] ?? 0,
+            }}
+            highlight="constraint"
+          />
         </Panel>
         <Panel>
-          <SectionHeading title="Axis Trend" subtitle="Month over month, all students." />
-          <AxisTrend data={axisTrend as unknown as Record<string, string | number>[]} height={280} />
+          <SectionHeading title="Category Performance" subtitle="Comprehension score by subject." />
+          {categoryPerformance.length > 0 ? (
+            <ScoreBars
+              data={categoryPerformance as unknown as Record<string, string | number>[]}
+              xKey="category"
+              height={280}
+            />
+          ) : (
+            <p className="p-8 text-center text-sm text-muted-foreground">
+              No category evaluations recorded yet.
+            </p>
+          )}
         </Panel>
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Panel>
-          <SectionHeading title="Performance by Category" />
-          <ScoreBars
-            data={categoryPerformance as unknown as Record<string, string | number>[]}
-            xKey="category"
-            height={300}
-          />
+          <SectionHeading title="Average Score by Test" />
+          {testPerformance.length > 0 ? (
+            <ScoreBars
+              data={testPerformance as unknown as Record<string, string | number>[]}
+              xKey="name"
+              layout="horizontal"
+              height={300}
+            />
+          ) : (
+            <p className="p-8 text-center text-sm text-muted-foreground">
+              Publish tests and collect attempts to view scores.
+            </p>
+          )}
         </Panel>
         <Panel>
-          <SectionHeading title="Average Score by Test" />
-          <ScoreBars
-            data={testPerformance as unknown as Record<string, string | number>[]}
-            xKey="name"
-            layout="horizontal"
-            height={300}
+          <SectionHeading
+            title="Hardest Questions to Understand"
+            subtitle="Lowest average comprehension score per question position."
           />
+          {perQuestionDifficulty.length > 0 ? (
+            <ScoreBars
+              data={perQuestionDifficulty as unknown as Record<string, string | number>[]}
+              xKey="q"
+              layout="horizontal"
+              height={300}
+            />
+          ) : (
+            <p className="p-8 text-center text-sm text-muted-foreground">
+              No question metrics available yet.
+            </p>
+          )}
         </Panel>
       </div>
-
-      <Panel className="mt-6">
-        <SectionHeading
-          title="Hardest Questions to Understand"
-          subtitle="Lowest average comprehension score per question position."
-        />
-        <ScoreBars
-          data={perQuestionDifficulty as unknown as Record<string, string | number>[]}
-          xKey="q"
-          layout="horizontal"
-          height={280}
-        />
-      </Panel>
     </PageShell>
   );
 }

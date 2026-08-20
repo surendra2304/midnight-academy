@@ -119,8 +119,8 @@ function Landing() {
               <span className="text-gradient">Understand First.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground lg:text-lg">
-              Midnight Academy trains students to accurately understand technical questions
-              before attempting to solve them.
+              Midnight Academy trains students to accurately understand technical questions before
+              attempting to solve them.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild size="lg">
@@ -187,14 +187,17 @@ function Landing() {
               Why Question Understanding Matters
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Most students don't lose marks because they don't know the concept. They lose
-              marks because they answered a slightly different question than the one on the page.
+              Most students don't lose marks because they don't know the concept. They lose marks
+              because they answered a slightly different question than the one on the page.
             </p>
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
               ["Misread requirements", "The goal was subtly different from what was solved."],
-              ["Ignored constraints", "Time, space and input bounds decide which approach is valid."],
+              [
+                "Ignored constraints",
+                "Time, space and input bounds decide which approach is valid.",
+              ],
               ["Unfamiliar terminology", "One unread technical term changes the entire problem."],
               ["Input/output expectations", "Wrong format, wrong indexing, wrong return type."],
               ["Missed edge conditions", "The single case the question was really testing."],
@@ -239,8 +242,8 @@ function Landing() {
             </h2>
             <p className="mt-4 max-w-lg text-muted-foreground">
               Midnight Academy is not an English platform and not a quiz app. Every question is a
-              real technical problem statement, and every evaluation is about interpretation —
-              never about grammar.
+              real technical problem statement, and every evaluation is about interpretation — never
+              about grammar.
             </p>
             <div className="mt-8 flex flex-wrap gap-2">
               {CATEGORIES.map((c) => (
@@ -257,7 +260,9 @@ function Landing() {
           <Panel>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-semibold text-foreground">Your Thinking. Measured.</h3>
+                <h3 className="text-base font-semibold text-foreground">
+                  Your Thinking. Measured.
+                </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Five axes, tracked on every attempt.
                 </p>
@@ -280,33 +285,35 @@ function Landing() {
               Is this cheating-proof?
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Instructors ask this first. The mechanic itself is the safeguard — there is no
-              answer to look up, because the student is graded on their own interpretation.
+              Instructors ask this first. The mechanic itself is the safeguard — there is no answer
+              to look up, because the student is graded on their own interpretation.
             </p>
           </div>
           <Accordion type="single" collapsible className="w-full">
-            {([
+            {(
               [
-                "Can a student just copy the question elsewhere?",
-                "Copy and text selection are disabled on the live question, and the question is removed from the DOM the instant reading time ends — it is never present while the student writes.",
-              ],
-              [
-                "What stops a second attempt with the same code?",
-                "A test code is one attempt per student. Reusing a completed code routes the student to their existing result instead of a new attempt.",
-              ],
-              [
-                "Can an AI assistant write the explanation?",
-                "There is no correct text to generate — the score reflects whether the student's own restatement matched the objective, constraints and concepts of a question the assistant never saw.",
-              ],
-              [
-                "Do you monitor the student?",
-                "No camera, no keystroke surveillance. Tab-switching and window blur during the reading stage are logged quietly for the instructor's integrity view, and never shown to shame the student.",
-              ],
-              [
-                "What if the AI scores a student unfairly?",
-                "Students can flag any evaluation. Flags land in an instructor review queue where the score can be confirmed or overridden with a note.",
-              ],
-            ] as [string, string][]).map(([q, a]) => (
+                [
+                  "Can a student just copy the question elsewhere?",
+                  "Copy and text selection are disabled on the live question, and the question is removed from the DOM the instant reading time ends — it is never present while the student writes.",
+                ],
+                [
+                  "What stops a second attempt with the same code?",
+                  "A test code is one attempt per student. Reusing a completed code routes the student to their existing result instead of a new attempt.",
+                ],
+                [
+                  "Can an AI assistant write the explanation?",
+                  "There is no correct text to generate — the score reflects whether the student's own restatement matched the objective, constraints and concepts of a question the assistant never saw.",
+                ],
+                [
+                  "Do you monitor the student?",
+                  "No camera, no keystroke surveillance. Tab-switching and window blur during the reading stage are logged quietly for the instructor's integrity view, and never shown to shame the student.",
+                ],
+                [
+                  "What if the AI scores a student unfairly?",
+                  "Students can flag any evaluation. Flags land in an instructor review queue where the score can be confirmed or overridden with a note.",
+                ],
+              ] as [string, string][]
+            ).map(([q, a]) => (
               <AccordionItem key={q} value={q}>
                 <AccordionTrigger className="text-left text-sm font-semibold">{q}</AccordionTrigger>
                 <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
@@ -339,13 +346,15 @@ function Landing() {
             </Button>
           </div>
           <ul className="mx-auto mt-10 flex max-w-2xl flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-            {["No setup required", "Works for any technical subject", "Instructor dashboards included"].map(
-              (i) => (
-                <li key={i} className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-3.5 text-success" /> {i}
-                </li>
-              ),
-            )}
+            {[
+              "No setup required",
+              "Works for any technical subject",
+              "Instructor dashboards included",
+            ].map((i) => (
+              <li key={i} className="flex items-center gap-1.5">
+                <CheckCircle2 className="size-3.5 text-success" /> {i}
+              </li>
+            ))}
           </ul>
         </div>
       </section>
@@ -354,14 +363,26 @@ function Landing() {
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div>
             <Wordmark />
-            <p className="mt-3 text-sm text-muted-foreground">Read. Understand. Explain. Improve.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Read. Understand. Explain. Improve.
+            </p>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-            <a href="#how-it-works" className="hover:text-foreground">How It Works</a>
-            <a href="#features" className="hover:text-foreground">Features</a>
-            <a href="#about" className="hover:text-foreground">About</a>
-            <Link to="/auth" className="hover:text-foreground">Login</Link>
-            <Link to="/admin" className="hover:text-foreground">For Instructors</Link>
+            <a href="#how-it-works" className="hover:text-foreground">
+              How It Works
+            </a>
+            <a href="#features" className="hover:text-foreground">
+              Features
+            </a>
+            <a href="#about" className="hover:text-foreground">
+              About
+            </a>
+            <Link to="/auth" className="hover:text-foreground">
+              Login
+            </Link>
+            <Link to="/admin" className="hover:text-foreground">
+              For Instructors
+            </Link>
           </nav>
         </div>
         <p className="mt-10 border-t border-border pt-6 text-xs text-muted-foreground">

@@ -10,6 +10,7 @@
 **Midnight Academy** is a specialized platform designed to train and assess technical question comprehension. Unlike conventional quiz or coding practice tools, Midnight Academy trains students to thoroughly digest, comprehend, and articulate complex problem statements (DSA, System Design, Operating Systems, DBMS, Computer Networks, and Aptitude) **before** jumping straight into implementation.
 
 ### 🔄 Core Learning Loop
+
 1. **Timed Reading**: The student is presented with a technical problem under timed exposure.
 2. **Recall & Articulation**: The problem disappears, and the student writes what they understood, key constraints, and core objectives in their own words.
 3. **AI Comprehension Evaluation**: Intelligent evaluation scores the explanation across key comprehension axes, highlighting missed constraints, conceptual gaps, and action items.
@@ -29,6 +30,7 @@
 ## 🛠️ Getting Started
 
 ### Prerequisites
+
 - Node.js (v18+) or Bun / pnpm
 
 ### Installation

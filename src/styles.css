@@ -169,11 +169,7 @@
 
 @utility grid-backdrop {
   background-image:
-    radial-gradient(
-      ellipse 70% 55% at 50% -10%,
-      oklch(0.74 0.145 233 / 18%),
-      transparent 70%
-    ),
+    radial-gradient(ellipse 70% 55% at 50% -10%, oklch(0.74 0.145 233 / 18%), transparent 70%),
     linear-gradient(to right, oklch(1 0 0 / 3.5%) 1px, transparent 1px),
     linear-gradient(to bottom, oklch(1 0 0 / 3.5%) 1px, transparent 1px);
   background-size:

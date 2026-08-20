@@ -1,18 +1,14 @@
 import { requireAuth } from "@/lib/auth-guard";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Clock, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Clock, Loader2, Search } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
 import { DifficultyTag, PageShell, SectionHeading, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  CATEGORIES,
-  practiceSets,
-  type Category,
-  type Difficulty,
-} from "@/lib/mock-data";
+import { CATEGORIES, type Category, type Difficulty } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import { listPracticeSets } from "@/lib/student.functions";
 
 export const Route = createFileRoute("/practice")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
@@ -22,12 +18,12 @@ export const Route = createFileRoute("/practice")({
       {
         name: "description",
         content:
-          "Browse self-serve comprehension practice sets across DSA, Aptitude, DBMS, OS, Networks, OOP and Programming.",
+          "Browse active comprehension practice sets across DSA, Aptitude, DBMS, OS, Networks, OOP and Programming.",
       },
       { property: "og:title", content: "Practice Library — Midnight Academy" },
       {
         property: "og:description",
-        content: "Open practice sets, filterable by category and difficulty. No test code needed.",
+        content: "Open practice sets, filterable by category and difficulty.",
       },
     ],
   }),
@@ -35,6 +31,18 @@ export const Route = createFileRoute("/practice")({
 });
 
 const difficulties: Difficulty[] = ["Easy", "Medium", "Hard"];
+
+type PracticeSet = {
+  id: string;
+  title: string;
+  category: string;
+  difficulty: string;
+  questions: number;
+  secondsPerQuestion: number;
+  code: string | null;
+  focus: string;
+  minutes: number;
+};
 
 function Chip({
   active,
@@ -62,11 +70,27 @@ function Chip({
 }
 
 function PracticeLibrary() {
+  const [practiceSetsList, setPracticeSetsList] = useState<PracticeSet[]>([]);
+  const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<Category | "All">("All");
   const [difficulty, setDifficulty] = useState<Difficulty | "All">("All");
   const [query, setQuery] = useState("");
 
-  const sets = practiceSets.filter(
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await listPracticeSets();
+        setPracticeSetsList(res as PracticeSet[]);
+      } catch {
+        // Fallback
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const sets = practiceSetsList.filter(
     (p) =>
       (category === "All" || p.category === category) &&
       (difficulty === "All" || p.difficulty === difficulty) &&
@@ -79,7 +103,7 @@ function PracticeLibrary() {
       <PageShell>
         <SectionHeading
           title="Practice Library"
-          subtitle="Open practice sets you can start right now — no test code required."
+          subtitle="Active comprehension assessments available for practice."
         />
 
         <div className="panel p-5">
@@ -116,11 +140,18 @@ function PracticeLibrary() {
           </div>
         </div>
 
-        {sets.length === 0 ? (
+        {loading ? (
+          <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading practice sets...</p>
+          </div>
+        ) : sets.length === 0 ? (
           <div className="panel-quiet mt-6 p-10 text-center">
-            <p className="text-sm font-semibold text-foreground">No sets match those filters</p>
+            <p className="text-sm font-semibold text-foreground">No active practice sets found</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Try clearing the difficulty filter or picking another category.
+              {practiceSetsList.length === 0
+                ? "Instructors have not published any public practice sets yet."
+                : "Try clearing your search filters."}
             </p>
             <Button
               variant="outline"
@@ -140,7 +171,7 @@ function PracticeLibrary() {
               <article key={p.id} className="panel flex flex-col p-5">
                 <div className="flex items-start justify-between gap-3">
                   <Tag tone="primary">{p.category}</Tag>
-                  <DifficultyTag difficulty={p.difficulty} />
+                  <DifficultyTag difficulty={p.difficulty as Difficulty} />
                 </div>
                 <h3 className="mt-4 text-base font-semibold leading-snug text-foreground">
                   {p.title}
@@ -153,7 +184,7 @@ function PracticeLibrary() {
                   </span>
                 </div>
                 <Button asChild className="mt-5 w-full">
-                  <Link to="/test/run">Start</Link>
+                  <Link to="/test">Start Assessment</Link>
                 </Button>
               </article>
             ))}

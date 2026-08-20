@@ -1,24 +1,9 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { ScoreBars, ScoreTrend } from "@/components/charts";
-import { ComprehensionBreakdown } from "@/components/comprehension";
-import {
-  PageShell,
-  Panel,
-  SectionHeading,
-  StatCard,
-  StatusTag,
-  Tag,
-} from "@/components/kit";
-import {
-  AXIS_LABELS,
-  adminStudents,
-  attempts,
-  categoryPerformance,
-  formatDate,
-  progressSeries,
-  scoreTextClass,
-  studentAxes,
-} from "@/lib/mock-data";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { PageShell, Panel, SectionHeading, StatCard, StatusTag, Tag } from "@/components/kit";
+import { AXIS_LABELS, type AxisKey, formatDate, scoreTextClass } from "@/lib/mock-data";
+import { getAdminStudent } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/students/$studentId")({
   head: () => ({
@@ -39,9 +24,76 @@ export const Route = createFileRoute("/admin/students/$studentId")({
   component: StudentDetail,
 });
 
+type StudentDetailData = {
+  student: {
+    id: string;
+    name: string;
+    initials: string;
+    email: string;
+    institution: string | null;
+    year: string | null;
+    attempts: number;
+    average: number;
+    weakest: AxisKey;
+    lastActive: string;
+  };
+  attempts: Array<{
+    id: string;
+    name: string;
+    category: string;
+    score: number;
+    status: string;
+    date: string;
+  }>;
+};
+
 function StudentDetail() {
   const { studentId } = useParams({ from: "/admin/students/$studentId" });
-  const student = adminStudents.find((s) => s.id === studentId) ?? adminStudents[0]!;
+  const [data, setData] = useState<StudentDetailData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await getAdminStudent({ data: { studentId } });
+        setData(res as StudentDetailData);
+      } catch {
+        // Fallback
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [studentId]);
+
+  if (loading) {
+    return (
+      <PageShell>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+          <Loader2 className="size-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading student details...</p>
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (!data) {
+    return (
+      <PageShell>
+        <div className="panel p-8 text-center">
+          <h2 className="text-lg font-bold text-foreground">Student Not Found</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This student has not attempted any tests created by your account.
+          </p>
+          <Button asChild className="mt-5">
+            <Link to="/admin/students">Back to Students</Link>
+          </Button>
+        </div>
+      </PageShell>
+    );
+  }
+
+  const { student, attempts } = data;
 
   return (
     <PageShell>
@@ -54,7 +106,11 @@ function StudentDetail() {
         </span>
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{student.name}</h1>
-          <p className="text-sm text-muted-foreground">{student.email}</p>
+          <p className="text-sm text-muted-foreground">
+            {student.email}
+            {student.institution ? ` · ${student.institution}` : ""}
+            {student.year ? ` · ${student.year}` : ""}
+          </p>
         </div>
       </div>
 
@@ -65,48 +121,53 @@ function StudentDetail() {
           value={<span className={scoreTextClass(student.average)}>{student.average}%</span>}
         />
         <StatCard label="Weakest Axis" value={AXIS_LABELS[student.weakest]} />
-        <StatCard label="Last Active" value={student.lastActive} />
+        <StatCard
+          label="Last Active"
+          value={
+            student.lastActive.includes("T") ? formatDate(student.lastActive) : student.lastActive
+          }
+        />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <Panel>
-          <SectionHeading title="Comprehension Trend" subtitle="Score per attempt." />
-          <ScoreTrend data={progressSeries} height={280} />
-        </Panel>
-        <Panel>
-          <SectionHeading title="Comprehension Profile" />
-          <ComprehensionBreakdown axes={studentAxes} variant="bars" highlight={student.weakest} />
-        </Panel>
-      </div>
-
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
-        <Panel>
-          <SectionHeading title="By Category" />
-          <ScoreBars
-            data={categoryPerformance as unknown as Record<string, string | number>[]}
-            xKey="category"
-            height={300}
-          />
-        </Panel>
+      <div className="mt-6">
         <Panel className="p-0">
           <div className="p-5 lg:p-6">
             <SectionHeading title="Attempt History" className="mb-0" />
           </div>
-          <ul className="divide-y divide-border">
-            {attempts.map((a) => (
-              <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
-                <span className="text-sm text-foreground">{a.name}</span>
-                <Tag>{a.category}</Tag>
-                <span className={`ml-auto text-sm font-bold ${scoreTextClass(a.score)}`}>
-                  {a.score}%
-                </span>
-                <span className="text-xs text-muted-foreground">{formatDate(a.date)}</span>
-                <StatusTag status={a.status} />
-              </li>
-            ))}
-          </ul>
+          {attempts.length === 0 ? (
+            <p className="p-8 text-center text-sm text-muted-foreground">
+              No attempts recorded yet.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {attempts.map((a) => (
+                <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
+                  <span className="text-sm text-foreground">{a.name}</span>
+                  <Tag>{a.category}</Tag>
+                  <span className={`ml-auto text-sm font-bold ${scoreTextClass(a.score)}`}>
+                    {a.score}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">{formatDate(a.date)}</span>
+                  <StatusTag status={a.status as "in_progress" | "evaluated"} />
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
       </div>
     </PageShell>
   );
+}
+
+function Button({
+  asChild,
+  className,
+  children,
+}: {
+  asChild?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  if (asChild) return <div className={className}>{children}</div>;
+  return <button className={className}>{children}</button>;
 }

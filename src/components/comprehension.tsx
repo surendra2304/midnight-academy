@@ -1,10 +1,4 @@
-import {
-  AXIS_KEYS,
-  AXIS_LABELS,
-  AXIS_SHORT,
-  type AxisKey,
-  type AxisScores,
-} from "@/lib/mock-data";
+import { AXIS_KEYS, AXIS_LABELS, AXIS_SHORT, type AxisKey, type AxisScores } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import {
   PolarAngleAxis,
@@ -92,13 +86,14 @@ export function ComprehensionBreakdown({
                     </span>
                   ) : null}
                 </span>
-                <span className="text-sm font-semibold tabular-nums text-foreground">
-                  {score}
-                </span>
+                <span className="text-sm font-semibold tabular-nums text-foreground">{score}</span>
               </div>
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
                 <div
-                  className={cn("h-full rounded-full transition-[width] duration-700", toneClass(score))}
+                  className={cn(
+                    "h-full rounded-full transition-[width] duration-700",
+                    toneClass(score),
+                  )}
                   style={{ width: `${score}%` }}
                 />
               </div>

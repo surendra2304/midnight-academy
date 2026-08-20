@@ -80,7 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Midnight Academy — Understand Before You Solve" },
-      { name: "description", content: "AI-powered technical question comprehension training for students and instructors." },
+      {
+        name: "description",
+        content:
+          "AI-powered technical question comprehension training for students and instructors.",
+      },
       { property: "og:title", content: "Midnight Academy" },
       { property: "og:description", content: "Read. Understand. Explain. Improve." },
       { property: "og:type", content: "website" },

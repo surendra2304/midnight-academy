@@ -127,9 +127,7 @@ export function computeAxes(answers: EvaluatedAnswer[]): AxisScores {
 
   return AXIS_KEYS.reduce((acc, key) => {
     const scores = direct[key];
-    const directPct = scores.length
-      ? (scores.reduce((a, b) => a + b, 0) / scores.length) * 10
-      : 0;
+    const directPct = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) * 10 : 0;
     const bucket = buckets[key];
     if (!scores.length && bucket.total === 0) {
       acc[key] = 0;

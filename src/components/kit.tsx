@@ -31,9 +31,7 @@ export function SectionHeading({
     <div className={cn("mb-5 flex flex-wrap items-end justify-between gap-3", className)}>
       <div>
         <h2 className="text-lg font-bold text-foreground lg:text-xl">{title}</h2>
-        {subtitle ? (
-          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
-        ) : null}
+        {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
       </div>
       {action}
     </div>

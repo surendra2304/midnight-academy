@@ -1,46 +1,68 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { apiClient, setAccessToken } from "@/lib/api-client";
-import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth/callback")({
   component: AuthCallbackPage,
 });
 
 function AuthCallbackPage() {
-  const search: any = useSearch({ from: "/auth/callback" });
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const exchangeCode = async () => {
-      const code = search.code;
-      if (!code) {
-        setError("No exchange code provided");
-        return;
-      }
-
+    const handleAuthCallback = async () => {
       try {
-        const res = await apiClient("/auth/google/exchange", {
-          method: "POST",
-          body: JSON.stringify({ code }),
-        });
-        
-        setAccessToken(res.accessToken);
-        localStorage.setItem("refreshToken", res.refreshToken);
-        
-        // Let the app re-hydrate session globally (we can also manually trigger it, 
-        // but simplest is just redirecting and let useAuth fetch /me or we can 
-        // rely on res.user since the backend returns it).
-        // Let's redirect based on role:
-        const returnedRole = res?.user?.role;
-        window.location.href = returnedRole === "ADMIN" ? "/admin" : "/onboarding";
-      } catch (err: any) {
-        setError(err.message || "Failed to exchange code");
+        // Supabase client automatically processes hash and query params on getSession
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          setError(sessionError.message);
+          return;
+        }
+
+        if (!session?.user) {
+          // If session is not immediately ready, check if user exists
+          const {
+            data: { user },
+            error: userError,
+          } = await supabase.auth.getUser();
+          if (userError || !user) {
+            setError("Could not complete authentication. Please try signing in again.");
+            return;
+          }
+        }
+
+        const userId = session?.user?.id;
+        if (!userId) {
+          navigate({ to: "/dashboard" });
+          return;
+        }
+
+        // Check role in user_roles table
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        const role = roleRow?.role;
+        if (role === "admin") {
+          navigate({ to: "/admin" });
+        } else {
+          navigate({ to: "/onboarding" });
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to complete authentication";
+        setError(message);
       }
     };
-    exchangeCode();
-  }, [search.code, navigate]);
+
+    handleAuthCallback();
+  }, [navigate]);
 
   if (error) {
     return (

@@ -1,7 +1,7 @@
 import { requireAuth } from "@/lib/auth-guard";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowUpDown, History as HistoryIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowUpDown, History as HistoryIcon, Loader2 } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
 import { EmptyState, PageShell, SectionHeading, StatusTag, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { attempts, CATEGORIES, formatDate, scoreTextClass } from "@/lib/mock-data";
+import { CATEGORIES, formatDate, scoreTextClass } from "@/lib/mock-data";
+import { getStudentDashboardData, type StudentAnalytics } from "@/lib/student.functions";
 
 export const Route = createFileRoute("/history")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
@@ -35,28 +36,59 @@ export const Route = createFileRoute("/history")({
 });
 
 function HistoryPage() {
+  const [data, setData] = useState<StudentAnalytics | null>(null);
+  const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("all");
   const [band, setBand] = useState("all");
   const [sort, setSort] = useState("recent");
 
-  const rows = attempts
-    .filter((a) => category === "all" || a.category === category)
-    .filter((a) =>
-      band === "all"
-        ? true
-        : band === "high"
-          ? a.score >= 80
-          : band === "mid"
-            ? a.score >= 65 && a.score < 80
-            : a.score < 65,
-    )
-    .sort((a, b) =>
-      sort === "recent"
-        ? b.date.localeCompare(a.date)
-        : sort === "oldest"
-          ? a.date.localeCompare(b.date)
-          : b.score - a.score,
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await getStudentDashboardData();
+        setData(res);
+      } catch {
+        // Fallback gracefully
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <AppNav />
+        <PageShell>
+          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading your attempt history...</p>
+          </div>
+        </PageShell>
+      </div>
     );
+  }
+
+  const allAttempts = data?.recentAttempts || [];
+
+  const rows = allAttempts
+    .filter((a) => category === "all" || a.category === category)
+    .filter((a) => {
+      if (band === "all") return true;
+      if (a.score === null) return band === "in_progress";
+      if (band === "high") return a.score >= 80;
+      if (band === "mid") return a.score >= 65 && a.score < 80;
+      if (band === "low") return a.score < 65;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sort === "recent") return b.date.localeCompare(a.date);
+      if (sort === "oldest") return a.date.localeCompare(b.date);
+      const scoreA = a.score ?? -1;
+      const scoreB = b.score ?? -1;
+      return scoreB - scoreA;
+    });
 
   return (
     <div className="min-h-screen">
@@ -64,7 +96,7 @@ function HistoryPage() {
       <PageShell>
         <SectionHeading
           title="Attempt History"
-          subtitle={`${attempts.length} attempts recorded. Open any row for its full evaluation.`}
+          subtitle={`${allAttempts.length} attempts recorded. Open any row for its full evaluation.`}
         />
 
         <div className="panel flex flex-wrap items-end gap-3 p-5">
@@ -134,15 +166,21 @@ function HistoryPage() {
           <div className="mt-6">
             <EmptyState
               icon={<HistoryIcon className="size-5" />}
-              title="Nothing matches those filters"
-              description="No attempt falls inside this category and score range. Widen the filters, or start a fresh practice set."
+              title="No attempts found"
+              description="No attempt matches the selected filters. Take a test or widen your filters."
               action={
                 <>
-                  <Button variant="outline" onClick={() => { setCategory("all"); setBand("all"); }}>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setCategory("all");
+                      setBand("all");
+                    }}
+                  >
                     Clear filters
                   </Button>
                   <Button asChild>
-                    <Link to="/practice">Browse Practice</Link>
+                    <Link to="/test">Take Test</Link>
                   </Button>
                 </>
               }
@@ -153,7 +191,7 @@ function HistoryPage() {
             <div className="hidden grid-cols-[minmax(0,2.4fr)_repeat(4,minmax(0,1fr))] gap-3 border-b border-border px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground lg:grid">
               <span>Test</span>
               <span>Category</span>
-              <span>Questions</span>
+              <span>Difficulty</span>
               <span>Score</span>
               <span>Date</span>
             </div>
@@ -166,13 +204,20 @@ function HistoryPage() {
                   className="grid grid-cols-2 items-center gap-3 px-5 py-4 transition-colors hover:bg-surface-2/60 lg:grid-cols-[minmax(0,2.4fr)_repeat(4,minmax(0,1fr))]"
                 >
                   <span className="col-span-2 text-sm font-semibold text-foreground lg:col-span-1">
-                    {a.name}
+                    {a.testName}
                   </span>
                   <Tag>{a.category}</Tag>
-                  <span className="text-sm text-muted-foreground">{a.questions}</span>
-                  <span className={`text-sm font-bold ${scoreTextClass(a.score)}`}>{a.score}%</span>
+                  <span className="text-sm text-muted-foreground">{a.difficulty}</span>
+                  <span
+                    className={`text-sm font-bold ${
+                      a.score !== null ? scoreTextClass(a.score) : "text-muted-foreground"
+                    }`}
+                  >
+                    {a.score !== null ? `${a.score}%` : "In Progress"}
+                  </span>
                   <span className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-                    {formatDate(a.date)} <StatusTag status={a.status} />
+                    {formatDate(a.date)}{" "}
+                    <StatusTag status={a.status as "in_progress" | "evaluated"} />
                   </span>
                 </Link>
               ))}

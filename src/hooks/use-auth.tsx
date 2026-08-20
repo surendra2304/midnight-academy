@@ -1,14 +1,24 @@
 import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { authStore, type AppRole, type User } from "@/lib/auth-store";
 
-type AuthState = {
+export type AuthState = {
   session: { user: User } | null;
   user: User | null;
   role: AppRole | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  login: (data: any) => Promise<any>;
-  register: (data: any) => Promise<any>;
+  login: (credentials: {
+    email: string;
+    password: string;
+  }) => Promise<{ user: User; session: Session | null }>;
+  register: (params: {
+    email: string;
+    password: string;
+    fullName?: string;
+    role?: "admin" | "student";
+  }) => Promise<{ user: User; session: Session | null }>;
+  signInWithGoogle: () => Promise<{ provider: string; url: string | null }>;
 };
 
 const AuthContext = createContext<AuthState>({
@@ -17,8 +27,15 @@ const AuthContext = createContext<AuthState>({
   role: null,
   loading: true,
   signOut: async () => {},
-  login: async () => {},
-  register: async () => {},
+  login: async () => ({
+    user: { id: "", email: "", fullName: null, role: "STUDENT" },
+    session: null,
+  }),
+  register: async () => ({
+    user: { id: "", email: "", fullName: null, role: "STUDENT" },
+    session: null,
+  }),
+  signInWithGoogle: async () => ({ provider: "google", url: null }),
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -42,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut: authStore.signOut,
       login: authStore.login,
       register: authStore.register,
+      signInWithGoogle: authStore.signInWithGoogle,
     }),
     [storeState],
   );

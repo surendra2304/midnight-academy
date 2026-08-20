@@ -1,13 +1,14 @@
 import { requireAuth } from "@/lib/auth-guard";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowRight, Flag, LayoutDashboard } from "lucide-react";
+import { AlertCircle, ArrowRight, Flag, LayoutDashboard, Loader2, RefreshCw } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
 import { ComprehensionBreakdown } from "@/components/comprehension";
 import { CountUp, PageShell, Panel, SectionHeading, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { sampleResult, sampleTest, scoreTextClass, testQuestions } from "@/lib/mock-data";
+import { flagEvaluation, getResult } from "@/lib/attempts.functions";
+import { scoreTextClass } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/result/$attemptId")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
@@ -29,8 +30,139 @@ export const Route = createFileRoute("/result/$attemptId")({
   component: ResultPage,
 });
 
+type ResultData = {
+  id: string;
+  status: string;
+  score: number | null;
+  axes: Record<string, number> | null;
+  blurCount: number;
+  completedAt: string | null;
+  test: {
+    name: string;
+    category: string;
+    difficulty: string;
+    code: string | null;
+  } | null;
+  answers: Array<{
+    id: string;
+    position: number;
+    response: string;
+    score: number | null;
+    feedback: string | null;
+    missedConcepts: string[];
+    missedConstraints: string[];
+    flagged: boolean;
+    question: {
+      text: string;
+      topic: string;
+      difficulty: string;
+      concepts: string[];
+      constraints: string[];
+      reference_answer: string;
+    } | null;
+  }>;
+};
+
 function ResultPage() {
-  const [flagged, setFlagged] = useState<string[]>([]);
+  const { attemptId } = useParams({ from: "/result/$attemptId" });
+  const [data, setData] = useState<ResultData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [flaggingIds, setFlaggingIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function fetchResult() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await getResult({ data: { attemptId } });
+        setData(res as ResultData);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to load test results";
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchResult();
+  }, [attemptId]);
+
+  const handleFlagAnswer = async (answerId: string) => {
+    setFlaggingIds((ids) => [...ids, answerId]);
+    try {
+      await flagEvaluation({ data: { answerId } });
+      toast.success("Evaluation flagged for instructor review");
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              answers: prev.answers.map((a) => (a.id === answerId ? { ...a, flagged: true } : a)),
+            }
+          : prev,
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not flag evaluation";
+      toast.error(message);
+    } finally {
+      setFlaggingIds((ids) => ids.filter((id) => id !== answerId));
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <AppNav />
+        <PageShell>
+          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading test evaluation...</p>
+          </div>
+        </PageShell>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="min-h-screen">
+        <AppNav />
+        <PageShell>
+          <div className="panel my-12 p-8 text-center">
+            <AlertCircle className="mx-auto size-8 text-destructive" />
+            <h1 className="mt-4 text-xl font-bold text-foreground">Result Not Available</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {error || "Could not retrieve the evaluation for this attempt."}
+            </p>
+            <div className="mt-6 flex justify-center gap-3">
+              <Button asChild>
+                <Link to="/dashboard">
+                  <LayoutDashboard className="size-4" /> Go to Dashboard
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </PageShell>
+      </div>
+    );
+  }
+
+  const overallScore = data.score ?? 0;
+  const axesScores = {
+    objective: data.axes?.["objective"] ?? 0,
+    constraint: data.axes?.["constraint"] ?? 0,
+    io: data.axes?.["io"] ?? 0,
+    concept: data.axes?.["concept"] ?? 0,
+    interpretation: data.axes?.["interpretation"] ?? 0,
+  };
+
+  // Collect all missed items across questions
+  const allMissedConcepts = Array.from(
+    new Set(data.answers.flatMap((a) => a.missedConcepts || [])),
+  );
+  const allMissedConstraints = Array.from(
+    new Set(data.answers.flatMap((a) => a.missedConstraints || [])),
+  );
 
   return (
     <div className="min-h-screen">
@@ -44,74 +176,94 @@ function ResultPage() {
             Here's how well you understood the problems.
           </h1>
           <p className="mt-8 text-6xl font-extrabold text-gradient lg:text-7xl">
-            <CountUp value={sampleResult.overall} suffix="%" />
+            <CountUp value={overallScore} suffix="%" />
           </p>
           <p className="mt-3 text-sm text-muted-foreground">Technical Comprehension Score</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {sampleTest.name} · {testQuestions.length} questions
+            {data.test?.name || "Comprehension Assessment"} · {data.answers.length} questions
           </p>
         </section>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
           <Panel>
-            <SectionHeading title="Comprehension Breakdown" subtitle="The same five axes you track on your dashboard." />
-            <ComprehensionBreakdown axes={sampleResult.axes} />
+            <SectionHeading
+              title="Comprehension Breakdown"
+              subtitle="The five core axes of technical question reading."
+            />
+            <ComprehensionBreakdown axes={axesScores} />
           </Panel>
           <div className="space-y-6">
             <Panel>
-              <h2 className="text-base font-semibold text-foreground">AI Overview</h2>
+              <h2 className="text-base font-semibold text-foreground">Assessment Summary</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {sampleResult.overview}
+                {overallScore >= 80
+                  ? "Excellent technical comprehension! You reliably captured primary objectives, constraints and expected data formats across problem statements."
+                  : overallScore >= 60
+                    ? "Good overall comprehension with occasional oversights in boundary constraints or underlying technical concepts."
+                    : "You are attempting to solve before fully digesting constraints and problem objectives. Focus on identifying stated limits before drafting explanations."}
               </p>
             </Panel>
             <Panel>
               <h2 className="text-base font-semibold text-foreground">What You Missed</h2>
-              <ul className="mt-3 space-y-2.5">
-                {sampleResult.missed.map((m) => (
-                  <li key={m} className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
-                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-warning" />
-                    {m}
-                  </li>
-                ))}
-              </ul>
+              {allMissedConcepts.length === 0 && allMissedConstraints.length === 0 ? (
+                <p className="mt-3 text-sm text-success">
+                  Outstanding — you captured all identified concepts and constraints accurately!
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-2.5">
+                  {allMissedConstraints.map((c) => (
+                    <li
+                      key={`c-${c}`}
+                      className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground"
+                    >
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-warning" />
+                      <span className="font-semibold text-warning">Constraint: </span> {c}
+                    </li>
+                  ))}
+                  {allMissedConcepts.map((m) => (
+                    <li
+                      key={`m-${m}`}
+                      className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground"
+                    >
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                      <span className="font-semibold text-primary">Concept: </span> {m}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Panel>
           </div>
         </div>
 
-        <Panel className="mt-6 border-primary/25 bg-primary/6">
-          <h2 className="text-base font-semibold text-foreground">AI Feedback</h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{sampleResult.feedback}</p>
-        </Panel>
-
         <section className="mt-10">
           <SectionHeading
             title="Actual Answers"
-            subtitle="Your understanding, the evaluation, and the correct answer — kept clearly apart."
+            subtitle="Your understanding, the AI evaluation, and the correct reference answer — kept clearly apart."
           />
           <div className="space-y-5">
-            {sampleResult.perQuestion.map((r, i) => {
-              const q = testQuestions.find((t) => t.id === r.questionId)!;
-              const isFlagged = flagged.includes(r.questionId);
+            {data.answers.map((a, i) => {
+              const isFlagged = a.flagged;
+              const isFlagging = flaggingIds.includes(a.id);
+              const scoreTen = a.score !== null ? Number(a.score) : 0;
+
               return (
-                <article key={r.questionId} className="panel overflow-hidden p-0">
+                <article key={a.id} className="panel overflow-hidden p-0">
                   <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-4">
                     <span className="text-sm font-bold text-foreground">
                       Question {String(i + 1).padStart(2, "0")}
                     </span>
-                    <Tag tone="primary">{q.category}</Tag>
-                    <span className={`ml-auto text-sm font-bold ${scoreTextClass(r.score * 10)}`}>
-                      {r.score}/10
+                    {a.question?.topic ? <Tag tone="primary">{a.question.topic}</Tag> : null}
+                    <span className={`ml-auto text-sm font-bold ${scoreTextClass(scoreTen * 10)}`}>
+                      {scoreTen}/10
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setFlagged((f) => [...f, r.questionId]);
-                        toast.success("Evaluation flagged for instructor review");
-                      }}
-                      disabled={isFlagged}
+                      onClick={() => handleFlagAnswer(a.id)}
+                      disabled={isFlagged || isFlagging}
                       className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
                     >
-                      <Flag className="size-3.5" /> {isFlagged ? "Flagged" : "Flag this evaluation"}
+                      <Flag className="size-3.5" />
+                      {isFlagging ? "Flagging..." : isFlagged ? "Flagged" : "Flag this evaluation"}
                     </button>
                   </header>
 
@@ -121,13 +273,18 @@ function ResultPage() {
                         Your understanding
                       </p>
                       <p className="mt-3 text-sm leading-relaxed text-foreground">
-                        {r.studentUnderstanding}
+                        {a.response || "(No answer submitted)"}
                       </p>
-                      {r.missed.length ? (
+                      {a.missedConstraints.length > 0 || a.missedConcepts.length > 0 ? (
                         <div className="mt-4 flex flex-wrap gap-1.5">
-                          {r.missed.map((m) => (
-                            <Tag key={m} tone="warning">
-                              missed: {m}
+                          {a.missedConstraints.map((c) => (
+                            <Tag key={c} tone="warning">
+                              missed constraint: {c}
+                            </Tag>
+                          ))}
+                          {a.missedConcepts.map((m) => (
+                            <Tag key={m} tone="primary">
+                              missed concept: {m}
                             </Tag>
                           ))}
                         </div>
@@ -137,13 +294,17 @@ function ResultPage() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
                         AI evaluation
                       </p>
-                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{r.feedback}</p>
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                        {a.feedback || "Comprehension processed successfully."}
+                      </p>
                     </div>
                     <div className="bg-success/6 p-5">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-success">
-                        Actual answer
+                        Reference understanding
                       </p>
-                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{q.answer}</p>
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                        {a.question?.reference_answer || "No reference answer available."}
+                      </p>
                     </div>
                   </div>
                 </article>
@@ -151,20 +312,6 @@ function ResultPage() {
             })}
           </div>
         </section>
-
-        <Panel className="mt-10">
-          <h2 className="text-base font-semibold text-foreground">Recommended Next Steps</h2>
-          <ol className="mt-4 space-y-3">
-            {sampleResult.nextSteps.map((s, i) => (
-              <li key={s} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
-                <span className="grid size-6 shrink-0 place-items-center rounded-md bg-primary/12 text-[11px] font-bold text-primary">
-                  {i + 1}
-                </span>
-                {s}
-              </li>
-            ))}
-          </ol>
-        </Panel>
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg">

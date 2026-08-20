@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Check, Copy, FileText, FileType2, Loader2, PencilLine, Trash2 } from "lucide-react";
 import { PageShell, Panel, SectionHeading, Tag } from "@/components/kit";
@@ -14,8 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CATEGORIES, testQuestions, questionBank } from "@/lib/mock-data";
+import { CATEGORIES } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import { draftTest, publishTest, saveQuestions } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/create")({
   head: () => ({
@@ -36,22 +37,47 @@ export const Route = createFileRoute("/admin/create")({
   component: CreateTest,
 });
 
-const uploadStages = [
-  "Extracting content",
-  "Detecting questions",
-  "Identifying concepts",
-  "Detecting constraints",
-  "Preparing reference answers",
-];
+type QuestionDraft = {
+  id: string;
+  position: number;
+  text: string;
+  topic: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  concepts: string[];
+  constraints: string[];
+  referenceAnswer: string;
+  approved: boolean;
+};
+
+type TestConfig = {
+  name: string;
+  category: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  secondsPerQuestion: number;
+  responseSeconds: number;
+  testId?: string;
+  code?: string;
+};
 
 const steps = ["Test Details", "Question Source", "Review Questions", "Publish"];
 
 function CreateTest() {
   const [step, setStep] = useState(0);
+  const [config, setConfig] = useState<TestConfig>({
+    name: "Arrays & Technical Comprehension",
+    category: "DSA",
+    difficulty: "Medium",
+    secondsPerQuestion: 45,
+    responseSeconds: 180,
+  });
+  const [questions, setQuestions] = useState<QuestionDraft[]>([]);
 
   return (
     <PageShell className="max-w-[1000px]">
-      <SectionHeading title="Create Test" subtitle="Four steps from a blank test to a shareable code." />
+      <SectionHeading
+        title="Create Test"
+        subtitle="Four steps from a blank test to a shareable code."
+      />
       <ol className="mb-8 flex flex-wrap gap-2">
         {steps.map((s, i) => (
           <li
@@ -70,15 +96,56 @@ function CreateTest() {
         ))}
       </ol>
 
-      {step === 0 ? <Details onNext={() => setStep(1)} /> : null}
-      {step === 1 ? <Source onNext={() => setStep(2)} /> : null}
-      {step === 2 ? <Review onNext={() => setStep(3)} /> : null}
-      {step === 3 ? <Publish /> : null}
+      {step === 0 ? (
+        <Details
+          initial={config}
+          onNext={(newConfig) => {
+            setConfig((prev) => ({ ...prev, ...newConfig }));
+            setStep(1);
+          }}
+        />
+      ) : null}
+      {step === 1 ? (
+        <Source
+          config={config}
+          onDrafted={(testId, draftedQuestions) => {
+            setConfig((prev) => ({ ...prev, testId }));
+            setQuestions(draftedQuestions);
+            setStep(2);
+          }}
+        />
+      ) : null}
+      {step === 2 ? (
+        <Review
+          testId={config.testId!}
+          questions={questions}
+          onQuestionsUpdated={(updated) => setQuestions(updated)}
+          onNext={() => setStep(3)}
+        />
+      ) : null}
+      {step === 3 ? (
+        <Publish
+          config={config}
+          approvedCount={questions.filter((q) => q.approved).length}
+          onPublished={(code) => setConfig((prev) => ({ ...prev, code }))}
+        />
+      ) : null}
     </PageShell>
   );
 }
 
-function Details({ onNext }: { onNext: () => void }) {
+function Details({
+  initial,
+  onNext,
+}: {
+  initial: TestConfig;
+  onNext: (config: Partial<TestConfig>) => void;
+}) {
+  const [name, setName] = useState(initial.name);
+  const [category, setCategory] = useState(initial.category);
+  const [difficulty, setDifficulty] = useState(initial.difficulty);
+  const [time, setTime] = useState(initial.secondsPerQuestion);
+
   return (
     <Panel>
       <h2 className="text-base font-semibold text-foreground">Test Details</h2>
@@ -86,16 +153,27 @@ function Details({ onNext }: { onNext: () => void }) {
         className="mt-5 grid gap-4 sm:grid-cols-2"
         onSubmit={(e) => {
           e.preventDefault();
-          onNext();
+          onNext({
+            name,
+            category,
+            difficulty,
+            secondsPerQuestion: time,
+          });
         }}
       >
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="tname">Test name</Label>
-          <Input id="tname" placeholder="Arrays & Two Pointers — Comprehension" required />
+          <Input
+            id="tname"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Arrays & Two Pointers — Comprehension"
+            required
+          />
         </div>
         <div className="space-y-2">
           <Label>Category</Label>
-          <Select defaultValue="DSA">
+          <Select value={category} onValueChange={setCategory}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -110,7 +188,10 @@ function Details({ onNext }: { onNext: () => void }) {
         </div>
         <div className="space-y-2">
           <Label>Difficulty</Label>
-          <Select defaultValue="Medium">
+          <Select
+            value={difficulty}
+            onValueChange={(val) => setDifficulty(val as "Easy" | "Medium" | "Hard")}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -124,15 +205,18 @@ function Details({ onNext }: { onNext: () => void }) {
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="qcount">Number of questions</Label>
-          <Input id="qcount" type="number" defaultValue={10} min={1} max={50} />
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="qtime">Time per question (seconds)</Label>
-          <Input id="qtime" type="number" defaultValue={45} min={10} max={300} />
+          <Input
+            id="qtime"
+            type="number"
+            value={time}
+            onChange={(e) => setTime(Number(e.target.value))}
+            min={15}
+            max={300}
+          />
         </div>
         <div className="sm:col-span-2">
-          <Button type="submit" size="lg">
+          <Button type="submit" size="lg" disabled={!name.trim()}>
             Continue
           </Button>
         </div>
@@ -141,46 +225,68 @@ function Details({ onNext }: { onNext: () => void }) {
   );
 }
 
-function Source({ onNext }: { onNext: () => void }) {
-  const [processing, setProcessing] = useState(false);
-  const [stage, setStage] = useState(0);
+function Source({
+  config,
+  onDrafted,
+}: {
+  config: TestConfig;
+  onDrafted: (testId: string, questions: QuestionDraft[]) => void;
+}) {
+  const [sourceText, setSourceText] = useState("");
+  const [drafting, setDrafting] = useState(false);
 
-  useEffect(() => {
-    if (!processing) return;
-    if (stage >= uploadStages.length) {
-      const t = setTimeout(onNext, 700);
-      return () => clearTimeout(t);
+  const handleDraft = async (rawContent: string) => {
+    if (rawContent.trim().length < 20) {
+      toast.error("Please paste at least one full question statement.");
+      return;
     }
-    const t = setTimeout(() => setStage((s) => s + 1), 800);
-    return () => clearTimeout(t);
-  }, [processing, stage, onNext]);
 
-  if (processing) {
+    setDrafting(true);
+    try {
+      const res = await draftTest({
+        data: {
+          name: config.name,
+          category: config.category,
+          difficulty: config.difficulty,
+          secondsPerQuestion: config.secondsPerQuestion,
+          responseSeconds: config.responseSeconds,
+          source: rawContent,
+        },
+      });
+
+      const formatted: QuestionDraft[] = (res.questions || []).map((q, i) => ({
+        id: q.id,
+        position: q.position ?? i,
+        text: q.text,
+        topic: q.topic,
+        difficulty: (q.difficulty as "Easy" | "Medium" | "Hard") || "Medium",
+        concepts: q.concepts || [],
+        constraints: q.constraints || [],
+        referenceAnswer: q.reference_answer || "",
+        approved: false,
+      }));
+
+      onDrafted(res.testId, formatted);
+      toast.success(`Successfully drafted ${res.count} questions`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to draft questions";
+      toast.error(message);
+    } finally {
+      setDrafting(false);
+    }
+  };
+
+  if (drafting) {
     return (
       <Panel>
         <div className="flex items-center gap-3">
           <Loader2 className="size-5 animate-spin text-primary" />
-          <h2 className="text-base font-semibold text-foreground">Analyzing your questions...</h2>
+          <h2 className="text-base font-semibold text-foreground">AI Drafting Questions...</h2>
         </div>
-        <ul className="mt-6 space-y-3">
-          {uploadStages.map((label, i) => (
-            <li key={label} className="flex items-center gap-3 text-sm">
-              <span
-                className={cn(
-                  "grid size-5 shrink-0 place-items-center rounded-full border text-[10px]",
-                  i < stage
-                    ? "border-success/45 bg-success/12 text-success"
-                    : i === stage
-                      ? "border-primary/50 bg-primary/12 text-primary"
-                      : "border-border text-muted-foreground",
-                )}
-              >
-                {i < stage ? <Check className="size-3" /> : i + 1}
-              </span>
-              <span className={i <= stage ? "text-foreground" : "text-muted-foreground"}>{label}</span>
-            </li>
-          ))}
-        </ul>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Analyzing problem statements, detecting explicit constraints, underlying concepts, and
+          generating instructor reference answers.
+        </p>
       </Panel>
     );
   }
@@ -189,47 +295,95 @@ function Source({ onNext }: { onNext: () => void }) {
     <Panel>
       <h2 className="text-base font-semibold text-foreground">Add Questions</h2>
       <p className="mt-1.5 text-sm text-muted-foreground">
-        Import a question paper and let AI detect concepts, constraints and reference answers.
+        Paste your technical question statements below. AI will automatically draft concepts,
+        constraints, and reference answers for your review.
       </p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {[
-          { icon: FileText, title: "Upload PDF", body: "Import questions from a PDF" },
-          { icon: FileType2, title: "Upload TXT", body: "Import questions from a text file" },
-        ].map((o) => (
-          <button
-            key={o.title}
-            type="button"
-            onClick={() => setProcessing(true)}
-            className="rounded-xl border border-dashed border-border-strong bg-surface-2/40 p-8 text-center transition-colors hover:border-primary/50 hover:bg-primary/6"
+
+      <div className="mt-6 space-y-4">
+        <Textarea
+          value={sourceText}
+          onChange={(e) => setSourceText(e.target.value)}
+          placeholder={`1. Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume each input would have exactly one solution.\n\n2. Given an integer array nums, find a subarray that has the largest product, and return the product. The test cases are generated so that the answer will fit in a 32-bit integer.`}
+          className="min-h-[220px] font-mono text-sm leading-relaxed"
+        />
+        <div className="flex flex-wrap gap-3">
+          <Button
+            size="lg"
+            onClick={() => handleDraft(sourceText)}
+            disabled={sourceText.trim().length < 20 || drafting}
           >
-            <o.icon className="mx-auto size-6 text-primary" />
-            <span className="mt-4 block text-sm font-semibold text-foreground">{o.title}</span>
-            <span className="mt-1 block text-xs text-muted-foreground">{o.body}</span>
-          </button>
-        ))}
+            Draft with AI
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => {
+              const sample =
+                "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.\n\nGiven the head of a singly linked list, reverse the list, and return the reversed list.";
+              setSourceText(sample);
+            }}
+          >
+            Load Sample Questions
+          </Button>
+        </div>
       </div>
-      <button
-        type="button"
-        onClick={onNext}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border p-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <PencilLine className="size-4" /> Create Manually
-      </button>
-      <p className="mt-4 text-xs text-muted-foreground">
-        Or reuse approved questions from the{" "}
-        <Link to="/admin/question-bank" className="text-primary hover:underline">
-          question bank
-        </Link>{" "}
-        ({questionBank.length} available).
-      </p>
     </Panel>
   );
 }
 
-function Review({ onNext }: { onNext: () => void }) {
-  const [approved, setApproved] = useState<string[]>([]);
-  const [deleted, setDeleted] = useState<string[]>([]);
-  const visible = testQuestions.filter((q) => !deleted.includes(q.id));
+function Review({
+  testId,
+  questions,
+  onQuestionsUpdated,
+  onNext,
+}: {
+  testId: string;
+  questions: QuestionDraft[];
+  onQuestionsUpdated: (updated: QuestionDraft[]) => void;
+  onNext: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  const handleToggleApprove = (id: string) => {
+    const updated = questions.map((q) => (q.id === id ? { ...q, approved: !q.approved } : q));
+    onQuestionsUpdated(updated);
+  };
+
+  const handleApproveAll = () => {
+    const updated = questions.map((q) => ({ ...q, approved: true }));
+    onQuestionsUpdated(updated);
+  };
+
+  const handleSaveAndContinue = async () => {
+    setSaving(true);
+    try {
+      await saveQuestions({
+        data: {
+          testId,
+          questions: questions.map((q) => ({
+            id: q.id,
+            text: q.text,
+            topic: q.topic,
+            difficulty: q.difficulty,
+            concepts: q.concepts,
+            constraints: q.constraints,
+            referenceAnswer: q.referenceAnswer,
+          })),
+          approve: true,
+        },
+      });
+
+      toast.success("Questions approved and saved");
+      onNext();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save questions";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const approvedCount = questions.filter((q) => q.approved).length;
 
   return (
     <>
@@ -237,116 +391,183 @@ function Review({ onNext }: { onNext: () => void }) {
         <div>
           <h2 className="text-base font-semibold text-foreground">Review Questions</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {approved.length} / {visible.length} Questions Approved — nothing is published until you
+            {approvedCount} / {questions.length} Questions Approved — nothing is published until you
             approve it.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setApproved(visible.map((q) => q.id))}>
+          <Button variant="outline" size="sm" onClick={handleApproveAll}>
             Approve All
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setApproved([])}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onQuestionsUpdated(questions.map((q) => ({ ...q, approved: false })))}
+          >
             Reset approvals
           </Button>
         </div>
       </Panel>
 
       <div className="space-y-5">
-        {visible.map((q, i) => {
-          const isApproved = approved.includes(q.id);
-          return (
-            <Panel key={q.id} className={isApproved ? "border-success/35" : undefined}>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-bold text-foreground">
-                  Question {String(i + 1).padStart(2, "0")}
-                </span>
-                <Tag tone="primary">{q.category}</Tag>
-                <Tag>{q.topic}</Tag>
-                <Tag tone="violet">{q.difficulty}</Tag>
-                {isApproved ? <Tag tone="success">Approved</Tag> : null}
+        {questions.map((q, i) => (
+          <Panel key={q.id} className={q.approved ? "border-success/35" : undefined}>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-bold text-foreground">
+                Question {String(i + 1).padStart(2, "0")}
+              </span>
+              <Tag tone="primary">{q.topic || "General"}</Tag>
+              <Tag tone="violet">{q.difficulty}</Tag>
+              {q.approved ? <Tag tone="success">Approved</Tag> : null}
+            </div>
+
+            <Textarea
+              value={q.text}
+              onChange={(e) => {
+                const text = e.target.value;
+                onQuestionsUpdated(
+                  questions.map((item) => (item.id === q.id ? { ...item, text } : item)),
+                );
+              }}
+              className="mt-4 min-h-[110px] text-sm"
+            />
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+              <div>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Expected concepts (one per line)
+                </Label>
+                <Textarea
+                  value={q.concepts.join("\n")}
+                  onChange={(e) => {
+                    const concepts = e.target.value.split("\n").filter(Boolean);
+                    onQuestionsUpdated(
+                      questions.map((item) => (item.id === q.id ? { ...item, concepts } : item)),
+                    );
+                  }}
+                  className="mt-2 min-h-[90px] text-sm"
+                />
               </div>
-              <Textarea defaultValue={q.text} className="mt-4 min-h-[110px] text-sm" />
-              <div className="mt-4 grid gap-4 lg:grid-cols-3">
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Expected concepts
-                  </Label>
-                  <Textarea defaultValue={q.concepts.join("\n")} className="mt-2 min-h-[90px] text-sm" />
-                </div>
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Important constraints
-                  </Label>
-                  <Textarea
-                    defaultValue={q.constraints.join("\n")}
-                    className="mt-2 min-h-[90px] text-sm"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Actual answer
-                  </Label>
-                  <Textarea defaultValue={q.answer} className="mt-2 min-h-[90px] text-sm" />
-                </div>
+              <div>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Important constraints (one per line)
+                </Label>
+                <Textarea
+                  value={q.constraints.join("\n")}
+                  onChange={(e) => {
+                    const constraints = e.target.value.split("\n").filter(Boolean);
+                    onQuestionsUpdated(
+                      questions.map((item) => (item.id === q.id ? { ...item, constraints } : item)),
+                    );
+                  }}
+                  className="mt-2 min-h-[90px] text-sm"
+                />
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={() => toast.success("Changes saved")}>
-                  <PencilLine className="size-4" /> Edit
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={isApproved}
-                  onClick={() => setApproved((a) => [...a, q.id])}
-                >
-                  <Check className="size-4" /> Approve
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setDeleted((d) => [...d, q.id])}
-                  className="text-destructive"
-                >
-                  <Trash2 className="size-4" /> Delete
-                </Button>
+              <div>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Reference understanding
+                </Label>
+                <Textarea
+                  value={q.referenceAnswer}
+                  onChange={(e) => {
+                    const referenceAnswer = e.target.value;
+                    onQuestionsUpdated(
+                      questions.map((item) =>
+                        item.id === q.id ? { ...item, referenceAnswer } : item,
+                      ),
+                    );
+                  }}
+                  className="mt-2 min-h-[90px] text-sm"
+                />
               </div>
-            </Panel>
-          );
-        })}
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant={q.approved ? "outline" : "default"}
+                onClick={() => handleToggleApprove(q.id)}
+              >
+                <Check className="size-4" /> {q.approved ? "Approved" : "Approve"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onQuestionsUpdated(questions.filter((item) => item.id !== q.id))}
+                className="text-destructive"
+              >
+                <Trash2 className="size-4" /> Delete
+              </Button>
+            </div>
+          </Panel>
+        ))}
       </div>
 
       <Button
         size="lg"
         className="mt-6"
-        disabled={approved.length === 0}
-        onClick={onNext}
+        disabled={approvedCount === 0 || saving}
+        onClick={handleSaveAndContinue}
       >
-        Continue
+        {saving ? (
+          <>
+            <Loader2 className="mr-2 size-4 animate-spin" /> Saving...
+          </>
+        ) : (
+          `Continue (${approvedCount} Approved)`
+        )}
       </Button>
     </>
   );
 }
 
-function Publish() {
-  const [published, setPublished] = useState(false);
+function Publish({
+  config,
+  approvedCount,
+  onPublished,
+}: {
+  config: TestConfig;
+  approvedCount: number;
+  onPublished: (code: string) => void;
+}) {
+  const [publishing, setPublishing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const code = "DSA-X7K29";
 
-  if (published) {
+  const handlePublish = async () => {
+    if (!config.testId) return;
+    setPublishing(true);
+    try {
+      const res = await publishTest({ data: { testId: config.testId } });
+      onPublished(res.code);
+      toast.success("Test published successfully!");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to publish test";
+      toast.error(message);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  if (config.code) {
     return (
       <Panel className="grid-backdrop p-10 text-center">
         <Check className="mx-auto size-7 text-success" />
-        <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-foreground">Test Published</h2>
+        <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-foreground">
+          Test Published
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Share this code with students to let them join the test.
         </p>
-        <p className="mt-8 font-mono text-4xl font-extrabold tracking-[0.18em] text-gradient">{code}</p>
+        <p className="mt-8 font-mono text-4xl font-extrabold tracking-[0.18em] text-gradient">
+          {config.code}
+        </p>
         <Button
           size="lg"
           className="mx-auto mt-8"
           onClick={() => {
-            navigator.clipboard?.writeText(code);
+            navigator.clipboard?.writeText(config.code!);
             setCopied(true);
-            toast.success("Test code copied");
+            toast.success("Test code copied to clipboard");
             setTimeout(() => setCopied(false), 2000);
           }}
         >
@@ -367,11 +588,11 @@ function Publish() {
       <h2 className="text-base font-semibold text-foreground">Publish Test</h2>
       <dl className="mt-5 divide-y divide-border text-sm">
         {[
-          ["Test Name", "Arrays & Two Pointers — Comprehension"],
-          ["Questions", "3 approved"],
-          ["Category", "DSA"],
-          ["Difficulty", "Medium"],
-          ["Time per question", "45 seconds"],
+          ["Test Name", config.name],
+          ["Questions", `${approvedCount} approved`],
+          ["Category", config.category],
+          ["Difficulty", config.difficulty],
+          ["Time per question", `${config.secondsPerQuestion} seconds`],
         ].map(([k, v]) => (
           <div key={k} className="flex justify-between gap-6 py-3">
             <dt className="text-muted-foreground">{k}</dt>
@@ -379,8 +600,19 @@ function Publish() {
           </div>
         ))}
       </dl>
-      <Button size="lg" className="mt-6" onClick={() => setPublished(true)}>
-        Publish Test
+      <Button
+        size="lg"
+        className="mt-6"
+        onClick={handlePublish}
+        disabled={publishing || approvedCount === 0}
+      >
+        {publishing ? (
+          <>
+            <Loader2 className="mr-2 size-4 animate-spin" /> Publishing...
+          </>
+        ) : (
+          "Publish Test & Generate Code"
+        )}
       </Button>
     </Panel>
   );

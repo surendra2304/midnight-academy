@@ -52,12 +52,12 @@ function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, signInWithGoogle } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
+
     const form = e.currentTarget;
     const email = (form.elements.namedItem("email") as HTMLInputElement).value;
     const password = (form.elements.namedItem("password") as HTMLInputElement).value;
@@ -67,24 +67,36 @@ function AuthPage() {
       if (isLogin) {
         res = await login({ email, password });
       } else {
-        res = await register({ email, password, fullName: email.split("@")[0] });
+        const namePrefix = email.split("@")[0] ?? "Student";
+        res = await register({
+          email,
+          password,
+          fullName: namePrefix,
+          role: role,
+        });
       }
-      
+
       const returnedRole = res?.user?.role;
       if (returnedRole === "ADMIN") {
         navigate({ to: "/admin" });
       } else {
         navigate({ to: "/onboarding" });
       }
-    } catch (err: any) {
-      toast.error(err.message || "Authentication failed");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Authentication failed";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env['VITE_API_URL'] || "http://localhost:3000"}/auth/google`;
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Google login failed";
+      toast.error(message);
+    }
   };
 
   return (
@@ -114,7 +126,9 @@ function AuthPage() {
                 <span
                   className={cn(
                     "mt-0.5 grid size-8 place-items-center rounded-lg",
-                    role === r.id ? "bg-primary/15 text-primary" : "bg-surface text-muted-foreground",
+                    role === r.id
+                      ? "bg-primary/15 text-primary"
+                      : "bg-surface text-muted-foreground",
                   )}
                 >
                   <r.icon className="size-4" />
@@ -151,7 +165,7 @@ function AuthPage() {
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {isLogin ? "Continue" : "Sign Up"}
             </Button>
-            
+
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -160,12 +174,12 @@ function AuthPage() {
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="w-full" 
-              size="lg" 
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              size="lg"
               onClick={handleGoogleLogin}
             >
               <svg className="mr-2 size-4" viewBox="0 0 24 24">
@@ -189,7 +203,7 @@ function AuthPage() {
               Google
             </Button>
           </form>
-          
+
           <div className="mt-4 text-center text-sm">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button
@@ -212,4 +226,3 @@ function AuthPage() {
     </main>
   );
 }
-

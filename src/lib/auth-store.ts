@@ -1,4 +1,4 @@
-import { apiClient, setAccessToken } from "./api-client";
+import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "ADMIN" | "STUDENT";
 
@@ -14,12 +14,13 @@ type AuthState = {
   loading: boolean;
 };
 
-// SSR-safe initial state: on the server there is never a session
+// SSR-safe initial state: on the server there is never an active client session
 const SERVER_SNAPSHOT: AuthState = { user: null, loading: false };
 
 let state: AuthState = { user: null, loading: true };
 let listeners: (() => void)[] = [];
 let restorePromise: Promise<void> | null = null;
+let isInitialized = false;
 
 function notify() {
   for (const listener of listeners) {
@@ -32,41 +33,68 @@ function updateState(newState: Partial<AuthState>) {
   notify();
 }
 
-function safeLocalStorage() {
-  if (typeof window === "undefined") return null;
-  return window.localStorage;
+/**
+ * Resolves user profile and role from Supabase DB using the authenticated user id.
+ */
+async function fetchUserProfileAndRole(userId: string, email: string): Promise<User> {
+  try {
+    const [{ data: profile }, { data: roleRow }] = await Promise.all([
+      supabase.from("profiles").select("full_name, email").eq("id", userId).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
+    ]);
+
+    const resolvedRole: AppRole = roleRow?.role === "admin" ? "ADMIN" : "STUDENT";
+
+    return {
+      id: userId,
+      email: profile?.email || email,
+      fullName: profile?.full_name || null,
+      role: resolvedRole,
+    };
+  } catch {
+    return {
+      id: userId,
+      email,
+      fullName: null,
+      role: "STUDENT",
+    };
+  }
 }
 
 async function doRestoreSession(): Promise<void> {
-  const ls = safeLocalStorage();
-  const refreshToken = ls?.getItem("refreshToken");
-  if (!refreshToken) {
+  if (typeof window === "undefined") {
     updateState({ user: null, loading: false });
     return;
   }
 
   try {
-    const response = await fetch(`${import.meta.env['VITE_API_URL'] || "http://localhost:3000"}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      setAccessToken(data.accessToken);
-      ls?.setItem("refreshToken", data.refreshToken);
-
-      const user = await apiClient("/auth/me");
-      updateState({ user, loading: false });
-    } else {
-      ls?.removeItem("refreshToken");
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+    if (error || !session?.user) {
       updateState({ user: null, loading: false });
+      return;
     }
-  } catch (error) {
-    ls?.removeItem("refreshToken");
+
+    const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
+    updateState({ user, loading: false });
+  } catch {
     updateState({ user: null, loading: false });
   }
+}
+
+// Subscribe to Supabase auth state changes on client
+if (typeof window !== "undefined" && !isInitialized) {
+  isInitialized = true;
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === "SIGNED_OUT" || !session?.user) {
+      updateState({ user: null, loading: false });
+    } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+      const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
+      updateState({ user, loading: false });
+    }
+  });
 }
 
 export const authStore = {
@@ -83,7 +111,6 @@ export const authStore = {
   },
 
   // Server snapshot — SSR always renders as unauthenticated/not-loading
-  // (session restore runs client-side only via getRestorePromise)
   getServerSnapshot() {
     return SERVER_SNAPSHOT;
   },
@@ -97,7 +124,6 @@ export const authStore = {
   },
 
   getRestorePromise() {
-    // Only run on the client — server has no localStorage
     if (typeof window === "undefined") return Promise.resolve();
     if (!restorePromise) {
       restorePromise = doRestoreSession();
@@ -105,43 +131,95 @@ export const authStore = {
     return restorePromise;
   },
 
-  async login(data: any) {
-    const res = await apiClient("/auth/login", {
-      method: "POST",
-      body: JSON.stringify(data),
+  async login(credentials: { email: string; password: string }) {
+    updateState({ loading: true });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password,
     });
-    setAccessToken(res.accessToken);
-    safeLocalStorage()?.setItem("refreshToken", res.refreshToken);
-    updateState({ user: res.user });
-    return res;
+
+    if (error) {
+      updateState({ loading: false });
+      throw error;
+    }
+
+    if (!data.user) {
+      updateState({ loading: false });
+      throw new Error("Login failed: no user returned");
+    }
+
+    const user = await fetchUserProfileAndRole(data.user.id, data.user.email ?? credentials.email);
+    updateState({ user, loading: false });
+    return { user, session: data.session };
   },
 
-  async register(data: any) {
-    const res = await apiClient("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(data),
+  async register(params: {
+    email: string;
+    password: string;
+    fullName?: string;
+    role?: "admin" | "student";
+  }) {
+    updateState({ loading: true });
+    const selectedRole = params.role ?? "student";
+    const { data, error } = await supabase.auth.signUp({
+      email: params.email,
+      password: params.password,
+      options: {
+        data: {
+          full_name: params.fullName || params.email.split("@")[0] || "",
+          role: selectedRole,
+        },
+      },
     });
-    setAccessToken(res.accessToken);
-    safeLocalStorage()?.setItem("refreshToken", res.refreshToken);
-    updateState({ user: res.user });
-    return res;
+
+    if (error) {
+      updateState({ loading: false });
+      throw error;
+    }
+
+    if (!data.user) {
+      updateState({ loading: false });
+      throw new Error("Registration failed: no user returned");
+    }
+
+    // Explicitly ensure profile / user_roles exist if triggers or email confirmations apply
+    try {
+      await supabase.from("profiles").upsert({
+        id: data.user.id,
+        email: data.user.email ?? params.email,
+        full_name: params.fullName || params.email.split("@")[0] || "",
+      });
+      await supabase.from("user_roles").upsert({
+        user_id: data.user.id,
+        role: selectedRole,
+      });
+    } catch {
+      // Ignored if already handled by database trigger
+    }
+
+    const user = await fetchUserProfileAndRole(data.user.id, data.user.email ?? params.email);
+    updateState({ user, loading: false });
+    return { user, session: data.session };
+  },
+
+  async signInWithGoogle() {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${origin}/auth/callback`,
+      },
+    });
+    if (error) throw error;
+    return data;
   },
 
   async signOut() {
-    const ls = safeLocalStorage();
-    const refreshToken = ls?.getItem("refreshToken");
-    if (refreshToken) {
-      try {
-        await apiClient("/auth/logout", {
-          method: "POST",
-          body: JSON.stringify({ refreshToken }),
-        });
-      } catch (error) {
-        // Ignore failure on logout
-      }
+    updateState({ loading: true });
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      updateState({ user: null, loading: false });
     }
-    setAccessToken(null);
-    ls?.removeItem("refreshToken");
-    updateState({ user: null });
   },
 };

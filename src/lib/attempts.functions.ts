@@ -12,7 +12,9 @@ export const startAttempt = createServerFn({ method: "POST" })
 
     const { data: test } = await supabaseAdmin
       .from("tests")
-      .select("id, name, category, difficulty, status, expires_at, seconds_per_question, response_seconds")
+      .select(
+        "id, name, category, difficulty, status, expires_at, seconds_per_question, response_seconds",
+      )
       .eq("code", code)
       .maybeSingle();
 
@@ -63,6 +65,7 @@ export const startAttempt = createServerFn({ method: "POST" })
       answered: answered ?? 0,
       total,
       test: {
+        id: test.id,
         name: test.name,
         category: test.category,
         difficulty: test.difficulty,
@@ -70,6 +73,69 @@ export const startAttempt = createServerFn({ method: "POST" })
         secondsPerQuestion: test.seconds_per_question,
         responseSeconds: test.response_seconds,
       },
+    };
+  });
+
+export const getAttemptState = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: attempt } = await supabaseAdmin
+      .from("attempts")
+      .select(
+        "id, test_id, student_id, status, blur_count, tests(name, category, difficulty, seconds_per_question, response_seconds)",
+      )
+      .eq("id", data.attemptId)
+      .maybeSingle();
+
+    if (!attempt || attempt.student_id !== context.userId) {
+      throw new Error("Attempt not found or unauthorized.");
+    }
+
+    const { count } = await supabaseAdmin
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("test_id", attempt.test_id)
+      .eq("approved", true);
+    const total = count ?? 0;
+
+    const { data: answers } = await supabaseAdmin
+      .from("attempt_answers")
+      .select("position, revealed_at, submitted_at")
+      .eq("attempt_id", attempt.id)
+      .order("position", { ascending: true });
+
+    // Determine current unsubmitted position
+    const answeredPositions = new Set(
+      (answers ?? []).filter((a) => a.submitted_at !== null).map((a) => a.position),
+    );
+
+    let currentIndex = 0;
+    for (let i = 0; i < total; i++) {
+      if (!answeredPositions.has(i)) {
+        currentIndex = i;
+        break;
+      }
+      currentIndex = i + 1;
+    }
+
+    const currentAnswer = (answers ?? []).find((a) => a.position === currentIndex);
+
+    return {
+      attemptId: attempt.id,
+      status: attempt.status,
+      total,
+      currentIndex,
+      blurCount: attempt.blur_count,
+      currentAnswer: currentAnswer
+        ? {
+            revealedAt: currentAnswer.revealed_at,
+            submittedAt: currentAnswer.submitted_at,
+          }
+        : null,
+      test: attempt.tests,
     };
   });
 
@@ -83,10 +149,13 @@ export const revealQuestion = createServerFn({ method: "POST" })
 
     const { data: attempt } = await supabaseAdmin
       .from("attempts")
-      .select("id, test_id, student_id, status")
+      .select("id, test_id, student_id, status, tests(seconds_per_question)")
       .eq("id", data.attemptId)
       .maybeSingle();
-    if (!attempt || attempt.student_id !== context.userId) throw new Error("Attempt not found.");
+
+    if (!attempt || attempt.student_id !== context.userId) {
+      throw new Error("Attempt not found or unauthorized.");
+    }
     if (attempt.status !== "in_progress") return { state: "finished" as const };
 
     const { data: questions } = await supabaseAdmin
@@ -107,24 +176,53 @@ export const revealQuestion = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (answer?.submitted_at) return { state: "submitted" as const };
-    // Already read once — the question is consumed for this attempt and is never
-    // sent to the browser again.
+
+    const readingSeconds =
+      (attempt.tests as { seconds_per_question?: number } | null)?.seconds_per_question ?? 45;
+
+    // Already revealed previously
     if (answer?.revealed_at) {
+      const revealedTime = new Date(answer.revealed_at).getTime();
+      const elapsedSeconds = (Date.now() - revealedTime) / 1000;
+
+      // If reading timer has expired, mark as consumed and do NOT return text
+      if (elapsedSeconds >= readingSeconds) {
+        return {
+          state: "consumed" as const,
+          meta: {
+            topic: question.topic,
+            difficulty: question.difficulty,
+            category: question.category,
+          },
+        };
+      }
+
+      // Still within valid reading window (e.g. accidental browser reload during reading)
+      const remainingSeconds = Math.max(1, Math.round(readingSeconds - elapsedSeconds));
       return {
-        state: "consumed" as const,
-        meta: { topic: question.topic, difficulty: question.difficulty, category: question.category },
+        state: "ready" as const,
+        remainingSeconds,
+        question: {
+          text: question.text,
+          topic: question.topic,
+          difficulty: question.difficulty,
+          category: question.category,
+        },
       };
     }
 
+    // First time reveal
+    const revealedAt = new Date().toISOString();
     await supabaseAdmin.from("attempt_answers").insert({
       attempt_id: attempt.id,
       question_id: question.id,
       position: data.position,
-      revealed_at: new Date().toISOString(),
+      revealed_at: revealedAt,
     });
 
     return {
       state: "ready" as const,
+      remainingSeconds: readingSeconds,
       question: {
         text: question.text,
         topic: question.topic,
@@ -153,7 +251,10 @@ export const submitAnswer = createServerFn({ method: "POST" })
       .select("id, student_id, status")
       .eq("id", data.attemptId)
       .maybeSingle();
-    if (!attempt || attempt.student_id !== context.userId) throw new Error("Attempt not found.");
+
+    if (!attempt || attempt.student_id !== context.userId) {
+      throw new Error("Attempt not found or unauthorized.");
+    }
     if (attempt.status !== "in_progress") return { ok: true };
 
     const { error } = await supabaseAdmin
@@ -162,6 +263,7 @@ export const submitAnswer = createServerFn({ method: "POST" })
       .eq("attempt_id", attempt.id)
       .eq("position", data.position)
       .is("submitted_at", null);
+
     if (error) throw new Error("Could not save your response.");
     return { ok: true };
   });
@@ -196,7 +298,10 @@ export const finishAttempt = createServerFn({ method: "POST" })
       .select("id, test_id, student_id, status")
       .eq("id", data.attemptId)
       .maybeSingle();
-    if (!attempt || attempt.student_id !== context.userId) throw new Error("Attempt not found.");
+
+    if (!attempt || attempt.student_id !== context.userId) {
+      throw new Error("Attempt not found or unauthorized.");
+    }
     if (attempt.status === "evaluated") return { attemptId: attempt.id };
 
     await supabaseAdmin.from("attempts").update({ status: "evaluating" }).eq("id", attempt.id);
@@ -308,10 +413,24 @@ export const flagEvaluation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ answerId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Verify answer belongs to attempt owned by the current student
+    const { data: answer } = await supabaseAdmin
+      .from("attempt_answers")
+      .select("id, attempt_id, attempts!inner(student_id)")
+      .eq("id", data.answerId)
+      .maybeSingle();
+
+    if (!answer || answer.attempts?.student_id !== context.userId) {
+      throw new Error("Answer not found or unauthorized.");
+    }
+
+    const { error } = await supabaseAdmin
       .from("attempt_answers")
       .update({ flagged: true })
       .eq("id", data.answerId);
+
     if (error) throw new Error("Could not flag this evaluation.");
     return { ok: true };
   });
@@ -321,7 +440,9 @@ export const getStudentOverview = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data: attempts } = await context.supabase
       .from("attempts")
-      .select("id, score, axes, status, started_at, completed_at, tests(name, category, difficulty)")
+      .select(
+        "id, score, axes, status, started_at, completed_at, tests(name, category, difficulty)",
+      )
       .eq("student_id", context.userId)
       .order("started_at", { ascending: false });
 

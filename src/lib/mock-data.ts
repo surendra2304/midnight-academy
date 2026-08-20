@@ -1,11 +1,5 @@
 export type Category =
-  | "DSA"
-  | "Aptitude"
-  | "DBMS"
-  | "Operating Systems"
-  | "Computer Networks"
-  | "OOP"
-  | "Programming";
+  "DSA" | "Aptitude" | "DBMS" | "Operating Systems" | "Computer Networks" | "OOP" | "Programming";
 
 export const CATEGORIES: Category[] = [
   "DSA",
@@ -20,13 +14,7 @@ export const CATEGORIES: Category[] = [
 export type Difficulty = "Easy" | "Medium" | "Hard";
 
 /** The 5 comprehension axes — the single source of truth for the shared component. */
-export const AXIS_KEYS = [
-  "objective",
-  "constraint",
-  "io",
-  "concept",
-  "interpretation",
-] as const;
+export const AXIS_KEYS = ["objective", "constraint", "io", "concept", "interpretation"] as const;
 
 export type AxisKey = (typeof AXIS_KEYS)[number];
 
@@ -362,7 +350,11 @@ export const testQuestions: TestQuestion[] = [
     topic: "Normalization",
     difficulty: "Medium",
     concepts: ["Transitive dependency", "Candidate key", "Normal forms", "Decomposition"],
-    constraints: ["A is the only candidate key", "Must name the current normal form", "Only the given FDs apply"],
+    constraints: [
+      "A is the only candidate key",
+      "Must name the current normal form",
+      "Only the given FDs apply",
+    ],
     answer:
       "R is in 2NF but not 3NF, because B → C and C → D are transitive dependencies on the non-prime attributes B and C. Decomposing into R1(A, B), R2(B, C) and R3(C, D) removes the transitive dependencies and puts every relation in 3NF.",
   },
@@ -537,12 +529,66 @@ export type AdminStudent = {
 };
 
 export const adminStudents: AdminStudent[] = [
-  { id: "s-1", name: "Alex Mehta", initials: "AM", email: "alex.mehta@university.edu", attempts: 14, average: 78, weakest: "constraint", lastActive: "Today" },
-  { id: "s-2", name: "Priya Nair", initials: "PN", email: "priya.nair@university.edu", attempts: 17, average: 88, weakest: "io", lastActive: "Today" },
-  { id: "s-3", name: "Daniel Okoro", initials: "DO", email: "daniel.okoro@university.edu", attempts: 9, average: 64, weakest: "interpretation", lastActive: "Yesterday" },
-  { id: "s-4", name: "Hana Sato", initials: "HS", email: "hana.sato@university.edu", attempts: 12, average: 81, weakest: "constraint", lastActive: "2 days ago" },
-  { id: "s-5", name: "Marcus Reid", initials: "MR", email: "marcus.reid@university.edu", attempts: 6, average: 57, weakest: "concept", lastActive: "4 days ago" },
-  { id: "s-6", name: "Leila Haddad", initials: "LH", email: "leila.haddad@university.edu", attempts: 15, average: 84, weakest: "interpretation", lastActive: "Today" },
+  {
+    id: "s-1",
+    name: "Alex Mehta",
+    initials: "AM",
+    email: "alex.mehta@university.edu",
+    attempts: 14,
+    average: 78,
+    weakest: "constraint",
+    lastActive: "Today",
+  },
+  {
+    id: "s-2",
+    name: "Priya Nair",
+    initials: "PN",
+    email: "priya.nair@university.edu",
+    attempts: 17,
+    average: 88,
+    weakest: "io",
+    lastActive: "Today",
+  },
+  {
+    id: "s-3",
+    name: "Daniel Okoro",
+    initials: "DO",
+    email: "daniel.okoro@university.edu",
+    attempts: 9,
+    average: 64,
+    weakest: "interpretation",
+    lastActive: "Yesterday",
+  },
+  {
+    id: "s-4",
+    name: "Hana Sato",
+    initials: "HS",
+    email: "hana.sato@university.edu",
+    attempts: 12,
+    average: 81,
+    weakest: "constraint",
+    lastActive: "2 days ago",
+  },
+  {
+    id: "s-5",
+    name: "Marcus Reid",
+    initials: "MR",
+    email: "marcus.reid@university.edu",
+    attempts: 6,
+    average: 57,
+    weakest: "concept",
+    lastActive: "4 days ago",
+  },
+  {
+    id: "s-6",
+    name: "Leila Haddad",
+    initials: "LH",
+    email: "leila.haddad@university.edu",
+    attempts: 15,
+    average: 84,
+    weakest: "interpretation",
+    lastActive: "Today",
+  },
 ];
 
 export const questionBank: TestQuestion[] = [
@@ -554,7 +600,11 @@ export const questionBank: TestQuestion[] = [
     topic: "Time, Speed & Distance",
     difficulty: "Easy",
     concepts: ["Relative speed", "Uniform motion", "Unit consistency"],
-    constraints: ["Train length ignored", "Answer required in kilometres", "Both start simultaneously"],
+    constraints: [
+      "Train length ignored",
+      "Answer required in kilometres",
+      "Both start simultaneously",
+    ],
     answer:
       "Relative speed is 150 km/h, so they meet after 2 hours. The first train covers 60 × 2 = 120 km, so they meet 120 km from the first station.",
   },
@@ -576,7 +626,11 @@ export const questionBank: TestQuestion[] = [
     topic: "Congestion Control",
     difficulty: "Medium",
     concepts: ["Fast retransmit", "Fast recovery", "Congestion window"],
-    constraints: ["TCP Reno assumed", "Exactly three duplicate ACKs", "Initial window of 8 segments"],
+    constraints: [
+      "TCP Reno assumed",
+      "Exactly three duplicate ACKs",
+      "Initial window of 8 segments",
+    ],
     answer:
       "Three duplicate ACKs trigger fast retransmit: the sender resends the missing segment immediately, halves the congestion window to 4 segments, sets that as the new ssthresh and enters fast recovery rather than slow start.",
   },

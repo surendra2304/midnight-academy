@@ -1,4 +1,5 @@
-/** Server-only: the actual comprehension evaluator. */
+/** Server-only: the actual comprehension evaluator with runtime schema validation. */
+import { z } from "zod";
 import type { AxisKey } from "./mock-data";
 import { chatJson } from "./ai.server";
 
@@ -43,20 +44,25 @@ Return ONLY JSON of this exact shape:
   }
 }`;
 
-type RawResult = {
-  score?: number;
-  feedback?: string;
-  missed_concepts?: string[];
-  missed_constraints?: string[];
-  axis_scores?: Record<string, number>;
-};
+// Runtime Zod schema to strictly validate AI outputs rather than trusting raw JSON
+const RawEvaluationSchema = z.object({
+  score: z.number().min(0).max(10).optional().default(0),
+  feedback: z.string().max(3000).optional().default(""),
+  missed_concepts: z.array(z.string()).optional().default([]),
+  missed_constraints: z.array(z.string()).optional().default([]),
+  axis_scores: z.record(z.string(), z.number()).optional().default({}),
+});
 
 const clamp = (value: unknown, fallback = 0) =>
   typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : fallback;
 
-const pickFrom = (list: string[], reported: unknown): string[] => {
-  if (!Array.isArray(reported)) return [];
-  const lookup = new Map(list.map((item) => [item.toLowerCase().trim(), item]));
+/**
+ * Strict whitelist filter: only allows missed concepts or constraints that exist in the canonical question definition.
+ * Prevents prompt-injection or AI hallucination of arbitrary tags.
+ */
+const pickFromCanonical = (canonicalList: string[], reported: string[]): string[] => {
+  if (!Array.isArray(reported) || canonicalList.length === 0) return [];
+  const lookup = new Map(canonicalList.map((item) => [item.toLowerCase().trim(), item]));
   const out: string[] = [];
   for (const item of reported) {
     if (typeof item !== "string") continue;
@@ -67,6 +73,7 @@ const pickFrom = (list: string[], reported: unknown): string[] => {
 };
 
 export async function evaluateAnswer(input: EvaluationInput): Promise<EvaluationResult> {
+  // Edge Case: Empty or whitespace-only response
   if (!input.response.trim()) {
     return {
       score: 0,
@@ -78,7 +85,7 @@ export async function evaluateAnswer(input: EvaluationInput): Promise<Evaluation
     };
   }
 
-  const raw = await chatJson<RawResult>([
+  const rawJson = await chatJson<unknown>([
     { role: "system", content: SYSTEM },
     {
       role: "user",
@@ -92,15 +99,29 @@ export async function evaluateAnswer(input: EvaluationInput): Promise<Evaluation
     },
   ]);
 
-  const axes = raw.axis_scores ?? {};
+  // Validate parsed JSON against schema
+  const parsed = RawEvaluationSchema.safeParse(rawJson);
+  const validated = parsed.success
+    ? parsed.data
+    : {
+        score: 0,
+        feedback:
+          "Your writing was reviewed, but the evaluator response could not be fully processed.",
+        missed_concepts: [],
+        missed_constraints: [],
+        axis_scores: {},
+      };
+
+  const axes = validated.axis_scores;
+
   return {
-    score: clamp(raw.score),
+    score: clamp(validated.score),
     feedback:
-      typeof raw.feedback === "string" && raw.feedback.trim()
-        ? raw.feedback.trim()
+      validated.feedback.trim().length > 0
+        ? validated.feedback.trim()
         : "Your writing was reviewed, but no detailed feedback could be generated for this question.",
-    missedConcepts: pickFrom(input.concepts, raw.missed_concepts),
-    missedConstraints: pickFrom(input.constraints, raw.missed_constraints),
+    missedConcepts: pickFromCanonical(input.concepts, validated.missed_concepts),
+    missedConstraints: pickFromCanonical(input.constraints, validated.missed_constraints),
     axisScores: {
       objective: clamp(axes["objective"]),
       constraint: clamp(axes["constraint"]),
@@ -127,20 +148,27 @@ For each question given to you, draft: the topic, a difficulty (Easy, Medium or 
 Never invent constraints that are not implied by the question text. Return ONLY JSON:
 { "questions": [ { "text": "<question text, cleaned up but not reworded>", "topic": "...", "difficulty": "Easy|Medium|Hard", "concepts": ["..."], "constraints": ["..."], "reference_answer": "..." } ] }`;
 
+const RawDraftSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        text: z.string().optional().default(""),
+        topic: z.string().optional().default(""),
+        difficulty: z.string().optional().default("Medium"),
+        concepts: z.array(z.string()).optional().default([]),
+        constraints: z.array(z.string()).optional().default([]),
+        reference_answer: z.string().optional().default(""),
+      }),
+    )
+    .optional()
+    .default([]),
+});
+
 export async function draftQuestions(
   category: string,
   rawQuestions: string[],
 ): Promise<DraftedQuestion[]> {
-  const raw = await chatJson<{
-    questions?: {
-      text?: string;
-      topic?: string;
-      difficulty?: string;
-      concepts?: string[];
-      constraints?: string[];
-      reference_answer?: string;
-    }[];
-  }>([
+  const rawJson = await chatJson<unknown>([
     { role: "system", content: DRAFT_SYSTEM },
     {
       role: "user",
@@ -150,16 +178,15 @@ export async function draftQuestions(
     },
   ]);
 
-  return (raw.questions ?? []).map((q, index) => ({
-    text: (q.text ?? rawQuestions[index] ?? "").trim(),
-    topic: (q.topic ?? "").trim(),
-    difficulty: ["Easy", "Medium", "Hard"].includes(q.difficulty ?? "")
-      ? (q.difficulty as string)
-      : "Medium",
-    concepts: Array.isArray(q.concepts) ? q.concepts.filter((c) => typeof c === "string") : [],
-    constraints: Array.isArray(q.constraints)
-      ? q.constraints.filter((c) => typeof c === "string")
-      : [],
-    referenceAnswer: (q.reference_answer ?? "").trim(),
+  const parsed = RawDraftSchema.safeParse(rawJson);
+  const questions = parsed.success ? parsed.data.questions : [];
+
+  return questions.map((q, index) => ({
+    text: (q.text || rawQuestions[index] || "").trim(),
+    topic: q.topic.trim(),
+    difficulty: ["Easy", "Medium", "Hard"].includes(q.difficulty) ? q.difficulty : "Medium",
+    concepts: q.concepts.filter((c) => typeof c === "string"),
+    constraints: q.constraints.filter((c) => typeof c === "string"),
+    referenceAnswer: q.reference_answer.trim(),
   }));
 }
