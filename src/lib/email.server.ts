@@ -29,7 +29,9 @@ function getTransporter(): nodemailer.Transporter | null {
 
   if (!cachedTransporter) {
     cachedTransporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true, // use SSL on port 465
       auth: {
         user,
         pass,
@@ -74,10 +76,13 @@ export async function sendEmail({
 
     return { success: true, messageId: info.messageId };
   } catch (err: unknown) {
-    const safeErrorMessage = err instanceof Error ? err.message : "Unknown SMTP error";
-    // Safe error reporting - never log or reveal credentials
-    console.error("[email.server] Failed to send email:", safeErrorMessage);
-    return { success: false, error: safeErrorMessage };
+    const rawError = err instanceof Error ? err.message : "Unknown SMTP error";
+    // Technical error logged strictly to server-side stderr
+    console.error("[email.server] Failed to send email via Gmail SMTP:", rawError);
+    return {
+      success: false,
+      error: "Unable to deliver verification email. Please verify your email configuration.",
+    };
   }
 }
 
