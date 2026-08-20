@@ -242,8 +242,8 @@ function AuthPage() {
                   : "Create a secure password."}
           </p>
 
-          {/* Workspace Role Selector */}
-          {(isLogin || signupStep === "email") && (
+          {/* Workspace Role Selector (Registration Only) */}
+          {!isLogin && signupStep === "email" && (
             <div className="mt-6 grid gap-3">
               {roles.map((r) => (
                 <button

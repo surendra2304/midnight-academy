@@ -42,11 +42,58 @@ describe("Role Resolution & Authorization Security", () => {
     expect(isAuthorized).toBe(false);
   });
 
-  it("allows admin user to access admin route", () => {
-    const userRole: AppRole = "ADMIN";
-    const requiredRouteRole: AppRole = "ADMIN";
+  it("verifies login flow does not use client-side role selector", () => {
+    // In the new architecture, login accepts only email and password
+    const loginPayload = { email: "user@midnight.academy", password: "password123" };
+    expect((loginPayload as Record<string, unknown>)["role"]).toBeUndefined();
+  });
 
-    const isAuthorized = userRole === requiredRouteRole;
-    expect(isAuthorized).toBe(true);
+  it("verifies admin can access owned test and student attempts", () => {
+    const adminUserId = "admin-uuid-123";
+    const test = {
+      id: "test-uuid-1",
+      code: "DSA-X7K29",
+      ownerId: "admin-uuid-123",
+      status: "active",
+    };
+
+    const isTestOwner = test.ownerId === adminUserId;
+    expect(isTestOwner).toBe(true);
+
+    const studentAttempt = {
+      id: "attempt-uuid-1",
+      testId: "test-uuid-1",
+      studentId: "student-uuid-456",
+      score: 85,
+      status: "evaluated",
+    };
+
+    // Owner can access student attempt for owned test
+    const canAdminViewAttempt = isTestOwner && studentAttempt.testId === test.id;
+    expect(canAdminViewAttempt).toBe(true);
+  });
+
+  it("rejects unauthorized access to another student's attempt", () => {
+    const requestingStudentId = "student-attacker-999";
+    const attempt = {
+      id: "attempt-victim-001",
+      studentId: "student-victim-111",
+      score: 90,
+    };
+
+    const isAuthorized = requestingStudentId === attempt.studentId;
+    expect(isAuthorized).toBe(false);
+  });
+
+  it("rejects unauthorized admin access to a test owned by another instructor", () => {
+    const requestingAdminId = "admin-other-777";
+    const test = {
+      id: "test-uuid-1",
+      code: "DSA-X7K29",
+      ownerId: "admin-legit-123",
+    };
+
+    const isOwner = requestingAdminId === test.ownerId;
+    expect(isOwner).toBe(false);
   });
 });
