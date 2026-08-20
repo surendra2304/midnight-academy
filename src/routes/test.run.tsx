@@ -96,9 +96,10 @@ function RunTest() {
       }
 
       if (res.state === "submitted") {
-        // Already submitted this position, move forward
-        setIndex(pos + 1);
-        return;
+        // Already submitted this position, move forward immediately
+        const nextPos = pos + 1;
+        setIndex(nextPos);
+        return loadQuestionForPosition(nextPos, attId);
       }
 
       if (res.state === "consumed") {

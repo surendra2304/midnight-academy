@@ -51,20 +51,19 @@ export async function evaluateAttempt(
   answers: AnswerRow[],
   questions: Map<string, QuestionRow>,
 ): Promise<{ scored: ScoredAnswer[]; axes: AxisScores; overall: number }> {
-  const results = await Promise.all(
-    answers.map(async (answer) => {
-      const question = questions.get(answer.question_id);
-      if (!question) return null;
-      const evaluation = await evaluateAnswer({
-        questionText: question.text,
-        referenceAnswer: question.reference_answer,
-        concepts: question.concepts,
-        constraints: question.constraints,
-        response: answer.response,
-      });
-      return { answer, question, evaluation };
-    }),
-  );
+  const results = [];
+  for (const answer of answers) {
+    const question = questions.get(answer.question_id);
+    if (!question) continue;
+    const evaluation = await evaluateAnswer({
+      questionText: question.text,
+      referenceAnswer: question.reference_answer,
+      concepts: question.concepts,
+      constraints: question.constraints,
+      response: answer.response,
+    });
+    results.push({ answer, question, evaluation });
+  }
 
   const usable = results.filter((r): r is NonNullable<typeof r> => r !== null);
 

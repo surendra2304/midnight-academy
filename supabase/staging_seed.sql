@@ -78,7 +78,7 @@ BEGIN
       approved
     )
     VALUES (
-      'q0000000-0000-0000-0000-000000000001',
+      'b0000000-0000-0000-0000-000000000001',
       v_test_id,
       0,
       'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume each input would have exactly one solution, and you may not use the same element twice. You can return the answer in any order.',
@@ -107,7 +107,7 @@ BEGIN
       approved
     )
     VALUES (
-      'q0000000-0000-0000-0000-000000000002',
+      'b0000000-0000-0000-0000-000000000002',
       v_test_id,
       1,
       'Given an integer array nums, find a subarray that has the largest product, and return the product. The test cases are generated so that the answer will fit in a 32-bit integer. A subarray is a contiguous non-empty sequence of elements.',
@@ -136,7 +136,7 @@ BEGIN
       approved
     )
     VALUES (
-      'q0000000-0000-0000-0000-000000000003',
+      'b0000000-0000-0000-0000-000000000003',
       v_test_id,
       2,
       'Given a 1-indexed array of integers numbers that is already sorted in non-decreasing order, find two numbers such that they add up to a specific target number. Let these two numbers be numbers[index1] and numbers[index2] where 1 <= index1 < index2 <= numbers.length. Return the indices of the two numbers, index1 and index2, added by one as an integer array [index1, index2] of length 2. Your solution must use only constant extra space.',
