@@ -42,3 +42,9 @@ supabase/.temp/
 *.sw?
 .vercel
 .env*
+
+# Temporary test scripts
+test-*.js
+test-*.cjs
+scratch-*.js
+scratch-*.cjs
