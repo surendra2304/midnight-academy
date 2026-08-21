@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { toJSONAsync, fromCrossJSON } from "seroval";
+import { toJSON, fromCrossJSON } from "seroval";
 import * as routerCore from "@tanstack/router-core";
 
 // run from project dir; load .env
@@ -37,10 +37,10 @@ async function callFn(name, data, token, method = "POST") {
   let url = `${SITE}/_serverFn/${FN[name]}`;
   if (method === "POST") {
     headers["Content-Type"] = "application/json";
-    var body = JSON.stringify(await toJSONAsync({ data }, { plugins }));
+    var body = JSON.stringify(toJSON({ data }, { plugins }));
   } else if (data) {
-    const payload = await toJSONAsync({ data }, { plugins });
-    url += `?payload=${encodeURIComponent(payload)}`;
+    const enc = "payload=" + encodeURIComponent(JSON.stringify(toJSON({ data }, { plugins })));
+    url += "?" + enc;
   }
   const res = await fetch(url, { method, headers, body });
   const text = await res.text();
@@ -77,12 +77,30 @@ async function ensureUser(email, name, role) {
   }
   const created = await supa("/auth/v1/admin/users", {
     method: "POST",
-    body: JSON.stringify({ email, password: PASSWORD, email_confirm: true, user_metadata: { full_name: name, role } }),
+    body: JSON.stringify({
+      email,
+      password: PASSWORD,
+      email_confirm: true,
+      user_metadata: { full_name: name, role },
+    }),
   });
   const id = created.body.id;
   if (!id) throw new Error("create user failed: " + JSON.stringify(created.body).slice(0, 300));
-  await supa("/rest/v1/profiles", { method: "POST", body: JSON.stringify({ id, email, full_name: name, onboarded: true, year: role === "student" ? "3rd Year" : undefined, branch: role === "student" ? "CSE" : undefined }) });
-  await supa("/rest/v1/user_roles", { method: "POST", body: JSON.stringify({ user_id: id, role }) });
+  await supa("/rest/v1/profiles", {
+    method: "POST",
+    body: JSON.stringify({
+      id,
+      email,
+      full_name: name,
+      onboarded: true,
+      year: role === "student" ? "3rd Year" : undefined,
+      branch: role === "student" ? "CSE" : undefined,
+    }),
+  });
+  await supa("/rest/v1/user_roles", {
+    method: "POST",
+    body: JSON.stringify({ user_id: id, role }),
+  });
   console.log(`created ${email} (${role}) -> ${id}`);
   return id;
 }
@@ -90,7 +108,11 @@ async function ensureUser(email, name, role) {
 async function signin(email) {
   const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", apikey: SECRET, Authorization: `Bearer ${SECRET}` },
+    headers: {
+      "Content-Type": "application/json",
+      apikey: SECRET,
+      Authorization: `Bearer ${SECRET}`,
+    },
     body: JSON.stringify({ email, password: PASSWORD }),
   });
   const body = await res.json();
@@ -113,47 +135,71 @@ const show = (label, v) => {
 };
 
 // STEP 1: instructor drafts a test with Gemini
-const draft = await callFn("draftTest", {
-  name: `E2E Comprehension Test ${stamp}`,
-  category: "DSA",
-  difficulty: "Medium",
-  secondsPerQuestion: 30,
-  responseSeconds: 120,
-  source: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nGiven a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid. An input string is valid if open brackets must be closed by the same type in the correct order and every close bracket has a corresponding open bracket of the same type.",
-}, iTok);
+const draft = await callFn(
+  "draftTest",
+  {
+    name: `E2E Comprehension Test ${stamp}`,
+    category: "DSA",
+    difficulty: "Medium",
+    secondsPerQuestion: 30,
+    responseSeconds: 120,
+    source:
+      "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nGiven a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid. An input string is valid if open brackets must be closed by the same type in the correct order and every close bracket has a corresponding open bracket of the same type.",
+  },
+  iTok,
+);
 show("1. draftTest", draft);
-if (draft.__http !== 200 || draft.result?.error) { console.log("DRAFT FAILED — stopping"); process.exit(1); }
-const d = draft.result;
+if (draft.__http !== 200 || draft.result?.error) {
+  console.log("DRAFT FAILED — stopping");
+  process.exit(1);
+}
+const d = draft.result?.result ?? draft.result;
 const testId = d.testId;
 
 // STEP 2: approve + save questions
 const questions = d.questions.map((q) => ({
-  id: q.id, text: q.text, topic: q.topic || "General", difficulty: q.difficulty || "Medium",
-  concepts: q.concepts || [], constraints: q.constraints || [],
-  referenceAnswer: q.reference_answer || "", approved: true,
+  id: q.id,
+  text: q.text,
+  topic: q.topic || "General",
+  difficulty: q.difficulty || "Medium",
+  concepts: q.concepts || [],
+  constraints: q.constraints || [],
+  referenceAnswer: q.reference_answer || "",
+  approved: true,
 }));
 show("2. saveQuestions", await callFn("saveQuestions", { testId, questions }, iTok));
 
 // STEP 3: publish
 const pub = await callFn("publishTest", { testId }, iTok);
 show("3. publishTest", pub);
-const code = pub.result?.code;
-if (!code) { console.log("PUBLISH FAILED"); process.exit(1); }
+const code = pub.result?.result?.code ?? pub.result?.code;
+if (!code) {
+  console.log("PUBLISH FAILED");
+  process.exit(1);
+}
 
 // STEP 4: student starts attempt
 const start = await callFn("startAttempt", { code }, sTok);
+const R = (x) => x?.result ?? x;
 show("4. startAttempt", start);
-const attemptId = start.result?.attemptId;
+const attemptId = R(start.result)?.attemptId;
 
 // STEP 5: reveal + answer each question
-for (let pos = 0; pos < start.result.total; pos++) {
+for (let pos = 0; pos < R(start.result).total; pos++) {
   const rev = await callFn("revealQuestion", { attemptId, position: pos }, sTok);
   const q = rev.result?.question;
-  show(`5.${pos} revealQuestion p${pos}`, { state: rev.result?.state, questionText: (q?.text || "").slice(0, 80) });
-  const answer = pos === 0
-    ? "The question gives an integer array nums and a target integer. We must return the indices of the two numbers in the array whose sum equals the target. Each input has exactly one solution and the same element cannot be used twice. Input is an array of integers and an integer target; output is an array of two indices. Concepts: hashing, one-pass map lookup."
-    : "The question asks whether a string s containing only bracket characters is valid. Valid means every open bracket is closed by the same bracket type in the correct order, and every close bracket matches an open one. Input is a string of brackets; output is a boolean. A stack tracks unmatched open brackets.";
-  show(`5.${pos} submitAnswer p${pos}`, await callFn("submitAnswer", { attemptId, position: pos, response: answer }, sTok));
+  show(`5.${pos} revealQuestion p${pos}`, {
+    state: rev.result?.state,
+    questionText: (q?.text || "").slice(0, 80),
+  });
+  const answer =
+    pos === 0
+      ? "The question gives an integer array nums and a target integer. We must return the indices of the two numbers in the array whose sum equals the target. Each input has exactly one solution and the same element cannot be used twice. Input is an array of integers and an integer target; output is an array of two indices. Concepts: hashing, one-pass map lookup."
+      : "The question asks whether a string s containing only bracket characters is valid. Valid means every open bracket is closed by the same bracket type in the correct order, and every close bracket matches an open one. Input is a string of brackets; output is a boolean. A stack tracks unmatched open brackets.";
+  show(
+    `5.${pos} submitAnswer p${pos}`,
+    await callFn("submitAnswer", { attemptId, position: pos, response: answer }, sTok),
+  );
 }
 
 // STEP 6: finish attempt (triggers Gemini evaluation)
@@ -167,7 +213,10 @@ show("7. getResult", {
   status: res.result?.attempt?.status ?? res.result?.status,
   score: res.result?.attempt?.score ?? res.result?.score,
   axes: res.result?.attempt?.axes ?? res.result?.axes,
-  answers: (res.result?.answers || []).map((a) => ({ score: a.score, feedback: (a.feedback || "").slice(0, 120) })),
+  answers: (res.result?.answers || []).map((a) => ({
+    score: a.score,
+    feedback: (a.feedback || "").slice(0, 120),
+  })),
 });
 
 // STEP 8: instructor overview shows the submission
@@ -179,6 +228,9 @@ show("8. getAdminOverview", {
 
 // STEP 9: student dashboard data
 const dash = await callFn("getStudentDashboard", undefined, sTok, "GET");
-show("9. studentDashboard", { stats: dash.result?.stats, recent: dash.result?.recentAttempts?.length });
+show("9. studentDashboard", {
+  stats: dash.result?.stats,
+  recent: dash.result?.recentAttempts?.length,
+});
 
 console.log("\n########## E2E COMPLETE ##########");
