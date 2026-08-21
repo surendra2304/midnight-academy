@@ -238,7 +238,7 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
     await updateOtpRecord(record);
 
     // Create user in Supabase Auth via Admin API with email confirmed.
-    // Role is chosen at signup: "student" or "admin" (teacher).
+    // Role is chosen at signup: "student" or "admin" (instructor).
     const displayName = data.fullName?.trim() || email.split("@")[0] || "Student";
     const { data: createdUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,

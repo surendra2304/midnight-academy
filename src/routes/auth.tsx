@@ -323,7 +323,7 @@ function AuthPage() {
                           },
                           {
                             value: "admin",
-                            title: "Teacher",
+                            title: "Instructor",
                             desc: "Create tests and review students",
                           },
                         ] as const

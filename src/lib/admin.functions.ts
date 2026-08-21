@@ -357,7 +357,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
       .map((a) => a.score)
       .filter((s): s is number => typeof s === "number");
 
-    // Recent student submissions across this teacher's tests
+    // Recent student submissions across this instructor's tests
     const recentRaw = [...allAttempts]
       .sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""))
       .slice(0, 6);

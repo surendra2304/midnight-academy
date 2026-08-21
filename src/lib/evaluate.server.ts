@@ -180,7 +180,7 @@ export async function draftQuestions(
       },
     ]);
   } catch (err) {
-    // AI unavailability must not dead-end the teacher's flow: fall back to a
+    // AI unavailability must not dead-end the instructor's flow: fall back to a
     // plain, unenriched draft the teacher can complete manually in review.
     console.warn(
       "[draftQuestions] AI drafting failed, using manual-review fallback:",

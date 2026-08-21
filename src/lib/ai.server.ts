@@ -1,9 +1,9 @@
 /** Server-only helpers for calling Google Gemini using the official @google/genai SDK. */
 import { GoogleGenAI, type GenerateContentConfig, ThinkingLevel } from "@google/genai";
 
-const MODEL_NAME = process.env["GEMINI_MODEL"] || "gemini-3.7-flash";
+const MODEL_NAME = process.env["GEMINI_MODEL"] || "gemini-3.5-flash-lite";
 /** Upper bound for a single Gemini call so serverless functions never hang. */
-const REQUEST_TIMEOUT_MS = Number(process.env["GEMINI_TIMEOUT_MS"] || 30000);
+const REQUEST_TIMEOUT_MS = Number(process.env["GEMINI_TIMEOUT_MS"] || 15000);
 
 export class AiError extends Error {
   status: number;
@@ -44,7 +44,7 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
     const currentApiKey = apiKeys[keyIdx]!;
     const ai = new GoogleGenAI({ apiKey: currentApiKey });
 
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
         if (attempt > 0) {
           await new Promise((r) => setTimeout(r, 1500 * Math.pow(2, attempt)));
@@ -104,7 +104,7 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
           break;
         }
 
-        if (attempt === 2) {
+        if (attempt === 1) {
           if (keyIdx === apiKeys.length - 1) {
             if (errorMsg.includes("429") || errorMsg.toLowerCase().includes("quota")) {
               throw new AiError(
