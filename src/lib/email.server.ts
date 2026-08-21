@@ -13,8 +13,8 @@ export interface SendEmailOptions {
 let cachedTransporter: nodemailer.Transporter | null = null;
 
 function getTransporter(): nodemailer.Transporter | null {
-  const user = (process.env["SMTP_USER"] || "").replace(/^["']|["']$/g, "").trim();
-  const pass = (process.env["SMTP_APP_PASSWORD"] || "").replace(/[\s"']/g, "");
+  const user = (process.env["SMTP_USER"] || "").trim();
+  const pass = (process.env["SMTP_APP_PASSWORD"] || "").trim();
 
   console.log(`[email.server] Authenticating with SMTP_USER: "${user}"`);
 
@@ -71,7 +71,7 @@ export async function sendEmail({
           .trim(),
       html,
     });
-
+    console.log(`[email.server] Email sent successfully, messageId: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (err: unknown) {
     const rawError = err instanceof Error ? err.message : "Unknown SMTP error";
