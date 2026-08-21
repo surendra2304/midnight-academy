@@ -16,7 +16,7 @@ const questionInput = z.object({
 export const listAdminTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, average } = await import("./admin.server");
+    const { assertAdmin, average, weakestAxis } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
 
     const { data: tests } = await context.supabase
@@ -51,7 +51,7 @@ export const getAdminTest = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => z.object({ testId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { assertAdmin, average } = await import("./admin.server");
+    const { assertAdmin, average, weakestAxis } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
 
     const { data: test } = await context.supabase
@@ -341,7 +341,7 @@ export const setTestStatus = createServerFn({ method: "POST" })
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, average } = await import("./admin.server");
+    const { assertAdmin, average, weakestAxis } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
 
     const [{ data: tests }, { count: flagged }] = await Promise.all([
@@ -428,7 +428,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
 export const listAdminStudents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, average } = await import("./admin.server");
+    const { assertAdmin, average, weakestAxis } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
 
     const { data: tests } = await context.supabase
@@ -470,7 +470,7 @@ export const listAdminStudents = createServerFn({ method: "GET" })
         institution: profile.institution,
         attempts: mine.length,
         average: average(scores),
-        weakest: "constraint" as const,
+        weakest: weakestAxis(mine),
         lastActive:
           mine
             .map((a) => a.completed_at)
@@ -485,7 +485,7 @@ export const getAdminStudent = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => z.object({ studentId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { assertAdmin, average } = await import("./admin.server");
+    const { assertAdmin, average, weakestAxis } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
 
     const { data: profile } = await context.supabase
@@ -531,7 +531,7 @@ export const getAdminStudent = createServerFn({ method: "GET" })
         branch: profile.branch,
         attempts: attempts?.length ?? 0,
         average: average(scores),
-        weakest: "constraint" as const,
+        weakest: weakestAxis(attempts ?? []),
         lastActive: attempts?.[0]?.completed_at ?? "Recently",
       },
       attempts: (attempts ?? []).map((a) => ({
@@ -548,7 +548,7 @@ export const getAdminStudent = createServerFn({ method: "GET" })
 export const getCohortAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, average } = await import("./admin.server");
+    const { assertAdmin, average, weakestAxis } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
 
     const { data: tests } = await context.supabase

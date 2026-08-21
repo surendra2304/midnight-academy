@@ -1,7 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowRight, Check, Copy, FileText, FileType2, Loader2, PencilLine, Trash2 } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Copy,
+  FileText,
+  FileType2,
+  Loader2,
+  PencilLine,
+  Trash2,
+} from "lucide-react";
 import { PageShell, Panel, SectionHeading, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -341,8 +350,8 @@ function Source({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Tip: separate each question with a blank line. AI drafting usually takes a few seconds;
-          if it is unavailable, "Continue Without AI" always works.
+          Tip: separate each question with a blank line. AI drafting usually takes a few seconds; if
+          it is unavailable, "Continue Without AI" always works.
         </p>
       </div>
     </Panel>

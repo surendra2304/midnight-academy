@@ -41,38 +41,14 @@ function AuthCallbackPage() {
           return;
         }
 
-        // Ensure new Google user has a default profile and student role if not present
+        // Ensure new Google user has a default profile and student role if not
+        // present. Must run server-side: RLS forbids clients from inserting
+        // into user_roles, which previously left OAuth users without a role.
         try {
-          const metadata = activeUser.user_metadata as Record<string, unknown> | undefined;
-          const fullName =
-            typeof metadata?.["full_name"] === "string"
-              ? metadata["full_name"]
-              : activeUser.email?.split("@")[0] || "";
-
-          await supabase.from("profiles").upsert(
-            {
-              id: activeUser.id,
-              email: activeUser.email ?? "",
-              full_name: fullName,
-            },
-            { onConflict: "id", ignoreDuplicates: true },
-          );
-
-          // Check if any role exists
-          const { data: existingRoles } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", activeUser.id);
-
-          if (!existingRoles || existingRoles.length === 0) {
-            // Safely assign student role by default for new OAuth sign-ins
-            await supabase.from("user_roles").insert({
-              user_id: activeUser.id,
-              role: "student",
-            });
-          }
+          const { ensureOAuthProfile } = await import("@/lib/auth.functions");
+          await ensureOAuthProfile();
         } catch {
-          // Handled gracefully if triggers/policies manage it
+          // Handled below by restoreSession / role resolution
         }
 
         // Synchronize auth-store with authoritative server role

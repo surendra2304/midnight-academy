@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 /**
@@ -278,4 +279,45 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
       email,
       role: data.role,
     };
+  });
+
+/**
+ * 4. Ensure an OAuth (e.g. Google) sign-in has a profile and a role.
+ * Runs server-side with the service role because RLS forbids clients from
+ * inserting into user_roles — without this, OAuth users could never sign in.
+ */
+export const ensureOAuthProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const user = userData?.user;
+    if (!user) throw new Error("Authenticated user not found.");
+
+    const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
+    const fullName =
+      typeof metadata["full_name"] === "string" && metadata["full_name"]
+        ? metadata["full_name"]
+        : user.email?.split("@")[0] || "Student";
+
+    await supabaseAdmin.from("profiles").upsert({
+      id: user.id,
+      email: user.email ?? "",
+      full_name: fullName,
+    });
+
+    const { data: existingRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    if (!existingRoles || existingRoles.length === 0) {
+      await supabaseAdmin.from("user_roles").insert({
+        user_id: user.id,
+        role: "student",
+      });
+    }
+
+    return { ok: true };
   });
