@@ -50,6 +50,14 @@ type OverviewData = {
     participants: number;
     average: number;
   }>;
+  recentSubmissions: Array<{
+    attemptId: string;
+    studentName: string;
+    testName: string;
+    score: number | null;
+    status: string;
+    completedAt: string | null;
+  }>;
 };
 
 function AdminDashboard() {
@@ -91,6 +99,7 @@ function AdminDashboard() {
   };
   const testPerf = data?.testPerformance || [];
   const recentTests = data?.recentTests || [];
+  const recentSubmissions = data?.recentSubmissions || [];
 
   return (
     <PageShell>
@@ -169,6 +178,44 @@ function AdminDashboard() {
           </div>
         </Panel>
       </div>
+
+      <section className="mt-10">
+        <SectionHeading
+          title="Recent Student Submissions"
+          subtitle="Latest test attempts by your students."
+        />
+        {recentSubmissions.length === 0 ? (
+          <div className="panel p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              No student submissions yet. Share a test code so students can join.
+            </p>
+          </div>
+        ) : (
+          <div className="panel divide-y divide-border overflow-hidden p-0">
+            {recentSubmissions.map((s) => (
+              <div
+                key={s.attemptId}
+                className="grid grid-cols-2 items-center gap-3 px-5 py-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]"
+              >
+                <span className="text-sm font-semibold text-foreground">{s.studentName}</span>
+                <span className="col-span-2 text-sm text-muted-foreground lg:col-span-1">
+                  {s.testName}
+                </span>
+                <span
+                  className={`text-sm font-bold ${
+                    s.score !== null ? scoreTextClass(s.score) : "text-muted-foreground"
+                  }`}
+                >
+                  {s.score !== null ? `${s.score}%` : "Evaluating"}
+                </span>
+                <span className="flex items-center justify-end text-xs text-muted-foreground">
+                  {s.completedAt ? new Date(s.completedAt).toLocaleDateString() : "In progress"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="mt-10">
         <SectionHeading

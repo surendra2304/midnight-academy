@@ -168,15 +168,33 @@ export async function draftQuestions(
   category: string,
   rawQuestions: string[],
 ): Promise<DraftedQuestion[]> {
-  const rawJson = await chatJson<unknown>([
-    { role: "system", content: DRAFT_SYSTEM },
-    {
-      role: "user",
-      content: `CATEGORY: ${category}\n\nQUESTIONS:\n${rawQuestions
-        .map((q, i) => `${i + 1}. ${q}`)
-        .join("\n\n")}`,
-    },
-  ]);
+  let rawJson: unknown;
+  try {
+    rawJson = await chatJson<unknown>([
+      { role: "system", content: DRAFT_SYSTEM },
+      {
+        role: "user",
+        content: `CATEGORY: ${category}\n\nQUESTIONS:\n${rawQuestions
+          .map((q, i) => `${i + 1}. ${q}`)
+          .join("\n\n")}`,
+      },
+    ]);
+  } catch (err) {
+    // AI unavailability must not dead-end the teacher's flow: fall back to a
+    // plain, unenriched draft the teacher can complete manually in review.
+    console.warn(
+      "[draftQuestions] AI drafting failed, using manual-review fallback:",
+      err instanceof Error ? err.message : err,
+    );
+    return rawQuestions.map((text) => ({
+      text: text.trim(),
+      topic: `${category} (needs review)`,
+      difficulty: "Medium",
+      concepts: [],
+      constraints: [],
+      referenceAnswer: "",
+    }));
+  }
 
   const parsed = RawDraftSchema.safeParse(rawJson);
   if (!parsed.success) {
@@ -190,7 +208,7 @@ export async function draftQuestions(
 
   return questions.map((q, index) => ({
     text: (q.text || rawQuestions[index] || "").trim(),
-    topic: q.topic.trim(),
+    topic: q.topic.trim() || `${category} (needs review)`,
     difficulty: ["Easy", "Medium", "Hard"].includes(q.difficulty) ? q.difficulty : "Medium",
     concepts: q.concepts.filter((c) => typeof c === "string"),
     constraints: q.constraints.filter((c) => typeof c === "string"),

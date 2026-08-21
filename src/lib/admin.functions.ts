@@ -338,7 +338,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
       context.supabase
         .from("tests")
         .select(
-          "id, name, category, status, code, question_count, seconds_per_question, created_at, attempts(id, score, status, student_id)",
+          "id, name, category, status, code, question_count, seconds_per_question, created_at, attempts(id, score, status, student_id, completed_at)",
         )
         .eq("owner_id", context.userId)
         .order("created_at", { ascending: false }),
@@ -356,6 +356,24 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     const scores = allAttempts
       .map((a) => a.score)
       .filter((s): s is number => typeof s === "number");
+
+    // Recent student submissions across this teacher's tests
+    const recentRaw = [...allAttempts]
+      .sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""))
+      .slice(0, 6);
+    const recentIds = [...new Set(recentRaw.map((a) => a.student_id))];
+    const { data: recentProfiles } = recentIds.length
+      ? await context.supabase.from("profiles").select("id, full_name").in("id", recentIds)
+      : { data: [] };
+    const nameMap = new Map((recentProfiles ?? []).map((p) => [p.id, p.full_name]));
+    const recentSubmissions = recentRaw.map((a) => ({
+      attemptId: a.id,
+      studentName: nameMap.get(a.student_id) || "Student",
+      testName: a.testName,
+      score: typeof a.score === "number" ? a.score : null,
+      status: a.status,
+      completedAt: a.completed_at,
+    }));
 
     const testPerformance = (tests ?? []).map((t) => {
       const tScores = (t.attempts ?? [])
@@ -378,6 +396,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         flagged: flagged ?? 0,
       },
       testPerformance,
+      recentSubmissions,
       recentTests: (tests ?? []).slice(0, 5).map((t) => {
         const tScores = (t.attempts ?? [])
           .map((a) => a.score)
@@ -461,7 +480,7 @@ export const getAdminStudent = createServerFn({ method: "GET" })
 
     const { data: profile } = await context.supabase
       .from("profiles")
-      .select("id, full_name, email, institution, year")
+      .select("id, full_name, email, institution, year, branch")
       .eq("id", data.studentId)
       .maybeSingle();
     if (!profile) throw new Error("Student not found.");
@@ -499,6 +518,7 @@ export const getAdminStudent = createServerFn({ method: "GET" })
         email: profile.email,
         institution: profile.institution,
         year: profile.year,
+        branch: profile.branch,
         attempts: attempts?.length ?? 0,
         average: average(scores),
         weakest: "constraint" as const,

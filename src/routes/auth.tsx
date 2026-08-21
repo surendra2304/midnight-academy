@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -48,6 +55,10 @@ function AuthPage() {
   const [verificationToken, setVerificationToken] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupPasswordConfirm, setSignupPasswordConfirm] = useState("");
+  const [signupRole, setSignupRole] = useState<"student" | "admin">("student");
+  const [fullName, setFullName] = useState("");
+  const [studyYear, setStudyYear] = useState("");
+  const [branch, setBranch] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const navigate = useNavigate();
@@ -159,6 +170,11 @@ function AuthPage() {
       return;
     }
 
+    if (!fullName.trim()) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+
     setLoading(true);
     try {
       await completeRegistrationWithPassword({
@@ -166,16 +182,18 @@ function AuthPage() {
           email: signupEmail.trim(),
           verificationToken,
           password: signupPassword,
-          fullName: signupEmail.split("@")[0] || "Student",
+          fullName: fullName.trim(),
+          role: signupRole,
+          year: studyYear || undefined,
+          branch: branch || undefined,
         },
       });
 
       // Automatically sign in the user
-      const loginRes = await login({ email: signupEmail.trim(), password: signupPassword });
+      await login({ email: signupEmail.trim(), password: signupPassword });
       toast.success("Account created successfully!");
 
-      const returnedRole = loginRes?.user?.role;
-      if (returnedRole === "ADMIN") {
+      if (signupRole === "admin") {
         navigate({ to: "/admin" });
       } else {
         navigate({ to: "/dashboard" });
@@ -294,6 +312,44 @@ function AuthPage() {
               {signupStep === "email" && (
                 <form onSubmit={handleSendOtp} className="space-y-4">
                   <div className="space-y-2">
+                    <Label>I am a</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {(
+                        [
+                          {
+                            value: "student",
+                            title: "Student",
+                            desc: "Take tests and get AI feedback",
+                          },
+                          {
+                            value: "admin",
+                            title: "Teacher",
+                            desc: "Create tests and review students",
+                          },
+                        ] as const
+                      ).map((r) => (
+                        <button
+                          key={r.value}
+                          type="button"
+                          onClick={() => setSignupRole(r.value)}
+                          className={cn(
+                            "rounded-lg border p-3 text-left transition-colors",
+                            signupRole === r.value
+                              ? "border-primary/60 bg-primary/10"
+                              : "border-border hover:border-border-strong",
+                          )}
+                        >
+                          <span className="block text-sm font-semibold text-foreground">
+                            {r.title}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {r.desc}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="signup-email">Enter your Email</Label>
                     <Input
                       id="signup-email"
@@ -382,8 +438,67 @@ function AuthPage() {
                 <form onSubmit={handleCreatePassword} className="space-y-4">
                   <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-3 text-xs text-primary">
                     <CheckCircle2 className="size-4 shrink-0" />
-                    <span>Email verified! Choose a password to secure your account.</span>
+                    <span>Email verified! Tell us about you and choose a password.</span>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="full-name">Full Name</Label>
+                    <Input
+                      id="full-name"
+                      type="text"
+                      placeholder="e.g. Surendra Kumar"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  {signupRole === "student" && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="study-year">B.Tech Year</Label>
+                        <Select value={studyYear} onValueChange={setStudyYear}>
+                          <SelectTrigger id="study-year">
+                            <SelectValue placeholder="Select year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduated"].map(
+                              (y) => (
+                                <SelectItem key={y} value={y}>
+                                  {y}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="branch">Branch</Label>
+                        <Select value={branch} onValueChange={setBranch}>
+                          <SelectTrigger id="branch">
+                            <SelectValue placeholder="Select branch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[
+                              "CSE",
+                              "IT",
+                              "ECE",
+                              "EEE",
+                              "Mechanical",
+                              "Civil",
+                              "AI & ML",
+                              "Other",
+                            ].map((b) => (
+                              <SelectItem key={b} value={b}>
+                                {b}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="create-password">Create Password</Label>
@@ -395,7 +510,6 @@ function AuthPage() {
                       onChange={(e) => setSignupPassword(e.target.value)}
                       required
                       minLength={6}
-                      autoFocus
                     />
                   </div>
 
@@ -416,7 +530,7 @@ function AuthPage() {
                     type="submit"
                     className="w-full"
                     size="lg"
-                    disabled={loading || signupPassword.length < 6}
+                    disabled={loading || signupPassword.length < 6 || !fullName.trim()}
                   >
                     {loading ? "Creating Account..." : "Create Account & Sign In"}
                   </Button>

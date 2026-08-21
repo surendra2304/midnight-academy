@@ -155,6 +155,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          branch: string | null;
           created_at: string;
           email: string;
           full_name: string;
@@ -164,6 +165,7 @@ export type Database = {
           year: string;
         };
         Insert: {
+          branch?: string | null;
           created_at?: string;
           email?: string;
           full_name?: string;
@@ -173,6 +175,7 @@ export type Database = {
           year?: string;
         };
         Update: {
+          branch?: string | null;
           created_at?: string;
           email?: string;
           full_name?: string;

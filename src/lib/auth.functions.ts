@@ -196,7 +196,11 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
         email: z.string().email(),
         verificationToken: z.string().min(32),
         password: z.string().min(6).max(72),
-        fullName: z.string().optional(),
+        fullName: z.string().max(120).optional(),
+        role: z.enum(["student", "admin"]).default("student"),
+        year: z.string().max(30).optional(),
+        branch: z.string().max(60).optional(),
+        institution: z.string().max(160).optional(),
       })
       .parse(data),
   )
@@ -233,14 +237,16 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
     record.usedAt = new Date();
     await updateOtpRecord(record);
 
-    // Create user in Supabase Auth via Admin API with email confirmed - strictly student role
+    // Create user in Supabase Auth via Admin API with email confirmed.
+    // Role is chosen at signup: "student" or "admin" (teacher).
+    const displayName = data.fullName?.trim() || email.split("@")[0] || "Student";
     const { data: createdUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: data.password,
       email_confirm: true,
       user_metadata: {
-        full_name: data.fullName || email.split("@")[0] || "Student",
-        role: "student",
+        full_name: displayName,
+        role: data.role,
       },
     });
 
@@ -250,23 +256,26 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
 
     const userId = createdUser.user.id;
 
-    // Create/update profile and role in database - strictly student role
+    // Create/update profile (with basic details) and the selected role
     await supabaseAdmin.from("profiles").upsert({
       id: userId,
       email,
-      full_name: data.fullName || email.split("@")[0] || "Student",
+      full_name: displayName,
+      ...(data.year ? { year: data.year } : {}),
+      ...(data.branch ? { branch: data.branch } : {}),
+      ...(data.institution ? { institution: data.institution } : {}),
       onboarded: false,
     });
 
     await supabaseAdmin.from("user_roles").upsert({
       user_id: userId,
-      role: "student",
+      role: data.role,
     });
 
     return {
       success: true,
       userId,
       email,
-      role: "student" as const,
+      role: data.role,
     };
   });

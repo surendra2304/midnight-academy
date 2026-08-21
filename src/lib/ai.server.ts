@@ -2,6 +2,8 @@
 import { GoogleGenAI, type GenerateContentConfig, ThinkingLevel } from "@google/genai";
 
 const MODEL_NAME = process.env["GEMINI_MODEL"] || "gemini-3.7-flash";
+/** Upper bound for a single Gemini call so serverless functions never hang. */
+const REQUEST_TIMEOUT_MS = Number(process.env["GEMINI_TIMEOUT_MS"] || 30000);
 
 export class AiError extends Error {
   status: number;
@@ -54,11 +56,19 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
           ...(systemInstruction ? { systemInstruction } : {}),
         };
 
-        const response = await ai.models.generateContent({
-          model: MODEL_NAME,
-          contents: userPrompt,
-          config,
-        });
+        const response = await Promise.race([
+          ai.models.generateContent({
+            model: MODEL_NAME,
+            contents: userPrompt,
+            config: { ...config, httpOptions: { timeout: REQUEST_TIMEOUT_MS } },
+          }),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new AiError("Gemini request timed out.", 504)),
+              REQUEST_TIMEOUT_MS + 5000,
+            ),
+          ),
+        ]);
 
         const content = response.text;
         if (!content) {

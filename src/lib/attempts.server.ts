@@ -51,21 +51,35 @@ export async function evaluateAttempt(
   answers: AnswerRow[],
   questions: Map<string, QuestionRow>,
 ): Promise<{ scored: ScoredAnswer[]; axes: AxisScores; overall: number }> {
-  const results = [];
-  for (const answer of answers) {
-    const question = questions.get(answer.question_id);
-    if (!question) continue;
-    const evaluation = await evaluateAnswer({
-      questionText: question.text,
-      referenceAnswer: question.reference_answer,
-      concepts: question.concepts,
-      constraints: question.constraints,
-      response: answer.response,
-    });
-    results.push({ answer, question, evaluation });
+  // Evaluate with limited concurrency so multi-question attempts finish well
+  // inside the serverless function window instead of running sequentially.
+  const EVAL_CONCURRENCY = 4;
+  const queue = answers.filter((answer) => questions.has(answer.question_id));
+  const results: Array<{
+    answer: AnswerRow;
+    question: QuestionRow;
+    evaluation: Awaited<ReturnType<typeof evaluateAnswer>>;
+  }> = [];
+
+  for (let i = 0; i < queue.length; i += EVAL_CONCURRENCY) {
+    const batch = queue.slice(i, i + EVAL_CONCURRENCY);
+    const evaluated = await Promise.all(
+      batch.map(async (answer) => {
+        const question = questions.get(answer.question_id)!;
+        const evaluation = await evaluateAnswer({
+          questionText: question.text,
+          referenceAnswer: question.reference_answer,
+          concepts: question.concepts,
+          constraints: question.constraints,
+          response: answer.response,
+        });
+        return { answer, question, evaluation };
+      }),
+    );
+    results.push(...evaluated);
   }
 
-  const usable = results.filter((r): r is NonNullable<typeof r> => r !== null);
+  const usable = results;
 
   const forAxes: EvaluatedAnswer[] = usable.map(({ question, evaluation }) => ({
     concepts: question.concepts,
