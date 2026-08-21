@@ -255,27 +255,40 @@ function TestDetail() {
           ) : (
             <ul className="divide-y divide-border">
               {participants.map((s) => (
-                <li key={s.attemptId}>
+                <li key={s.attemptId} className="flex items-center justify-between gap-3 py-3">
                   <Link
                     to="/admin/students/$studentId"
                     params={{ studentId: s.id }}
-                    className="flex items-center gap-3 py-3 transition-colors hover:opacity-80"
+                    className="flex min-w-0 items-center gap-3 transition-colors hover:opacity-80"
                   >
-                    <span className="grid size-8 place-items-center rounded-full bg-primary/12 text-[11px] font-bold text-primary">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/12 text-[11px] font-bold text-primary">
                       {s.initials}
                     </span>
-                    <div>
-                      <span className="block text-sm font-semibold text-foreground">{s.name}</span>
-                      <span className="block text-xs text-muted-foreground">{s.email}</span>
+                    <div className="min-w-0 truncate">
+                      <span className="block truncate text-sm font-semibold text-foreground">
+                        {s.name}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {s.email}
+                      </span>
                     </div>
+                  </Link>
+                  <div className="flex items-center gap-3">
                     <span
-                      className={`ml-auto text-sm font-bold ${
+                      className={`text-sm font-bold ${
                         s.score ? scoreTextClass(s.score) : "text-muted-foreground"
                       }`}
                     >
                       {s.score ? `${s.score}%` : "In Progress"}
                     </span>
-                  </Link>
+                    {s.attemptId ? (
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/result/$attemptId" params={{ attemptId: s.attemptId }}>
+                          Evaluation
+                        </Link>
+                      </Button>
+                    ) : null}
+                  </div>
                 </li>
               ))}
             </ul>

@@ -38,6 +38,7 @@ export type StudentAnalytics = {
     status: string;
     date: string;
     questionsCount: number;
+    testCode: string;
   }>;
   progressSeries: Array<{
     label: string;
@@ -64,12 +65,21 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<StudentAnalytics> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // 1. Fetch Student Profile
-    const { data: profileRow } = await supabaseAdmin
-      .from("profiles")
-      .select("full_name, email, institution, year, onboarded")
-      .eq("id", context.userId)
-      .maybeSingle();
+    // 1 & 2. Fetch Student Profile and Attempts concurrently
+    const [{ data: profileRow }, { data: attempts }] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("full_name, email, institution, year, onboarded")
+        .eq("id", context.userId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("attempts")
+        .select(
+          "id, test_id, status, score, axes, started_at, completed_at, tests(name, category, difficulty, code, question_count)",
+        )
+        .eq("student_id", context.userId)
+        .order("started_at", { ascending: false }),
+    ]);
 
     const profile = {
       fullName: profileRow?.full_name || "Student",
@@ -78,15 +88,6 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
       year: profileRow?.year || null,
       onboarded: profileRow?.onboarded ?? false,
     };
-
-    // 2. Fetch all student attempts with tests relation
-    const { data: attempts } = await supabaseAdmin
-      .from("attempts")
-      .select(
-        "id, test_id, status, score, axes, started_at, completed_at, tests(name, category, difficulty)",
-      )
-      .eq("student_id", context.userId)
-      .order("started_at", { ascending: false });
 
     const allAttempts = attempts ?? [];
     const evaluated = allAttempts.filter((a) => a.status === "evaluated" && a.score !== null);
@@ -180,7 +181,13 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
 
     // 6. Recent attempts formatted
     const recentAttempts = allAttempts.slice(0, 10).map((a) => {
-      const test = a.tests as { name?: string; category?: string; difficulty?: string } | null;
+      const test = a.tests as {
+        name?: string;
+        category?: string;
+        difficulty?: string;
+        code?: string;
+        question_count?: number;
+      } | null;
       return {
         id: a.id,
         testName: test?.name || "Comprehension Test",
@@ -189,7 +196,8 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
         score: a.score !== null ? Number(a.score) : null,
         status: a.status,
         date: a.started_at,
-        questionsCount: 5,
+        questionsCount: test?.question_count || 5,
+        testCode: test?.code || "",
       };
     });
 
@@ -244,7 +252,7 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
 
 export const updateStudentProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         fullName: z.string().min(1).max(100),

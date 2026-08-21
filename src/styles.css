@@ -206,3 +206,21 @@
 @utility animate-pulse-soft {
   animation: ma-pulse-soft 2.2s ease-in-out infinite;
 }
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Fixed navigation for onboarding buttons */
+.fixed-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: var(--color-surface);
+  padding-top: 0.5rem;
+  margin-top: 1rem;
+}

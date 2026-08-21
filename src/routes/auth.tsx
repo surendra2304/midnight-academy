@@ -1,14 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  GraduationCap,
-  KeyRound,
-  Mail,
-  RefreshCw,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, KeyRound, Mail, RefreshCw } from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,38 +23,21 @@ export const Route = createFileRoute("/auth")({
       { title: "Sign in — Midnight Academy" },
       {
         name: "description",
-        content:
-          "Choose your workspace and sign in to Midnight Academy as a student or an instructor.",
+        content: "Sign in to Midnight Academy to access technical comprehension training.",
       },
       { property: "og:title", content: "Sign in — Midnight Academy" },
       {
         property: "og:description",
-        content: "Student and instructor access to technical comprehension training.",
+        content: "Access technical comprehension training.",
       },
     ],
   }),
   component: AuthPage,
 });
 
-const roles = [
-  {
-    id: "student" as const,
-    title: "Student",
-    body: "Practice and improve your technical question understanding",
-    icon: GraduationCap,
-  },
-  {
-    id: "admin" as const,
-    title: "Admin",
-    body: "Create, manage and evaluate technical tests",
-    icon: ShieldCheck,
-  },
-];
-
 type SignupStep = "email" | "otp" | "password" | "done";
 
 function AuthPage() {
-  const [role, setRole] = useState<"student" | "admin">("student");
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -102,7 +77,7 @@ function AuthPage() {
       if (returnedRole === "ADMIN") {
         navigate({ to: "/admin" });
       } else {
-        navigate({ to: "/onboarding" });
+        navigate({ to: "/dashboard" });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Authentication failed";
@@ -191,7 +166,6 @@ function AuthPage() {
           email: signupEmail.trim(),
           verificationToken,
           password: signupPassword,
-          role,
           fullName: signupEmail.split("@")[0] || "Student",
         },
       });
@@ -204,7 +178,7 @@ function AuthPage() {
       if (returnedRole === "ADMIN") {
         navigate({ to: "/admin" });
       } else {
-        navigate({ to: "/onboarding" });
+        navigate({ to: "/dashboard" });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create account";
@@ -234,49 +208,13 @@ function AuthPage() {
           <h1 className="text-xl font-bold text-foreground">Welcome to Midnight Academy</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
             {isLogin
-              ? "Choose your workspace and sign in."
+              ? "Sign in to access your technical training."
               : signupStep === "email"
                 ? "Create a new verified account."
                 : signupStep === "otp"
                   ? "Enter the verification code sent to your email."
                   : "Create a secure password."}
           </p>
-
-          {/* Workspace Role Selector (Registration Only) */}
-          {!isLogin && signupStep === "email" && (
-            <div className="mt-6 grid gap-3">
-              {roles.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => setRole(r.id)}
-                  className={cn(
-                    "flex items-start gap-3 rounded-xl border p-4 text-left transition-colors",
-                    role === r.id
-                      ? "border-primary/60 bg-primary/8"
-                      : "border-border bg-surface-2/50 hover:border-border-strong",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "mt-0.5 grid size-8 place-items-center rounded-lg",
-                      role === r.id
-                        ? "bg-primary/15 text-primary"
-                        : "bg-surface text-muted-foreground",
-                    )}
-                  >
-                    <r.icon className="size-4" />
-                  </span>
-                  <span>
-                    <span className="block text-sm font-semibold text-foreground">{r.title}</span>
-                    <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                      {r.body}
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* 1. Login View */}
           {isLogin ? (

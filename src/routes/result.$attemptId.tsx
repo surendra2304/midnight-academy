@@ -11,7 +11,7 @@ import { flagEvaluation, getResult } from "@/lib/attempts.functions";
 import { scoreTextClass } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/result/$attemptId")({
-  beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
+  beforeLoad: ({ location }) => requireAuth({ location }),
   head: () => ({
     meta: [
       { title: "Test Result — Midnight Academy" },

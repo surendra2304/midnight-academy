@@ -5,7 +5,7 @@ import { z } from "zod";
  * 1. Request OTP Code for registration
  */
 export const requestRegistrationOtp = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         email: z.string().email(),
@@ -99,7 +99,7 @@ export const requestRegistrationOtp = createServerFn({ method: "POST" })
  * 2. Verify OTP Code submitted by user
  */
 export const verifyRegistrationOtp = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         email: z.string().email(),
@@ -189,14 +189,13 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
  * 3. Complete Registration with Password (authorized only via verified token)
  */
 export const completeRegistrationWithPassword = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         email: z.string().email(),
         verificationToken: z.string().min(32),
         password: z.string().min(6).max(72),
         fullName: z.string().optional(),
-        role: z.enum(["admin", "student"]).default("student"),
       })
       .parse(data),
   )
@@ -233,14 +232,14 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
     record.usedAt = new Date();
     await updateOtpRecord(record);
 
-    // Create user in Supabase Auth via Admin API with email confirmed
+    // Create user in Supabase Auth via Admin API with email confirmed - strictly student role
     const { data: createdUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: data.password,
       email_confirm: true,
       user_metadata: {
-        full_name: data.fullName || email.split("@")[0] || "User",
-        role: data.role,
+        full_name: data.fullName || email.split("@")[0] || "Student",
+        role: "student",
       },
     });
 
@@ -250,23 +249,23 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
 
     const userId = createdUser.user.id;
 
-    // Create/update profile and role in database
+    // Create/update profile and role in database - strictly student role
     await supabaseAdmin.from("profiles").upsert({
       id: userId,
       email,
-      full_name: data.fullName || email.split("@")[0] || "",
+      full_name: data.fullName || email.split("@")[0] || "Student",
       onboarded: false,
     });
 
     await supabaseAdmin.from("user_roles").upsert({
       user_id: userId,
-      role: data.role as "admin" | "student",
+      role: "student",
     });
 
     return {
       success: true,
       userId,
       email,
-      role: data.role,
+      role: "student" as const,
     };
   });

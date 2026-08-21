@@ -160,21 +160,15 @@ export const authStore = {
     return { user, session: data.session };
   },
 
-  async register(params: {
-    email: string;
-    password: string;
-    fullName?: string;
-    role?: "admin" | "student";
-  }) {
+  async register(params: { email: string; password: string; fullName?: string }) {
     updateState({ loading: true });
-    const selectedRole = params.role ?? "student";
     const { data, error } = await supabase.auth.signUp({
       email: params.email,
       password: params.password,
       options: {
         data: {
-          full_name: params.fullName || params.email.split("@")[0] || "",
-          role: selectedRole,
+          full_name: params.fullName || params.email.split("@")[0] || "Student",
+          role: "student",
         },
       },
     });
@@ -194,11 +188,11 @@ export const authStore = {
       await supabase.from("profiles").upsert({
         id: data.user.id,
         email: data.user.email ?? params.email,
-        full_name: params.fullName || params.email.split("@")[0] || "",
+        full_name: params.fullName || params.email.split("@")[0] || "Student",
       });
       await supabase.from("user_roles").upsert({
         user_id: data.user.id,
-        role: selectedRole,
+        role: "student",
       });
     } catch {
       // Ignored if already handled by database trigger

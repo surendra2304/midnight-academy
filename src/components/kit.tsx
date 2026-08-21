@@ -113,15 +113,30 @@ export function DifficultyTag({ difficulty }: { difficulty: Difficulty }) {
 }
 
 export function StatusTag({ status }: { status: string }) {
+  const norm = (status || "").toLowerCase();
   const tone =
-    status === "Active"
+    norm === "active"
       ? "success"
-      : status === "Draft"
+      : norm === "draft"
         ? "neutral"
-        : status === "Paused"
+        : norm === "paused"
           ? "warning"
-          : "primary";
-  return <Tag tone={tone as never}>{status}</Tag>;
+          : norm === "in_progress"
+            ? "violet"
+            : norm === "completed" || norm === "evaluated"
+              ? "primary"
+              : "neutral";
+
+  const label =
+    norm === "in_progress"
+      ? "In Progress"
+      : norm === "evaluated"
+        ? "Evaluated"
+        : status
+          ? status.charAt(0).toUpperCase() + status.slice(1)
+          : "—";
+
+  return <Tag tone={tone as never}>{label}</Tag>;
 }
 
 export function CountUp({

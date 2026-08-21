@@ -312,7 +312,7 @@ function ErrorNote({
         ? "border-warning/35 bg-warning/8"
         : "border-primary/30 bg-primary/8";
   return (
-    <div className={`mt-4 flex gap-3 rounded-xl border p-4 ${border}`}>
+    <div role="alert" className={`mt-4 flex gap-3 rounded-xl border p-4 ${border}`}>
       {icon}
       <div>
         <p className="text-sm font-semibold text-foreground">{title}</p>

@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/auth-guard";
+import Onboarding from "@/routes/onboarding";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, EyeOff, Loader2, RefreshCw, Timer } from "lucide-react";
@@ -75,6 +76,7 @@ function RunTest() {
   const [total, setTotal] = useState(0);
   const [stage, setStage] = useState<Stage>("read");
   const [remaining, setRemaining] = useState(45);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [question, setQuestion] = useState<QuestionPayload | null>(null);
   const [testMeta, setTestMeta] = useState<AttemptMeta | null>(null);
   const [draft, setDraft] = useState("");
@@ -158,11 +160,17 @@ function RunTest() {
           });
         }
 
-        if (state.currentIndex >= state.total) {
+        if (state.status === "evaluating" || state.currentIndex >= state.total) {
           setLoading(false);
           setStage("evaluating");
-        } else {
+        } else if (state.currentIndex > 0) {
+          // Mid-test resumption after browser reload
+          setShowOnboarding(false);
           await loadQuestionForPosition(state.currentIndex, attemptId!);
+        } else {
+          // Show onboarding before starting the first question
+          setShowOnboarding(true);
+          setLoading(false);
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to initialize test attempt";
@@ -183,7 +191,7 @@ function RunTest() {
 
   // 3. Reading timer
   useEffect(() => {
-    if (stage !== "read" || loading) return;
+    if (stage !== "read" || loading || showOnboarding) return;
 
     const id = setInterval(() => {
       setRemaining((r) => {
@@ -197,7 +205,7 @@ function RunTest() {
     }, 1000);
 
     return () => clearInterval(id);
-  }, [stage, loading]);
+  }, [stage, loading, showOnboarding]);
 
   // 4. Integrity signal: Window blur / tab switch recording via real server function
   useEffect(() => {
@@ -209,13 +217,16 @@ function RunTest() {
       });
     };
 
-    window.addEventListener("blur", onBlur);
-    document.addEventListener("visibilitychange", () => {
+    const onVisibilityChange = () => {
       if (document.hidden) onBlur();
-    });
+    };
+
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [attemptId, stage]);
 
@@ -314,6 +325,21 @@ function RunTest() {
   const progress = ((index + (stage === "respond" ? 0.5 : 0)) / Math.max(1, total)) * 100;
   const lowTime = remaining <= 10;
 
+  if (showOnboarding) {
+    return (
+      <Onboarding
+        onComplete={async () => {
+          setShowOnboarding(false);
+          await loadQuestionForPosition(index, attemptId!);
+        }}
+        onSkip={async () => {
+          setShowOnboarding(false);
+          await loadQuestionForPosition(index, attemptId!);
+        }}
+      />
+    );
+  }
+
   return (
     <main className="flex min-h-screen flex-col bg-background">
       <header className="border-b border-border px-5 py-4 lg:px-8">
@@ -388,6 +414,8 @@ function RunTest() {
               </p>
             </div>
             <Textarea
+              id="student-response"
+              aria-label="Explain what you understood about the question"
               autoFocus
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -395,7 +423,10 @@ function RunTest() {
               className="mt-6 min-h-[220px] resize-none text-base leading-relaxed"
               disabled={submitting}
             />
-            <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+            <div
+              className="mt-2 flex items-center justify-between text-xs text-muted-foreground"
+              aria-live="polite"
+            >
               <span>{draft.length} characters</span>
               <span>
                 {draft.trim().length < 10 ? "Write at least 10 characters" : "Ready to submit"}

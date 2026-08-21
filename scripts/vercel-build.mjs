@@ -41,9 +41,9 @@ fs.writeFileSync(
       dependencies: pkg.dependencies,
     },
     null,
-    2
+    2,
   ),
-  "utf-8"
+  "utf-8",
 );
 
 // Copy node_modules into the function directory so all SSR dependencies are bundled
@@ -148,25 +148,33 @@ const funcConfig = {
   handler: "index.mjs",
   launcherType: "Nodejs",
   maxDuration: 60,
-  supportsResponseStreaming: true
+  supportsResponseStreaming: true,
 };
 
-fs.writeFileSync(path.join(funcDir, ".vc-config.json"), JSON.stringify(funcConfig, null, 2), "utf-8");
+fs.writeFileSync(
+  path.join(funcDir, ".vc-config.json"),
+  JSON.stringify(funcConfig, null, 2),
+  "utf-8",
+);
 
 // 8. Create root .vercel/output/config.json
 const vercelConfig = {
   version: 3,
   routes: [
     {
-      handle: "filesystem"
+      handle: "filesystem",
     },
     {
       src: "/(.*)",
-      dest: "/__server"
-    }
-  ]
+      dest: "/__server",
+    },
+  ],
 };
 
-fs.writeFileSync(path.join(vercelOutputDir, "config.json"), JSON.stringify(vercelConfig, null, 2), "utf-8");
+fs.writeFileSync(
+  path.join(vercelOutputDir, "config.json"),
+  JSON.stringify(vercelConfig, null, 2),
+  "utf-8",
+);
 
 console.log("=== Vercel Build Output Successfully Generated ===");

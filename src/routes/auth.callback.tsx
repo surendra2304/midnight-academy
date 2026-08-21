@@ -84,7 +84,7 @@ function AuthCallbackPage() {
         if (storedUser?.role === "ADMIN") {
           navigate({ to: "/admin" });
         } else {
-          navigate({ to: "/onboarding" });
+          navigate({ to: "/dashboard" });
         }
       } catch (err: unknown) {
         if (active) {

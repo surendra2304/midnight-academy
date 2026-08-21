@@ -16,7 +16,6 @@ export type AuthState = {
     email: string;
     password: string;
     fullName?: string;
-    role?: "admin" | "student";
   }) => Promise<{ user: User; session: Session | null }>;
   signInWithGoogle: () => Promise<{ provider: string; url: string | null }>;
 };

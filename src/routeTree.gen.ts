@@ -14,7 +14,6 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as HistoryRouteImport } from './routes/history'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProgressRouteImport } from './routes/progress'
@@ -56,11 +55,6 @@ const DashboardRoute = DashboardRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PracticeRoute = PracticeRouteImport.update({
@@ -155,7 +149,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/history': typeof HistoryRoute
-  '/onboarding': typeof OnboardingRoute
   '/practice': typeof PracticeRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
@@ -179,7 +172,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/history': typeof HistoryRoute
-  '/onboarding': typeof OnboardingRoute
   '/practice': typeof PracticeRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
@@ -205,7 +197,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/history': typeof HistoryRoute
-  '/onboarding': typeof OnboardingRoute
   '/practice': typeof PracticeRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
@@ -232,7 +223,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/history'
-    | '/onboarding'
     | '/practice'
     | '/profile'
     | '/progress'
@@ -256,7 +246,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/history'
-    | '/onboarding'
     | '/practice'
     | '/profile'
     | '/progress'
@@ -281,7 +270,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/history'
-    | '/onboarding'
     | '/practice'
     | '/profile'
     | '/progress'
@@ -307,7 +295,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   HistoryRoute: typeof HistoryRoute
-  OnboardingRoute: typeof OnboardingRoute
   PracticeRoute: typeof PracticeRoute
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
@@ -351,13 +338,6 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/practice': {
@@ -526,7 +506,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   DashboardRoute: DashboardRoute,
   HistoryRoute: HistoryRoute,
-  OnboardingRoute: OnboardingRoute,
   PracticeRoute: PracticeRoute,
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,

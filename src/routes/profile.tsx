@@ -98,6 +98,19 @@ function ProfilePage() {
           year: year.trim() || undefined,
         },
       });
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              profile: {
+                ...prev.profile,
+                fullName: name.trim(),
+                institution: inst.trim() || null,
+                year: year.trim() || null,
+              },
+            }
+          : prev,
+      );
       toast.success("Profile updated successfully");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to update profile";

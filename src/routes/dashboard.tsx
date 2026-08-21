@@ -203,6 +203,7 @@ function Dashboard() {
                   >
                     <span className="col-span-2 text-sm font-semibold text-foreground lg:col-span-1">
                       {a.testName}
+                      {a.testCode ? ` (${a.testCode})` : ""}
                     </span>
                     <Tag>{a.category}</Tag>
                     <span className="text-sm text-muted-foreground">{a.difficulty}</span>

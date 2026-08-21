@@ -48,7 +48,7 @@ export const listAdminTests = createServerFn({ method: "GET" })
 
 export const getAdminTest = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ testId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ testId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { assertAdmin, average } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
@@ -62,28 +62,28 @@ export const getAdminTest = createServerFn({ method: "GET" })
 
     if (!test) throw new Error("Test not found or unauthorized.");
 
-    const { data: questions } = await context.supabase
-      .from("questions")
-      .select("*")
-      .eq("test_id", test.id)
-      .order("position", { ascending: true });
-
-    const { data: attempts } = await context.supabase
-      .from("attempts")
-      .select("id, student_id, score, status, blur_count, started_at, completed_at")
-      .eq("test_id", test.id)
-      .order("score", { ascending: false, nullsFirst: false });
+    const [{ data: questions }, { data: attempts }, { data: answers }] = await Promise.all([
+      context.supabase
+        .from("questions")
+        .select("*")
+        .eq("test_id", test.id)
+        .order("position", { ascending: true }),
+      context.supabase
+        .from("attempts")
+        .select("id, student_id, score, status, blur_count, started_at, completed_at")
+        .eq("test_id", test.id)
+        .order("score", { ascending: false, nullsFirst: false }),
+      context.supabase
+        .from("attempt_answers")
+        .select("position, score, attempts!inner(test_id)")
+        .eq("attempts.test_id", test.id),
+    ]);
 
     const studentIds = (attempts ?? []).map((a) => a.student_id);
     const { data: profiles } = studentIds.length
       ? await context.supabase.from("profiles").select("id, full_name, email").in("id", studentIds)
       : { data: [] };
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
-
-    const { data: answers } = await context.supabase
-      .from("attempt_answers")
-      .select("position, score, attempts!inner(test_id)")
-      .eq("attempts.test_id", test.id);
 
     const byPosition = new Map<number, number[]>();
     for (const answer of answers ?? []) {
@@ -150,7 +150,7 @@ export const getAdminTest = createServerFn({ method: "GET" })
 
 export const draftTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         name: z.string().min(3).max(160),
@@ -219,7 +219,7 @@ export const draftTest = createServerFn({ method: "POST" })
 
 export const saveQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         testId: z.string().uuid(),
@@ -262,7 +262,7 @@ export const saveQuestions = createServerFn({ method: "POST" })
 
 export const publishTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ testId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ testId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { assertAdmin } = await import("./admin.server");
     const { generateCode } = await import("./attempts.server");
@@ -299,7 +299,7 @@ export const publishTest = createServerFn({ method: "POST" })
 
 export const setTestStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({ testId: z.string().uuid(), status: z.enum(["draft", "active", "completed"]) })
       .parse(data),
@@ -324,13 +324,20 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     const { assertAdmin, average } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
 
-    const { data: tests } = await context.supabase
-      .from("tests")
-      .select(
-        "id, name, category, status, code, question_count, seconds_per_question, created_at, attempts(id, score, status, student_id)",
-      )
-      .eq("owner_id", context.userId)
-      .order("created_at", { ascending: false });
+    const [{ data: tests }, { count: flagged }] = await Promise.all([
+      context.supabase
+        .from("tests")
+        .select(
+          "id, name, category, status, code, question_count, seconds_per_question, created_at, attempts(id, score, status, student_id)",
+        )
+        .eq("owner_id", context.userId)
+        .order("created_at", { ascending: false }),
+      context.supabase
+        .from("attempt_answers")
+        .select("id, attempts!inner(tests!inner(owner_id))", { count: "exact", head: true })
+        .eq("flagged", true)
+        .eq("attempts.tests.owner_id", context.userId),
+    ]);
 
     const allAttempts = (tests ?? []).flatMap((t) =>
       (t.attempts ?? []).map((a) => ({ ...a, testName: t.name, category: t.category })),
@@ -339,12 +346,6 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     const scores = allAttempts
       .map((a) => a.score)
       .filter((s): s is number => typeof s === "number");
-
-    const { count: flagged } = await context.supabase
-      .from("attempt_answers")
-      .select("id, attempts!inner(tests!inner(owner_id))", { count: "exact", head: true })
-      .eq("flagged", true)
-      .eq("attempts.tests.owner_id", context.userId);
 
     const testPerformance = (tests ?? []).map((t) => {
       const tScores = (t.attempts ?? [])
@@ -443,7 +444,7 @@ export const listAdminStudents = createServerFn({ method: "GET" })
 
 export const getAdminStudent = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ studentId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ studentId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { assertAdmin, average } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
@@ -516,20 +517,19 @@ export const getCohortAnalytics = createServerFn({ method: "GET" })
       .eq("owner_id", context.userId);
     const testIds = (tests ?? []).map((t) => t.id);
 
-    const { data: attempts } = testIds.length
-      ? await context.supabase
-          .from("attempts")
-          .select("id, test_id, score, axes, completed_at")
-          .in("test_id", testIds)
-          .eq("status", "evaluated")
-      : { data: [] };
-
-    const { data: answers } = testIds.length
-      ? await context.supabase
-          .from("attempt_answers")
-          .select("position, score, attempts!inner(test_id)")
-          .in("attempts.test_id", testIds)
-      : { data: [] };
+    const [{ data: attempts }, { data: answers }] = testIds.length
+      ? await Promise.all([
+          context.supabase
+            .from("attempts")
+            .select("id, test_id, score, axes, completed_at")
+            .in("test_id", testIds)
+            .eq("status", "evaluated"),
+          context.supabase
+            .from("attempt_answers")
+            .select("position, score, attempts!inner(test_id)")
+            .in("attempts.test_id", testIds),
+        ])
+      : [{ data: [] }, { data: [] }];
 
     const axisKeys = ["objective", "constraint", "io", "concept", "interpretation"] as const;
     const axes = axisKeys.reduce(
@@ -633,7 +633,7 @@ export const listFlaggedEvaluations = createServerFn({ method: "GET" })
 
 export const resolveFlag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         answerId: z.string().uuid(),

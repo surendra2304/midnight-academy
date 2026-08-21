@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const startAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ code: z.string().min(1).max(24) }).parse(data))
+  .validator((data) => z.object({ code: z.string().min(1).max(24) }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { normalizeCode } = await import("./attempts.server");
@@ -37,6 +37,8 @@ export const startAttempt = createServerFn({ method: "POST" })
       .select("id, status")
       .eq("test_id", test.id)
       .eq("student_id", context.userId)
+      .order("started_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (existing && existing.status !== "in_progress") {
@@ -78,7 +80,7 @@ export const startAttempt = createServerFn({ method: "POST" })
 
 export const getAttemptState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -141,7 +143,7 @@ export const getAttemptState = createServerFn({ method: "GET" })
 
 export const revealQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z.object({ attemptId: z.string().uuid(), position: z.number().int().min(0) }).parse(data),
   )
   .handler(async ({ data, context }) => {
@@ -234,7 +236,7 @@ export const revealQuestion = createServerFn({ method: "POST" })
 
 export const submitAnswer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         attemptId: z.string().uuid(),
@@ -270,7 +272,7 @@ export const submitAnswer = createServerFn({ method: "POST" })
 
 export const recordBlur = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: attempt } = await supabaseAdmin
@@ -288,7 +290,7 @@ export const recordBlur = createServerFn({ method: "POST" })
 
 export const finishAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { evaluateAttempt } = await import("./attempts.server");
@@ -395,7 +397,7 @@ export const finishAttempt = createServerFn({ method: "POST" })
 
 export const getResult = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -451,7 +453,7 @@ export const getResult = createServerFn({ method: "GET" })
 
 export const flagEvaluation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ answerId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ answerId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

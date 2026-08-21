@@ -1,31 +1,10 @@
-import { requireAuth } from "@/lib/auth-guard";
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Brain, EyeOff, Gauge } from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/onboarding")({
-  beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
-  head: () => ({
-    meta: [
-      { title: "How it works — Midnight Academy" },
-      {
-        name: "description",
-        content:
-          "A 30-second explainer on why the question disappears before you explain what you understood.",
-      },
-      { property: "og:title", content: "How it works — Midnight Academy" },
-      {
-        property: "og:description",
-        content: "Read the question, lose the question, explain your understanding.",
-      },
-    ],
-  }),
-  component: Onboarding,
-});
-
+// Onboarding slides data
 const slides = [
   {
     icon: EyeOff,
@@ -44,7 +23,7 @@ const slides = [
   },
 ];
 
-function Onboarding() {
+function Onboarding({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
   const [step, setStep] = useState(0);
   const slide = slides[step]!;
   const last = step === slides.length - 1;
@@ -55,19 +34,17 @@ function Onboarding() {
         <div className="flex justify-center">
           <Wordmark />
         </div>
-
         <div className="panel mt-8 p-7 lg:p-9">
           <span className="grid size-10 place-items-center rounded-xl border border-primary/25 bg-primary/10 text-primary">
             <slide.icon className="size-5" />
           </span>
-          <h1 className="animate-fade-up mt-6 text-2xl font-bold leading-snug text-foreground">
+          <h1 className="animate-fade-up mt-6 text-2xl font-bold leading-snug text-foreground lg:text-3xl">
             {slide.title}
           </h1>
           <p className="animate-fade-up mt-4 text-sm leading-relaxed text-muted-foreground">
             {slide.body}
           </p>
-
-          <div className="mt-9 flex items-center justify-between">
+          <div className="mt-9 flex items-center justify-between fixed-nav">
             <div className="flex gap-1.5">
               {slides.map((s, i) => (
                 <span
@@ -80,11 +57,7 @@ function Onboarding() {
               ))}
             </div>
             {last ? (
-              <Button asChild>
-                <Link to="/dashboard">
-                  Go to dashboard <ArrowRight className="size-4" />
-                </Link>
-              </Button>
+              <Button onClick={onComplete}>Start Test</Button>
             ) : (
               <Button onClick={() => setStep((s) => s + 1)}>
                 Next <ArrowRight className="size-4" />
@@ -92,13 +65,20 @@ function Onboarding() {
             )}
           </div>
         </div>
-
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          <Link to="/dashboard" className="hover:text-foreground">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onSkip();
+            }}
+            className="hover:text-foreground cursor-pointer"
+          >
             Skip for now
-          </Link>
+          </button>
         </p>
       </div>
     </main>
   );
 }
+
+export default Onboarding;

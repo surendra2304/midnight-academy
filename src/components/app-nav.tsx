@@ -34,7 +34,7 @@ const adminNav: NavItem[] = [
 function NavLinks({ items }: { items: NavItem[] }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="flex items-center gap-1 overflow-x-auto">
+    <nav className="no-scrollbar flex items-center gap-1 overflow-x-auto">
       {items.map((item) => {
         const active = item.to === "/admin" ? pathname === "/admin" : pathname.startsWith(item.to);
         return (
