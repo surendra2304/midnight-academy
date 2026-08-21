@@ -126,10 +126,13 @@ describe("Gemini AI Comprehension Evaluator Pipeline Hardening", () => {
     let errorThrown = false;
     try {
       if (!parsed.success) throw new Error("AI generated a malformed response.");
-      if (parsed.data.questions.length === 0) throw new Error("AI failed to extract any valid questions from the source text.");
-    } catch (e: any) {
+      if (parsed.data.questions.length === 0) {
+        throw new Error("AI failed to extract any valid questions from the source text.");
+      }
+    } catch (e: unknown) {
       errorThrown = true;
-      expect(e.message).toContain("failed to extract any valid questions");
+      const message = e instanceof Error ? e.message : String(e);
+      expect(message).toContain("failed to extract any valid questions");
     }
     expect(errorThrown).toBe(true);
   });
