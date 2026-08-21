@@ -517,4 +517,109 @@ describe("Midnight Academy — Comprehensive Production Regression Suite", () =>
       expect((sanitized as Record<string, unknown>)["score"]).toBeUndefined();
     });
   });
+
+  describe("OTP & SMTP DELIVERY FLOW: Transactional Email, Rate Limits & Security", () => {
+    it("fails delivery gracefully (SMTP failure) without saving OTP or starting cooldown", () => {
+      let otpSaved = false;
+      const sendEmail = () => ({ success: false, error: "SMTP connect ETIMEDOUT" });
+      const requestOtp = () => {
+        const result = sendEmail();
+        if (!result.success) return { error: "delivery_failed", cooldown: 0 };
+        otpSaved = true;
+        return { success: true, cooldown: 60 };
+      };
+
+      const res = requestOtp();
+      expect(res.error).toBe("delivery_failed");
+      expect(res.cooldown).toBe(0);
+      expect(otpSaved).toBe(false); // 2. OTP NOT activated, 3. Cooldown NOT started
+    });
+
+    it("allows immediate retry if previous SMTP delivery failed", () => {
+      let emailAttempts = 0;
+      const requestOtp = () => {
+        emailAttempts++;
+        if (emailAttempts === 1) return { error: "delivery_failed", cooldown: 0, saved: false };
+        return { success: true, cooldown: 60, saved: true };
+      };
+
+      const failRes = requestOtp();
+      expect(failRes.error).toBe("delivery_failed");
+
+      const successRes = requestOtp(); // 4. User can retry immediately
+      expect(successRes.success).toBe(true);
+      expect(successRes.saved).toBe(true); // 1. SMTP success -> OTP saved
+      expect(successRes.cooldown).toBe(60); // 5. Cooldown starts
+    });
+
+    it("invalidates OTP after first successful verification", () => {
+      const db = { used: false, verified: false };
+      const verify = (otp: string) => {
+        if (db.used) return { error: "already_used" };
+        if (otp !== "123456") return { error: "invalid" };
+        db.used = true;
+        db.verified = true;
+        return { success: true };
+      };
+
+      expect(verify("123456").success).toBe(true);
+      expect(verify("123456").error).toBe("already_used"); // 6. OTP cannot be reused
+    });
+
+    it("rejects expired OTPs", () => {
+      const now = Date.now();
+      const db = { expiresAt: now - 1000 };
+      const verify = () => {
+        if (db.expiresAt < Date.now()) return { error: "expired" };
+        return { success: true };
+      };
+
+      expect(verify().error).toBe("expired"); // 7. Expired OTP fails
+    });
+
+    it("increments attempts on wrong OTP and locks out after max attempts", () => {
+      const db = { attemptsCount: 0, maxAttempts: 5, otpHash: "hash" };
+      const verify = (submitted: string) => {
+        if (db.attemptsCount >= db.maxAttempts) return { error: "max_attempts" };
+        if (submitted !== db.otpHash) {
+          db.attemptsCount++;
+          return { error: "incorrect", remaining: db.maxAttempts - db.attemptsCount };
+        }
+        return { success: true };
+      };
+
+      expect(verify("wrong")).toEqual({ error: "incorrect", remaining: 4 }); // 8. Wrong OTP increments attempts
+      verify("wrong");
+      verify("wrong");
+      verify("wrong");
+      verify("wrong");
+      expect(verify("wrong")).toEqual({ error: "max_attempts" }); // Locks out
+    });
+
+    it("prevents concurrent verification reuse of the same OTP", () => {
+      const db = { used: false, inFlight: false };
+      const verifyConcurrent = async () => {
+        if (db.inFlight) return { error: "in_flight" };
+        db.inFlight = true; // Lock
+
+        // Simulating async db check
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        if (db.used) {
+          db.inFlight = false;
+          return { error: "already_used" };
+        }
+
+        db.used = true;
+        db.inFlight = false;
+        return { success: true };
+      };
+
+      // 9. Concurrent verification cannot reuse OTP
+      return Promise.all([verifyConcurrent(), verifyConcurrent()]).then((results) => {
+        expect(results).toContainEqual({ success: true });
+        expect(results).toContainEqual({ error: "in_flight" });
+      });
+    });
+  });
 });

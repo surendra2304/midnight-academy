@@ -13,12 +13,8 @@ export interface SendEmailOptions {
 let cachedTransporter: nodemailer.Transporter | null = null;
 
 function getTransporter(): nodemailer.Transporter | null {
-  const user = process.env["SMTP_USER"] || process.env["GMAIL_USER"];
-  const pass = (
-    process.env["SMTP_APP_PASSWORD"] ||
-    process.env["GOOGLE_APP_PASSWORD"] ||
-    ""
-  ).replace(/\s+/g, "");
+  const user = process.env["SMTP_USER"];
+  const pass = (process.env["SMTP_APP_PASSWORD"] || "").replace(/\s+/g, "");
 
   if (!user || !pass) {
     console.warn(
@@ -58,7 +54,7 @@ export async function sendEmail({
     }
 
     const fromName = process.env["SMTP_FROM_NAME"] || "Midnight Academy";
-    const fromEmail = process.env["SMTP_USER"] || process.env["GMAIL_USER"];
+    const fromEmail = process.env["SMTP_USER"];
     const from = `"${fromName}" <${fromEmail}>`;
 
     const info = await transporter.sendMail({

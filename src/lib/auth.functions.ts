@@ -53,6 +53,25 @@ export const requestRegistrationOtp = createServerFn({ method: "POST" })
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
     const resendAvailableAt = new Date(Date.now() + 60 * 1000); // 60s cooldown
 
+    const emailHtml = renderOtpVerificationEmail({ otp, expiresInMinutes: 10 });
+    const emailResult = await sendEmail({
+      to: email,
+      subject: "Your Midnight Academy Verification Code",
+      html: emailHtml,
+    });
+
+    if (!emailResult.success) {
+      console.error(
+        "[requestRegistrationOtp] Failed to deliver verification code:",
+        emailResult.error,
+      );
+      return {
+        error: "delivery_failed" as const,
+        message: "Unable to send the verification email right now. Please try again.",
+      };
+    }
+
+    // ONLY AFTER SUCCESS: Save to DB to begin the cooldown
     await saveOtpRecord({
       id,
       email,
@@ -68,24 +87,6 @@ export const requestRegistrationOtp = createServerFn({ method: "POST" })
       resendAvailableAt,
       createdAt: now,
     });
-
-    const emailHtml = renderOtpVerificationEmail({ otp, expiresInMinutes: 10 });
-    const emailResult = await sendEmail({
-      to: email,
-      subject: "Your Midnight Academy Verification Code",
-      html: emailHtml,
-    });
-
-    if (!emailResult.success) {
-      console.error(
-        "[requestRegistrationOtp] Failed to deliver verification code:",
-        emailResult.error,
-      );
-      return {
-        error: "delivery_failed" as const,
-        message: "Unable to send verification code. Please check your email address and try again.",
-      };
-    }
 
     return {
       success: true,
