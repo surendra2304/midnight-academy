@@ -180,7 +180,7 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
     };
 
     // 6. Recent attempts formatted
-    const recentAttempts = allAttempts.slice(0, 10).map((a) => {
+    const recentAttempts = allAttempts.map((a) => {
       const test = a.tests as {
         name?: string;
         category?: string;
@@ -190,13 +190,13 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
       } | null;
       return {
         id: a.id,
-        testName: test?.name || "Comprehension Test",
-        category: test?.category || "General",
+        testName: test?.name || "Unknown Test",
+        category: test?.category || "Unknown",
         difficulty: test?.difficulty || "Medium",
         score: a.score !== null ? Number(a.score) : null,
         status: a.status,
         date: a.started_at,
-        questionsCount: test?.question_count || 5,
+        questionsCount: test?.question_count || 0,
         testCode: test?.code || "",
       };
     });

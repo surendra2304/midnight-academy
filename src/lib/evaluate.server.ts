@@ -179,7 +179,14 @@ export async function draftQuestions(
   ]);
 
   const parsed = RawDraftSchema.safeParse(rawJson);
-  const questions = parsed.success ? parsed.data.questions : [];
+  if (!parsed.success) {
+    throw new Error("AI generated a malformed response. Please try again.");
+  }
+
+  const questions = parsed.data.questions;
+  if (questions.length === 0) {
+    throw new Error("AI failed to extract any valid questions from the source text.");
+  }
 
   return questions.map((q, index) => ({
     text: (q.text || rawQuestions[index] || "").trim(),

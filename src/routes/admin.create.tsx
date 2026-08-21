@@ -217,7 +217,7 @@ function Details({
         </div>
         <div className="sm:col-span-2">
           <Button type="submit" size="lg" disabled={!name.trim()}>
-            Continue
+            Next
           </Button>
         </div>
       </form>
@@ -368,8 +368,8 @@ function Review({
             concepts: q.concepts,
             constraints: q.constraints,
             referenceAnswer: q.referenceAnswer,
+            approved: q.approved,
           })),
-          approve: true,
         },
       });
 
@@ -514,7 +514,7 @@ function Review({
             <Loader2 className="mr-2 size-4 animate-spin" /> Saving...
           </>
         ) : (
-          `Continue (${approvedCount} Approved)`
+          `Next (${approvedCount} Approved)`
         )}
       </Button>
     </>

@@ -2,6 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Bell, ChevronDown, LogOut, Settings, User } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Wordmark } from "@/components/brand";
+import { NotificationsMenu } from "@/components/notifications-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -124,13 +125,9 @@ export function AppNav({ admin }: { admin?: boolean | undefined }) {
           <NavLinks items={admin ? adminNav : studentNav} />
         </div>
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
-          <button
-            className="relative hidden size-9 place-items-center rounded-lg border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground sm:grid"
-            aria-label="Notifications"
-          >
-            <Bell className="size-4" />
-            <span className="absolute right-2 top-2 size-1.5 rounded-full bg-primary" />
-          </button>
+          <div className="hidden sm:block">
+            <NotificationsMenu />
+          </div>
           <ProfileMenu admin={admin} />
         </div>
       </div>

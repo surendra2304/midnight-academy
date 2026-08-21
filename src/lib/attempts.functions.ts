@@ -348,6 +348,39 @@ export const finishAttempt = createServerFn({ method: "POST" })
         })
         .eq("id", attempt.id);
 
+      // Fetch test to notify owner
+      const { data: testInfo } = await supabaseAdmin
+        .from("tests")
+        .select("name, owner_id")
+        .eq("id", attempt.test_id)
+        .maybeSingle();
+
+      // Notify Student
+      await supabaseAdmin.from("notifications").insert({
+        user_id: context.userId,
+        title: "Evaluation Completed",
+        message: `Your results for "${testInfo?.name || "Test"}" are ready.`,
+        type: "evaluation",
+        link: `/result/${attempt.id}`,
+      });
+
+      // Notify Admin
+      if (testInfo?.owner_id) {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("full_name")
+          .eq("id", context.userId)
+          .maybeSingle();
+
+        await supabaseAdmin.from("notifications").insert({
+          user_id: testInfo.owner_id,
+          title: "New Student Submission",
+          message: `${profile?.full_name || "A student"} has completed "${testInfo?.name || "Test"}".`,
+          type: "system",
+          link: `/admin/tests/${attempt.test_id}`,
+        });
+      }
+
       // Asynchronous email notification to student (non-blocking for UI)
       (async () => {
         try {

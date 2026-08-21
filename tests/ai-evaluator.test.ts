@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "vitest";
 import { z } from "zod";
 
 describe("Gemini AI Comprehension Evaluator Pipeline Hardening", () => {
@@ -119,5 +119,18 @@ describe("Gemini AI Comprehension Evaluator Pipeline Hardening", () => {
     expect(userSafeMessage).not.toContain("AIzaSy");
     expect(userSafeMessage).not.toContain("internal");
     expect(userSafeMessage).not.toContain("ResourceExhausted");
+  });
+
+  it("prevents generating tests with zero questions when AI returns an empty array", () => {
+    const parsed = { success: true, data: { questions: [] } };
+    let errorThrown = false;
+    try {
+      if (!parsed.success) throw new Error("AI generated a malformed response.");
+      if (parsed.data.questions.length === 0) throw new Error("AI failed to extract any valid questions from the source text.");
+    } catch (e: any) {
+      errorThrown = true;
+      expect(e.message).toContain("failed to extract any valid questions");
+    }
+    expect(errorThrown).toBe(true);
   });
 });

@@ -8,6 +8,47 @@ export type Database = {
   };
   public: {
     Tables: {
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          message: string;
+          type: Database["public"]["Enums"]["notification_type"];
+          is_read: boolean;
+          link: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          message: string;
+          type?: Database["public"]["Enums"]["notification_type"];
+          is_read?: boolean;
+          link?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          message?: string;
+          type?: Database["public"]["Enums"]["notification_type"];
+          is_read?: boolean;
+          link?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       attempt_answers: {
         Row: {
           attempt_id: string;
@@ -275,6 +316,7 @@ export type Database = {
       app_role: "admin" | "student";
       attempt_status: "in_progress" | "evaluating" | "evaluated";
       test_status: "draft" | "active" | "completed";
+      notification_type: "system" | "alert" | "message" | "evaluation";
     };
     CompositeTypes: {
       [_ in never]: never;

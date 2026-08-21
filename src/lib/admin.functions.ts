@@ -10,6 +10,7 @@ const questionInput = z.object({
   concepts: z.array(z.string()).max(20),
   constraints: z.array(z.string()).max(20),
   referenceAnswer: z.string().max(4000),
+  approved: z.boolean().optional(),
 });
 
 export const listAdminTests = createServerFn({ method: "GET" })
@@ -251,7 +252,7 @@ export const saveQuestions = createServerFn({ method: "POST" })
           concepts: question.concepts,
           constraints: question.constraints,
           reference_answer: question.referenceAnswer,
-          ...(data.approve ? { approved: true } : {}),
+          ...(question.approved !== undefined ? { approved: question.approved } : {}),
         })
         .eq("id", question.id)
         .eq("test_id", data.testId);
@@ -291,7 +292,16 @@ export const publishTest = createServerFn({ method: "POST" })
         .from("tests")
         .update({ code, status: "active", question_count: count })
         .eq("id", test.id);
-      if (!error) return { code };
+      if (!error) {
+        await context.supabase.from("notifications").insert({
+          user_id: context.userId,
+          title: "Test Published",
+          message: `Test code is ${code}.`,
+          type: "system",
+          link: `/admin/tests/${test.id}`,
+        });
+        return { code };
+      }
       if (!error.message.includes("duplicate")) throw new Error("Could not publish the test.");
     }
     throw new Error("Could not generate a unique test code. Please try again.");
