@@ -160,6 +160,7 @@ export const draftTest = createServerFn({ method: "POST" })
         secondsPerQuestion: z.number().int().min(15).max(300),
         responseSeconds: z.number().int().min(30).max(900),
         source: z.string().min(20).max(40000),
+        useAi: z.boolean().optional().default(true),
       })
       .parse(data),
   )
@@ -171,7 +172,16 @@ export const draftTest = createServerFn({ method: "POST" })
     const rawQuestions = splitQuestions(data.source);
     if (!rawQuestions.length) throw new Error("No questions could be read from that source.");
 
-    const drafted = await draftQuestions(data.category, rawQuestions);
+    const drafted = data.useAi
+      ? await draftQuestions(data.category, rawQuestions)
+      : rawQuestions.map((text) => ({
+          text: text.trim(),
+          topic: "",
+          difficulty: "Medium" as string,
+          concepts: [],
+          constraints: [],
+          referenceAnswer: "",
+        }));
 
     const { data: test, error } = await context.supabase
       .from("tests")

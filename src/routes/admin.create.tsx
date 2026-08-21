@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Check, Copy, FileText, FileType2, Loader2, PencilLine, Trash2 } from "lucide-react";
+import { ArrowRight, Check, Copy, FileText, FileType2, Loader2, PencilLine, Trash2 } from "lucide-react";
 import { PageShell, Panel, SectionHeading, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -235,7 +235,7 @@ function Source({
   const [sourceText, setSourceText] = useState("");
   const [drafting, setDrafting] = useState(false);
 
-  const handleDraft = async (rawContent: string) => {
+  const handleDraft = async (rawContent: string, useAi = true) => {
     if (rawContent.trim().length < 20) {
       toast.error("Please paste at least one full question statement.");
       return;
@@ -251,6 +251,7 @@ function Source({
           secondsPerQuestion: config.secondsPerQuestion,
           responseSeconds: config.responseSeconds,
           source: rawContent,
+          useAi,
         },
       });
 
@@ -267,7 +268,11 @@ function Source({
       }));
 
       onDrafted(res.testId, formatted);
-      toast.success(`Successfully drafted ${res.count} questions`);
+      toast.success(
+        useAi
+          ? `Successfully drafted ${res.count} questions`
+          : `Created ${res.count} questions — review and fill in details`,
+      );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to draft questions";
       toast.error(message);
@@ -295,8 +300,9 @@ function Source({
     <Panel>
       <h2 className="text-base font-semibold text-foreground">Add Questions</h2>
       <p className="mt-1.5 text-sm text-muted-foreground">
-        Paste your technical question statements below. AI will automatically draft concepts,
-        constraints, and reference answers for your review.
+        Paste your technical question statements below, then continue. AI will draft concepts,
+        constraints, and reference answers automatically — or skip AI and fill them in yourself on
+        the next step.
       </p>
 
       <div className="mt-6 space-y-4">
@@ -306,16 +312,24 @@ function Source({
           placeholder={`1. Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume each input would have exactly one solution.\n\n2. Given an integer array nums, find a subarray that has the largest product, and return the product. The test cases are generated so that the answer will fit in a 32-bit integer.`}
           className="min-h-[220px] font-mono text-sm leading-relaxed"
         />
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             size="lg"
-            onClick={() => handleDraft(sourceText)}
+            onClick={() => handleDraft(sourceText, true)}
             disabled={sourceText.trim().length < 20 || drafting}
           >
-            Draft with AI
+            Draft with AI & Continue <ArrowRight className="size-4" />
           </Button>
           <Button
             variant="outline"
+            size="lg"
+            onClick={() => handleDraft(sourceText, false)}
+            disabled={sourceText.trim().length < 20 || drafting}
+          >
+            Continue Without AI <ArrowRight className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
             size="lg"
             onClick={() => {
               const sample =
@@ -326,6 +340,10 @@ function Source({
             Load Sample Questions
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Tip: separate each question with a blank line. AI drafting usually takes a few seconds;
+          if it is unavailable, "Continue Without AI" always works.
+        </p>
       </div>
     </Panel>
   );
