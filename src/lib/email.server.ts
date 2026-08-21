@@ -16,8 +16,6 @@ function getTransporter(): nodemailer.Transporter | null {
   const user = (process.env["SMTP_USER"] || "").trim();
   const pass = (process.env["SMTP_APP_PASSWORD"] || "").trim();
 
-  console.log(`[email.server] Authenticating with SMTP_USER: "${user}"`);
-
   if (!user || !pass) {
     console.warn(
       "[email.server] SMTP credentials not configured (SMTP_USER / SMTP_APP_PASSWORD missing).",
@@ -26,10 +24,13 @@ function getTransporter(): nodemailer.Transporter | null {
   }
 
   if (!cachedTransporter) {
+    // Port/secure are configurable so production can switch to 587 + STARTTLS
+    // if the hosting platform blocks direct outbound SSL on 465.
+    const port = Number(process.env["SMTP_PORT"] || 465);
     cachedTransporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true, // use SSL on port 465
+      host: process.env["SMTP_HOST"] || "smtp.gmail.com",
+      port,
+      secure: process.env["SMTP_SECURE"] ? process.env["SMTP_SECURE"] === "true" : port === 465,
       auth: {
         user,
         pass,
@@ -37,10 +38,21 @@ function getTransporter(): nodemailer.Transporter | null {
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
+      pool: true,
+      maxConnections: 3,
+      maxMessages: 50,
     });
   }
 
   return cachedTransporter;
+}
+
+function describeSmtpError(err: unknown): string {
+  if (err && typeof err === "object") {
+    const e = err as { code?: string; command?: string; message?: string };
+    return [e.code, e.command, e.message].filter(Boolean).join(" | ");
+  }
+  return String(err);
 }
 
 export async function sendEmail({
@@ -59,7 +71,7 @@ export async function sendEmail({
     const fromEmail = process.env["SMTP_USER"];
     const from = `"${fromName}" <${fromEmail}>`;
 
-    const info = await transporter.sendMail({
+    const message = {
       from,
       to,
       subject,
@@ -70,13 +82,31 @@ export async function sendEmail({
           .replace(/\s+/g, " ")
           .trim(),
       html,
-    });
-    console.log(`[email.server] Email sent successfully, messageId: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    };
+
+    try {
+      const info = await transporter.sendMail(message);
+      console.log(`[email.server] Email sent successfully, messageId: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    } catch (firstErr: unknown) {
+      // Transient SMTP failures (connection drops, greeting timeouts) are common
+      // in serverless environments; one retry with a fresh connection helps.
+      console.warn(
+        "[email.server] First send attempt failed, retrying once:",
+        describeSmtpError(firstErr),
+      );
+      cachedTransporter = null;
+      const retryTransporter = getTransporter();
+      if (!retryTransporter) {
+        return { success: false, error: "SMTP not configured" };
+      }
+      const info = await retryTransporter.sendMail(message);
+      console.log(`[email.server] Email sent on retry, messageId: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    }
   } catch (err: unknown) {
-    const rawError = err instanceof Error ? err.message : "Unknown SMTP error";
-    // Technical error logged strictly to server-side stderr
-    console.error("[email.server] Failed to send email via Gmail SMTP:", rawError);
+    // Technical error logged strictly to server-side stderr (no credentials/PII)
+    console.error("[email.server] Failed to send email via Gmail SMTP:", describeSmtpError(err));
     return {
       success: false,
       error: "Unable to deliver verification email. Please verify your email configuration.",
