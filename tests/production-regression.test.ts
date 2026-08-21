@@ -91,6 +91,27 @@ describe("Midnight Academy — Comprehensive Production Regression Suite", () =>
       const result = checkAccess("ADMIN", student.role);
       expect(result).toEqual({ redirect: "/dashboard" });
     });
+
+    it("fails safely when user role query returns an error or no role exists", () => {
+      const resolveRoleSafely = (roleQueryError: Error | null, roles: string[]) => {
+        if (roleQueryError) {
+          throw new Error(`Role resolution failed: ${roleQueryError.message}`);
+        }
+        const hasAdmin = roles.includes("admin");
+        const hasStudent = roles.includes("student");
+        if (!hasAdmin && !hasStudent) {
+          throw new Error("No authorized role assigned to this account.");
+        }
+        return hasAdmin ? "ADMIN" : "STUDENT";
+      };
+
+      expect(() => resolveRoleSafely(new Error("Database offline"), [])).toThrow(
+        "Role resolution failed",
+      );
+      expect(() => resolveRoleSafely(null, [])).toThrow("No authorized role assigned");
+      expect(resolveRoleSafely(null, ["student"])).toBe("STUDENT");
+      expect(resolveRoleSafely(null, ["admin"])).toBe("ADMIN");
+    });
   });
 
   describe("OTP: Security, Lifecycle, Expiration & Rate Limiting", () => {

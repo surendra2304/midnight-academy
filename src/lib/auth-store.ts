@@ -37,30 +37,33 @@ function updateState(newState: Partial<AuthState>) {
  * Resolves user profile and role from Supabase DB using the authenticated user id.
  */
 async function fetchUserProfileAndRole(userId: string, email: string): Promise<User> {
-  try {
-    const [{ data: profile }, { data: roleRows }] = await Promise.all([
+  const [{ data: profile, error: profileError }, { data: roleRows, error: roleError }] =
+    await Promise.all([
       supabase.from("profiles").select("full_name, email").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
 
-    const hasAdminRole = (roleRows ?? []).some((r) => r.role === "admin");
-    const hasStudentRole = (roleRows ?? []).some((r) => r.role === "student");
-    const resolvedRole: AppRole = hasAdminRole ? "ADMIN" : hasStudentRole ? "STUDENT" : "STUDENT";
-
-    return {
-      id: userId,
-      email: profile?.email || email,
-      fullName: profile?.full_name || null,
-      role: resolvedRole,
-    };
-  } catch {
-    return {
-      id: userId,
-      email,
-      fullName: null,
-      role: "STUDENT",
-    };
+  if (roleError) {
+    throw new Error(`Failed to resolve user roles: ${roleError.message}`);
   }
+
+  const hasAdminRole = (roleRows ?? []).some((r) => r.role === "admin");
+  const hasStudentRole = (roleRows ?? []).some((r) => r.role === "student");
+
+  if (!hasAdminRole && !hasStudentRole) {
+    throw new Error(
+      "No authorized role assigned to this account. Please contact an administrator.",
+    );
+  }
+
+  const resolvedRole: AppRole = hasAdminRole ? "ADMIN" : "STUDENT";
+
+  return {
+    id: userId,
+    email: profile?.email || email,
+    fullName: profile?.full_name || null,
+    role: resolvedRole,
+  };
 }
 
 async function doRestoreSession(): Promise<void> {

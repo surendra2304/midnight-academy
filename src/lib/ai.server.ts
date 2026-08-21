@@ -16,7 +16,7 @@ type Message = { role: "system" | "user"; content: string };
 /** Calls Google Gemini and parses the model's reply as JSON. */
 export async function chatJson<T>(messages: Message[]): Promise<T> {
   const primaryKey = process.env["GEMINI_API_KEY"];
-  const fallbackKey = process.env["GEMINI_FALLBACK_API_KEY"];
+  const fallbackKey = process.env["GEMINI_FALLBACK_API_KEY"] || process.env["GEMINI_FALLBACK_KEY"];
 
   const apiKeys = [primaryKey, fallbackKey].filter(Boolean) as string[];
   if (apiKeys.length === 0) {
@@ -77,7 +77,6 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
         }
       } catch (err: unknown) {
         lastError = err;
-        if (err instanceof AiError) throw err;
         const errorMsg = err instanceof Error ? err.message : String(err);
         console.error(`[gemini key ${keyIdx + 1}] attempt ${attempt + 1} error:`, errorMsg);
 
@@ -95,7 +94,7 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
           break;
         }
 
-        if (!isQuotaOrDemand || attempt === 2) {
+        if (attempt === 2) {
           if (keyIdx === apiKeys.length - 1) {
             if (errorMsg.includes("429") || errorMsg.toLowerCase().includes("quota")) {
               throw new AiError(
