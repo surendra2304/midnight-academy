@@ -210,7 +210,8 @@ function AuthPage() {
         const { completeGoogleRegistration } = await import("@/lib/auth.functions");
         await completeGoogleRegistration({
           data: {
-            password: signupPassword,
+            // Google accounts sign in with Google — a password is optional
+            ...(signupPassword ? { password: signupPassword } : {}),
             fullName: fullName.trim(),
             role: signupRole,
             year: studyYear || undefined,
@@ -491,11 +492,7 @@ function AuthPage() {
                 <form onSubmit={handleCreatePassword} className="space-y-4">
                   <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-3 text-xs text-primary">
                     <CheckCircle2 className="size-4 shrink-0" />
-                    <span>
-                      {googleFlow
-                        ? `Continue signing up as ${signupEmail || "your Google account"}.`
-                        : "Email verified! Choose a password to secure your account."}
-                    </span>
+                    <span>Email verified! Choose a password to secure your account.</span>
                   </div>
 
                   <div className="space-y-2">

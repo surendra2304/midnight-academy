@@ -1,5 +1,6 @@
 /** Server-only helpers for calling Google Gemini using the official @google/genai SDK. */
 import { GoogleGenAI, type GenerateContentConfig, ThinkingLevel } from "@google/genai";
+import Groq from "groq-sdk";
 
 const MODEL_NAME = process.env["GEMINI_MODEL"] || "gemini-3.5-flash-lite";
 /** Upper bound for a single Gemini call so serverless functions never hang. */
@@ -119,5 +120,57 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
       }
     }
   }
+
+  // All Gemini keys exhausted — try Groq as a final fallback so evaluation
+  // survives a full Gemini outage. Entirely contained in this abstraction.
+  const groqKey = process.env["GROQ_API_KEY"];
+  if (groqKey) {
+    const groq = new Groq({ apiKey: groqKey });
+    const systemInstruction = messages
+      .filter((m) => m.role === "system")
+      .map((m) => m.content)
+      .join("\n\n");
+    const userPrompt = messages
+      .filter((m) => m.role === "user")
+      .map((m) => m.content)
+      .join("\n\n");
+
+    try {
+      const completion = await Promise.race([
+        groq.chat.completions.create({
+          model: process.env["GROQ_MODEL"] || "llama-3.1-8b-instant",
+          messages: [
+            ...(systemInstruction ? [{ role: "system" as const, content: systemInstruction }] : []),
+            { role: "user" as const, content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.2,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new AiError("Groq request timed out.", 504)),
+            REQUEST_TIMEOUT_MS + 5000,
+          ),
+        ),
+      ]);
+
+      const content = completion.choices?.[0]?.message?.content ?? "";
+      if (!content) throw new AiError("The fallback evaluator returned an empty response.", 502);
+      try {
+        return JSON.parse(content) as T;
+      } catch {
+        const start = content.indexOf("{");
+        const end = content.lastIndexOf("}");
+        if (start >= 0 && end > start) {
+          return JSON.parse(content.slice(start, end + 1)) as T;
+        }
+        throw new AiError("The fallback evaluator returned malformed output.", 502);
+      }
+    } catch (err) {
+      console.error("[groq] fallback error:", err instanceof Error ? err.message : String(err));
+      throw new AiError("The evaluator could not be reached.", 502);
+    }
+  }
+
   throw lastError;
 }

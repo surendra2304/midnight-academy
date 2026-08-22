@@ -62,6 +62,16 @@ export const startAttempt = createServerFn({ method: "POST" })
       .eq("attempt_id", attemptId)
       .not("submitted_at", "is", null);
 
+    // Accessibility mode grants a 1.5x reading window for students who need it
+    const { data: studentProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("accessibility_mode")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const readingSeconds = studentProfile?.accessibility_mode
+      ? Math.round(test.seconds_per_question * 1.5)
+      : test.seconds_per_question;
+
     return {
       attemptId,
       answered: answered ?? 0,
@@ -72,7 +82,7 @@ export const startAttempt = createServerFn({ method: "POST" })
         category: test.category,
         difficulty: test.difficulty,
         code,
-        secondsPerQuestion: test.seconds_per_question,
+        secondsPerQuestion: readingSeconds,
         responseSeconds: test.response_seconds,
       },
     };
@@ -293,20 +303,53 @@ export const finishAttempt = createServerFn({ method: "POST" })
   .validator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { evaluateAttempt } = await import("./attempts.server");
 
     const { data: attempt } = await supabaseAdmin
       .from("attempts")
-      .select("id, test_id, student_id, status")
+      .select("id, student_id, status")
       .eq("id", data.attemptId)
       .maybeSingle();
 
     if (!attempt || attempt.student_id !== context.userId) {
       throw new Error("Attempt not found or unauthorized.");
     }
-    if (attempt.status === "evaluated") return { attemptId: attempt.id };
+    if (attempt.status === "evaluated") return { attemptId: attempt.id, status: "evaluated" };
 
-    await supabaseAdmin.from("attempts").update({ status: "evaluating" }).eq("id", attempt.id);
+    // Mark for evaluation and return immediately — the heavy Gemini work runs
+    // in processAttemptEvaluation (called by the result page / instructor),
+    // so this request can never hit the serverless timeout.
+    await supabaseAdmin
+      .from("attempts")
+      .update({ status: "evaluating", completed_at: new Date().toISOString() })
+      .eq("id", attempt.id);
+
+    return { attemptId: attempt.id, status: "evaluating" };
+  });
+
+/**
+ * Processes the AI evaluation for one attempt. Authorised for the attempt's
+ * student and for the instructor who owns the test. Safe to call repeatedly —
+ * it skips attempts that are already evaluated, so clients can poll it.
+ */
+export const processAttemptEvaluation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { evaluateAttempt } = await import("./attempts.server");
+
+    const { data: attempt } = await supabaseAdmin
+      .from("attempts")
+      .select("id, test_id, student_id, status, tests(name, owner_id)")
+      .eq("id", data.attemptId)
+      .maybeSingle();
+
+    if (!attempt) throw new Error("Attempt not found.");
+    if (attempt.status === "evaluated") return { attemptId: attempt.id, status: "evaluated" };
+
+    const isStudent = attempt.student_id === context.userId;
+    const isInstructor = attempt.tests?.owner_id === context.userId;
+    if (!isStudent && !isInstructor) throw new Error("Attempt not found or unauthorized.");
 
     const { data: answers } = await supabaseAdmin
       .from("attempt_answers")
@@ -348,40 +391,33 @@ export const finishAttempt = createServerFn({ method: "POST" })
         })
         .eq("id", attempt.id);
 
-      // Fetch test to notify owner
-      const { data: testInfo } = await supabaseAdmin
-        .from("tests")
-        .select("name, owner_id")
-        .eq("id", attempt.test_id)
-        .maybeSingle();
-
-      // Notify Student
+      // Notify student
       await supabaseAdmin.from("notifications").insert({
-        user_id: context.userId,
+        user_id: attempt.student_id,
         title: "Evaluation Completed",
-        message: `Your results for "${testInfo?.name || "Test"}" are ready.`,
+        message: `Your results for "${attempt.tests?.name ?? "Test"}" are ready.`,
         type: "evaluation",
         link: `/result/${attempt.id}`,
       });
 
-      // Notify Admin
-      if (testInfo?.owner_id) {
+      // Notify instructor
+      if (attempt.tests?.owner_id) {
         const { data: profile } = await supabaseAdmin
           .from("profiles")
           .select("full_name")
-          .eq("id", context.userId)
+          .eq("id", attempt.student_id)
           .maybeSingle();
 
         await supabaseAdmin.from("notifications").insert({
-          user_id: testInfo.owner_id,
+          user_id: attempt.tests.owner_id,
           title: "New Student Submission",
-          message: `${profile?.full_name || "A student"} has completed "${testInfo?.name || "Test"}".`,
+          message: `${profile?.full_name || "A student"} has completed "${attempt.tests?.name ?? "Test"}".`,
           type: "system",
           link: `/admin/tests/${attempt.test_id}`,
         });
       }
 
-      // Asynchronous email notification to student (non-blocking for UI)
+      // Asynchronous email notification to student (non-blocking)
       (async () => {
         try {
           const { data: studentProfile } = await supabaseAdmin
@@ -415,14 +451,15 @@ export const finishAttempt = createServerFn({ method: "POST" })
           }
         } catch (mailErr) {
           console.warn(
-            "[finishAttempt] Evaluation email dispatch notice:",
+            "[processAttemptEvaluation] Evaluation email dispatch notice:",
             mailErr instanceof Error ? mailErr.message : mailErr,
           );
         }
       })();
 
-      return { attemptId: attempt.id };
+      return { attemptId: attempt.id, status: "evaluated" };
     } catch (error) {
+      // Return the attempt to in_progress so the student is not stuck
       await supabaseAdmin.from("attempts").update({ status: "in_progress" }).eq("id", attempt.id);
       throw error;
     }

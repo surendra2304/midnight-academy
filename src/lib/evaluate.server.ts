@@ -36,6 +36,7 @@ Rules:
 - Feedback must be 2-3 complete sentences.
 - Only list a concept or constraint as missed if it appears in the provided lists and is genuinely absent or misstated in the student's writing. Copy the missed items verbatim from the lists.
 - Empty or off-topic writing scores 0.
+- IRRELEVANT RESPONSES: if the student's response is completely irrelevant to the passage or the reference answer — fluent but factually disconnected, hallucinated content — cap ALL five axis scores at 1 (out of 10) and append this exact note at the start of the feedback: "The response appears to be off-topic or completely irrelevant to the passage."
 
 Return ONLY JSON of this exact shape:
 {

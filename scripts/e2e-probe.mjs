@@ -236,3 +236,24 @@ show("9. studentDashboard", {
 });
 
 console.log("\n########## E2E COMPLETE ##########");
+
+// ---------- Cleanup: remove throwaway probe accounts ----------
+if (!process.env["E2E_KEEP"]) {
+  try {
+    const { body: allUsers } = await supa("/auth/v1/admin/users?per_page=1000");
+    const probeUsers = (allUsers?.users ?? []).filter(
+      (u) =>
+        (u.email || "").includes(".e2e.") ||
+        (u.email || "").startsWith("gflow.") ||
+        (u.email || "").startsWith("googleflow."),
+    );
+    let deleted = 0;
+    for (const u of probeUsers) {
+      const r = await supa(`/auth/v1/admin/users/${u.id}`, { method: "DELETE" });
+      if (r.status < 300) deleted += 1;
+    }
+    console.log(`cleanup: removed ${deleted} probe accounts (set E2E_KEEP=1 to keep them)`);
+  } catch (e) {
+    console.log("cleanup skipped:", e.message);
+  }
+}

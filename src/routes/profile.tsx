@@ -65,7 +65,7 @@ function ProfilePage() {
   const [data, setData] = useState<StudentAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [extraTime, setExtraTime] = useState("none");
+  const [accessibility, setAccessibility] = useState(false);
   const [name, setName] = useState("");
   const [inst, setInst] = useState("");
   const [year, setYear] = useState("");
@@ -78,6 +78,7 @@ function ProfilePage() {
         setName(res.profile.fullName);
         setInst(res.profile.institution || "");
         setYear(res.profile.year || "");
+        setAccessibility(res.profile.accessibilityMode ?? false);
       } catch {
         // Fallback
       } finally {
@@ -96,6 +97,7 @@ function ProfilePage() {
           fullName: name.trim(),
           institution: inst.trim() || undefined,
           year: year.trim() || undefined,
+          accessibilityMode: accessibility,
         },
       });
       setData((prev) =>
@@ -225,19 +227,12 @@ function ProfilePage() {
           <div className="mt-3">
             <Row
               title="Extended reading time"
-              description="Adds extra time to the reading stage of every question. Requires instructor approval and is recorded on your attempts."
+              description="Gives you a 1.5x longer reading window on every question, applied automatically to all tests and practice."
             >
-              <Select value={extraTime} onValueChange={setExtraTime}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Standard time</SelectItem>
-                  <SelectItem value="25">+25% time</SelectItem>
-                  <SelectItem value="50">+50% time</SelectItem>
-                  <SelectItem value="100">Double time</SelectItem>
-                </SelectContent>
-              </Select>
+              <Switch
+                checked={accessibility}
+                onCheckedChange={(checked) => setAccessibility(checked)}
+              />
             </Row>
             <Row
               title="Larger question text"

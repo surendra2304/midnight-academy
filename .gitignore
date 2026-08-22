@@ -48,3 +48,4 @@ test-*.js
 test-*.cjs
 scratch-*.js
 scratch-*.cjs
+.env.production.local

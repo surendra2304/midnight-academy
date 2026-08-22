@@ -245,6 +245,7 @@ function Source({
   const [sourceText, setSourceText] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState<number | null>(null);
   // Once a PDF is parsed (or questions are split), they are shown as editable boxes
   const [extracted, setExtracted] = useState<string[] | null>(null);
 
@@ -310,14 +311,41 @@ function Source({
       const buffer = await file.arrayBuffer();
       const pdf = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
       const pages: string[] = [];
+      const pagesNeedingOcr: number[] = [];
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        pages.push(
-          content.items
-            .map((item) => ("str" in item ? (item as { str: string }).str : ""))
-            .join(" "),
-        );
+        const pageText = content.items
+          .map((item) => ("str" in item ? (item as { str: string }).str : ""))
+          .join(" ");
+        if (pageText.replace(/\s/g, "").length < 20) {
+          pagesNeedingOcr.push(i);
+          pages.push("");
+        } else {
+          pages.push(pageText);
+        }
+      }
+
+      // Scanned PDFs have no embedded text — run OCR on those pages in-browser
+      if (pagesNeedingOcr.length > 0) {
+        const { default: Tesseract } = await import("tesseract.js");
+        let done = 0;
+        for (const pageNum of pagesNeedingOcr) {
+          const page = await pdf.getPage(pageNum);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const viewport = page.getViewport({ scale: 1400 / baseViewport.width });
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.floor(viewport.width);
+          canvas.height = Math.floor(viewport.height);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) continue;
+          await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+          const result = await Tesseract.recognize(canvas, "eng");
+          pages[pageNum - 1] = result.data.text ?? "";
+          done += 1;
+          setOcrProgress(Math.round((done / pagesNeedingOcr.length) * 100));
+        }
+        setOcrProgress(null);
       }
       const text = pages
         .join("\n")
@@ -454,7 +482,8 @@ function Source({
             <label htmlFor="pdf-upload" className="cursor-pointer">
               {parsing ? (
                 <>
-                  <Loader2 className="mr-2 size-4 animate-spin" /> Reading PDF...
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  {ocrProgress !== null ? `Running OCR... ${ocrProgress}%` : "Reading PDF..."}
                 </>
               ) : (
                 <>
@@ -464,7 +493,7 @@ function Source({
             </label>
           </Button>
           <p className="mt-3 text-xs text-muted-foreground">
-            Text-based PDFs work best (not scans). Each question is detected automatically.
+            Text PDFs read instantly; scanned pages are read with in-browser OCR automatically.
           </p>
         </div>
 

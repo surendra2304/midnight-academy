@@ -346,7 +346,12 @@ export const completeGoogleRegistration = createServerFn({ method: "POST" })
   .validator((data) =>
     z
       .object({
-        password: z.string().min(6).max(72),
+        password: z
+          .string()
+          .min(6)
+          .max(72)
+          .nullish()
+          .transform((v) => (v === null ? undefined : v)),
         fullName: z.string().max(120),
         role: z.enum(["student", "admin"]),
         year: z.string().max(30).optional(),
@@ -383,11 +388,14 @@ export const completeGoogleRegistration = createServerFn({ method: "POST" })
     const user = userData?.user;
     if (!user) throw new Error("Google account not found. Please try again.");
 
-    const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      password: data.password,
-    });
-    if (passwordError) {
-      throw new Error(passwordError.message || "Could not set the password.");
+    // Google identities may skip the password entirely — they sign in with Google.
+    if (data.password) {
+      const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        password: data.password,
+      });
+      if (passwordError) {
+        throw new Error(passwordError.message || "Could not set the password.");
+      }
     }
 
     await supabaseAdmin.from("profiles").upsert({

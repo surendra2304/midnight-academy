@@ -7,7 +7,7 @@ import { AppNav } from "@/components/app-nav";
 import { ComprehensionBreakdown } from "@/components/comprehension";
 import { CountUp, PageShell, Panel, SectionHeading, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { flagEvaluation, getResult } from "@/lib/attempts.functions";
+import { flagEvaluation, getResult, processAttemptEvaluation } from "@/lib/attempts.functions";
 import { scoreTextClass } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/result/$attemptId")({
@@ -71,21 +71,55 @@ function ResultPage() {
   const [flaggingIds, setFlaggingIds] = useState<string[]>([]);
 
   useEffect(() => {
-    async function fetchResult() {
+    let cancelled = false;
+
+    async function waitForEvaluation() {
       setLoading(true);
       setError(null);
       try {
-        const res = await getResult({ data: { attemptId } });
-        setData(res as ResultData);
+        let res = (await getResult({ data: { attemptId } })) as ResultData;
+
+        // Kick the heavy AI evaluation here (off the submit request) and poll
+        // until it finishes. processAttemptEvaluation skips evaluated attempts,
+        // so repeated calls are safe.
+        let attempts = 0;
+        while (res.status !== "evaluated" && attempts < 12 && !cancelled) {
+          if (attempts === 0) {
+            setData(res);
+            setLoading(false);
+          }
+          try {
+            await processAttemptEvaluation({ data: { attemptId } });
+          } catch {
+            // transient failure — keep polling
+          }
+          await new Promise((r) => setTimeout(r, 5000));
+          res = (await getResult({ data: { attemptId } })) as ResultData;
+          if (res.status === "evaluated" && !cancelled) setData(res);
+          attempts += 1;
+        }
+
+        if (cancelled) return;
+        if (res.status !== "evaluated") {
+          setError(
+            "Evaluation is still in progress. Refresh this page in a moment to see your results.",
+          );
+          setData(res);
+        } else {
+          setData(res);
+        }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to load test results";
         setError(message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
-    fetchResult();
+    waitForEvaluation();
+    return () => {
+      cancelled = true;
+    };
   }, [attemptId]);
 
   const handleFlagAnswer = async (answerId: string) => {
@@ -123,6 +157,24 @@ function ResultPage() {
     );
   }
 
+  if (data && data.status !== "evaluated" && !loading) {
+    return (
+      <div className="min-h-screen">
+        <AppNav />
+        <PageShell>
+          <div className="panel my-12 p-10 text-center">
+            <Loader2 className="mx-auto size-10 animate-spin text-primary" />
+            <h1 className="mt-6 text-xl font-bold text-foreground">Evaluating your answers...</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              The AI evaluator is reviewing your responses across the five reading axes. This
+              usually takes less than a minute — this page updates automatically.
+            </p>
+          </div>
+        </PageShell>
+      </div>
+    );
+  }
+
   if (error || !data) {
     return (
       <div className="min-h-screen">
@@ -146,6 +198,8 @@ function ResultPage() {
       </div>
     );
   }
+
+  const stillEvaluating = data.status !== "evaluated";
 
   const overallScore = data.score ?? 0;
   const axesScores = {

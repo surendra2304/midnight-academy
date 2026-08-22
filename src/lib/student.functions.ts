@@ -12,6 +12,7 @@ export type StudentAnalytics = {
     institution: string | null;
     year: string | null;
     onboarded: boolean;
+    accessibilityMode: boolean;
   };
   stats: {
     testsTaken: number;
@@ -69,7 +70,7 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
     const [{ data: profileRow }, { data: attempts }] = await Promise.all([
       supabaseAdmin
         .from("profiles")
-        .select("full_name, email, institution, year, onboarded")
+        .select("full_name, email, institution, year, onboarded, accessibility_mode")
         .eq("id", context.userId)
         .maybeSingle(),
       supabaseAdmin
@@ -87,6 +88,7 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
       institution: profileRow?.institution || null,
       year: profileRow?.year || null,
       onboarded: profileRow?.onboarded ?? false,
+      accessibilityMode: profileRow?.accessibility_mode ?? false,
     };
 
     const allAttempts = attempts ?? [];
@@ -258,15 +260,24 @@ export const updateStudentProfile = createServerFn({ method: "POST" })
         fullName: z.string().min(1).max(100),
         institution: z.string().max(120).optional(),
         year: z.string().max(80).optional(),
+        accessibilityMode: z.boolean().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const updatePayload: { full_name: string; institution?: string; year?: string } = {
+    const updatePayload: {
+      full_name: string;
+      institution?: string;
+      year?: string;
+      accessibility_mode?: boolean;
+    } = {
       full_name: data.fullName,
     };
+    if (data.accessibilityMode !== undefined) {
+      updatePayload.accessibility_mode = data.accessibilityMode;
+    }
     if (data.institution !== undefined) {
       updatePayload.institution = data.institution;
     }
