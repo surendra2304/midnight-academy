@@ -282,42 +282,107 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
   });
 
 /**
- * 4. Ensure an OAuth (e.g. Google) sign-in has a profile and a role.
+ * 4. OAuth (e.g. Google) post-login status check.
  * Runs server-side with the service role because RLS forbids clients from
- * inserting into user_roles — without this, OAuth users could never sign in.
+ * reading arbitrary user_roles rows. Does NOT create anything: an existing
+ * account (role assigned) signs straight in; a first-time Google identity is
+ * routed to the signup continuation flow instead of being auto-registered.
  */
-export const ensureOAuthProfile = createServerFn({ method: "POST" })
+export const getOAuthAccountStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const authUserId = context?.userId;
+    if (!authUserId) throw new Error("Unauthorized.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(context.userId);
-    const user = userData?.user;
-    if (!user) throw new Error("Authenticated user not found.");
-
-    const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
-    const fullName =
-      typeof metadata["full_name"] === "string" && metadata["full_name"]
-        ? metadata["full_name"]
-        : user.email?.split("@")[0] || "Student";
-
-    await supabaseAdmin.from("profiles").upsert({
-      id: user.id,
-      email: user.email ?? "",
-      full_name: fullName,
-    });
 
     const { data: existingRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id);
+      .eq("user_id", authUserId);
 
-    if (!existingRoles || existingRoles.length === 0) {
-      await supabaseAdmin.from("user_roles").insert({
-        user_id: user.id,
-        role: "student",
-      });
+    const roles = existingRoles ?? [];
+    if (roles.length === 0) {
+      return { hasAccount: false as const, email: null, fullName: null };
     }
 
-    return { ok: true };
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(authUserId);
+    const metadata = (userData?.user?.user_metadata ?? {}) as Record<string, unknown>;
+
+    return {
+      hasAccount: true as const,
+      role: (roles[0]?.role ?? "student") as "admin" | "student",
+      email: userData?.user?.email ?? null,
+      fullName:
+        typeof metadata["full_name"] === "string" && metadata["full_name"]
+          ? metadata["full_name"]
+          : null,
+    };
+  });
+
+/**
+ * 5. Complete registration for a first-time Google identity.
+ * The OAuth callback deliberately leaves the account unregistered (no role);
+ * this finishes signup with the chosen password, role and details, using the
+ * service role for the password update and the RLS-protected writes.
+ */
+export const completeGoogleRegistration = createServerFn({ method: "POST" })
+  .validator((data) =>
+    z
+      .object({
+        password: z.string().min(6).max(72),
+        fullName: z.string().max(120),
+        role: z.enum(["student", "admin"]),
+        year: z.string().max(30).optional(),
+        branch: z.string().max(60).optional(),
+        institution: z.string().max(160).optional(),
+      })
+      .parse(data),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const authUserId = context?.userId;
+    if (!authUserId) throw new Error("Unauthorized.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: existingRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", authUserId);
+
+    if (existingRoles && existingRoles.length > 0) {
+      throw new Error("This Google account is already registered. Please sign in.");
+    }
+
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(authUserId);
+    const user = userData?.user;
+    if (!user) throw new Error("Google account not found. Please try again.");
+
+    const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      password: data.password,
+    });
+    if (passwordError) {
+      throw new Error(passwordError.message || "Could not set the password.");
+    }
+
+    await supabaseAdmin.from("profiles").upsert({
+      id: user.id,
+      email: user.email ?? "",
+      full_name: data.fullName.trim(),
+      ...(data.year ? { year: data.year } : {}),
+      ...(data.branch ? { branch: data.branch } : {}),
+      ...(data.institution ? { institution: data.institution } : {}),
+      onboarded: false,
+    });
+
+    await supabaseAdmin.from("user_roles").insert({
+      user_id: user.id,
+      role: data.role,
+    });
+
+    return {
+      success: true,
+      userId: user.id,
+      email: user.email ?? "",
+      role: data.role,
+    };
   });

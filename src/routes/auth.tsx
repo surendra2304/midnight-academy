@@ -25,6 +25,19 @@ import {
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: ({ location }) => requireUnauth({ location }),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    flow?: string | undefined;
+    email?: string | undefined;
+    name?: string | undefined;
+    redirect?: string | undefined;
+  } => ({
+    flow: typeof search["flow"] === "string" ? search["flow"] : undefined,
+    email: typeof search["email"] === "string" ? search["email"] : undefined,
+    name: typeof search["name"] === "string" ? search["name"] : undefined,
+    redirect: typeof search["redirect"] === "string" ? search["redirect"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — Midnight Academy" },
@@ -42,23 +55,30 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-type SignupStep = "email" | "otp" | "password" | "done";
+type SignupStep = "email" | "otp" | "password" | "role" | "details" | "done";
 
 function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const search = Route.useSearch();
+  // A first-time Google identity lands here from the OAuth callback with
+  // flow=google-new: email is already verified by Google, so signup continues
+  // at the password step and completes via completeGoogleRegistration.
+  const googleFlow = search.flow === "google-new";
+
+  const [isLogin, setIsLogin] = useState(!googleFlow);
   const [loading, setLoading] = useState(false);
 
   // Signup multi-step states
-  const [signupStep, setSignupStep] = useState<SignupStep>("email");
-  const [signupEmail, setSignupEmail] = useState("");
+  const [signupStep, setSignupStep] = useState<SignupStep>(googleFlow ? "password" : "email");
+  const [signupEmail, setSignupEmail] = useState(search.email ?? "");
   const [signupOtp, setSignupOtp] = useState("");
   const [verificationToken, setVerificationToken] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupPasswordConfirm, setSignupPasswordConfirm] = useState("");
   const [signupRole, setSignupRole] = useState<"student" | "admin">("student");
-  const [fullName, setFullName] = useState("");
+  const [fullName, setFullName] = useState(search.name ?? "");
   const [studyYear, setStudyYear] = useState("");
   const [branch, setBranch] = useState("");
+  const [institution, setInstitution] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const navigate = useNavigate();
@@ -156,8 +176,8 @@ function AuthPage() {
     }
   };
 
-  // Step 3: Set Password & Create Account
-  const handleCreatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Step 3: Set Password (account is only created at the final details step)
+  const handleCreatePassword = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (signupPassword.length < 6) {
@@ -170,6 +190,13 @@ function AuthPage() {
       return;
     }
 
+    setSignupStep("role");
+  };
+
+  // Step 5: Details & Create Account (regular email flow)
+  const handleCompleteDetails = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
     if (!fullName.trim()) {
       toast.error("Please enter your full name.");
       return;
@@ -177,26 +204,42 @@ function AuthPage() {
 
     setLoading(true);
     try {
-      await completeRegistrationWithPassword({
-        data: {
-          email: signupEmail.trim(),
-          verificationToken,
-          password: signupPassword,
-          fullName: fullName.trim(),
-          role: signupRole,
-          year: studyYear || undefined,
-          branch: branch || undefined,
-        },
-      });
+      if (googleFlow) {
+        const { completeGoogleRegistration } = await import("@/lib/auth.functions");
+        await completeGoogleRegistration({
+          data: {
+            password: signupPassword,
+            fullName: fullName.trim(),
+            role: signupRole,
+            year: studyYear || undefined,
+            branch: branch || undefined,
+            institution: institution || undefined,
+          },
+        });
 
-      // Automatically sign in the user
-      await login({ email: signupEmail.trim(), password: signupPassword });
-      toast.success("Account created successfully!");
-
-      if (signupRole === "admin") {
-        navigate({ to: "/admin" });
+        // The Google session already exists — resync the store and route by role
+        const { authStore } = await import("@/lib/auth-store");
+        await authStore.restoreSession();
+        toast.success("Account created successfully!");
+        navigate({ to: signupRole === "admin" ? "/admin" : "/dashboard" });
       } else {
-        navigate({ to: "/dashboard" });
+        await completeRegistrationWithPassword({
+          data: {
+            email: signupEmail.trim(),
+            verificationToken,
+            password: signupPassword,
+            fullName: fullName.trim(),
+            role: signupRole,
+            year: studyYear || undefined,
+            branch: branch || undefined,
+            institution: institution || undefined,
+          },
+        });
+
+        // Automatically sign in the user
+        await login({ email: signupEmail.trim(), password: signupPassword });
+        toast.success("Account created successfully!");
+        navigate({ to: signupRole === "admin" ? "/admin" : "/dashboard" });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create account";
@@ -231,7 +274,11 @@ function AuthPage() {
                 ? "Create a new verified account."
                 : signupStep === "otp"
                   ? "Enter the verification code sent to your email."
-                  : "Create a secure password."}
+                  : signupStep === "role"
+                    ? "Choose how you will use Midnight Academy."
+                    : signupStep === "details"
+                      ? "Almost done — a few details about you."
+                      : "Create a secure password."}
           </p>
 
           {/* 1. Login View */}
@@ -312,44 +359,6 @@ function AuthPage() {
               {signupStep === "email" && (
                 <form onSubmit={handleSendOtp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label>I am a</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {(
-                        [
-                          {
-                            value: "student",
-                            title: "Student",
-                            desc: "Take tests and get AI feedback",
-                          },
-                          {
-                            value: "admin",
-                            title: "Instructor",
-                            desc: "Create tests and review students",
-                          },
-                        ] as const
-                      ).map((r) => (
-                        <button
-                          key={r.value}
-                          type="button"
-                          onClick={() => setSignupRole(r.value)}
-                          className={cn(
-                            "rounded-lg border p-3 text-left transition-colors",
-                            signupRole === r.value
-                              ? "border-primary/60 bg-primary/10"
-                              : "border-border hover:border-border-strong",
-                          )}
-                        >
-                          <span className="block text-sm font-semibold text-foreground">
-                            {r.title}
-                          </span>
-                          <span className="mt-0.5 block text-xs text-muted-foreground">
-                            {r.desc}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="signup-email">Enter your Email</Label>
                     <Input
                       id="signup-email"
@@ -366,6 +375,45 @@ function AuthPage() {
                   </div>
                   <Button type="submit" className="w-full" size="lg" disabled={loading}>
                     {loading ? "Sending code..." : "Send Verification Code"}
+                  </Button>
+
+                  <div className="relative my-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        Or sign up with
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    onClick={handleGoogleLogin}
+                  >
+                    <svg className="mr-2 size-4" viewBox="0 0 24 24">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                    Sign up with Google
                   </Button>
                 </form>
               )}
@@ -438,8 +486,104 @@ function AuthPage() {
                 <form onSubmit={handleCreatePassword} className="space-y-4">
                   <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-3 text-xs text-primary">
                     <CheckCircle2 className="size-4 shrink-0" />
-                    <span>Email verified! Tell us about you and choose a password.</span>
+                    <span>
+                      {googleFlow
+                        ? `Continue signing up as ${signupEmail || "your Google account"}.`
+                        : "Email verified! Choose a password to secure your account."}
+                    </span>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="create-password">Create Password</Label>
+                    <Input
+                      id="create-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupPasswordConfirm}
+                      onChange={(e) => setSignupPasswordConfirm(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={loading || signupPassword.length < 6}
+                  >
+                    Continue
+                  </Button>
+                </form>
+              )}
+
+              {signupStep === "role" && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    How will you use Midnight Academy?
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(
+                      [
+                        {
+                          value: "student",
+                          title: "Student",
+                          desc: "Take tests and get AI feedback",
+                        },
+                        {
+                          value: "admin",
+                          title: "Instructor",
+                          desc: "Create tests and review students",
+                        },
+                      ] as const
+                    ).map((r) => (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => setSignupRole(r.value)}
+                        className={cn(
+                          "rounded-lg border p-4 text-left transition-colors",
+                          signupRole === r.value
+                            ? "border-primary/60 bg-primary/10"
+                            : "border-border hover:border-border-strong",
+                        )}
+                      >
+                        <span className="block text-sm font-semibold text-foreground">
+                          {r.title}
+                        </span>
+                        <span className="mt-1 block text-xs text-muted-foreground">{r.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <Button className="w-full" size="lg" onClick={() => setSignupStep("details")}>
+                    Continue
+                  </Button>
+                </div>
+              )}
+
+              {signupStep === "details" && (
+                <form onSubmit={handleCompleteDetails} className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Signing up as{" "}
+                    <strong className="text-foreground">
+                      {signupRole === "admin" ? "Instructor" : "Student"}
+                    </strong>
+                    — last step.
+                  </p>
 
                   <div className="space-y-2">
                     <Label htmlFor="full-name">Full Name</Label>
@@ -454,7 +598,7 @@ function AuthPage() {
                     />
                   </div>
 
-                  {signupRole === "student" && (
+                  {signupRole === "student" ? (
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="study-year">B.Tech Year</Label>
@@ -498,41 +642,29 @@ function AuthPage() {
                         </Select>
                       </div>
                     </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="institution">Institution / Organization</Label>
+                      <Input
+                        id="institution"
+                        type="text"
+                        placeholder="e.g. IIT Hyderabad"
+                        value={institution}
+                        onChange={(e) => setInstitution(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Students will see this on your tests.
+                      </p>
+                    </div>
                   )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="create-password">Create Password</Label>
-                    <Input
-                      id="create-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={signupPasswordConfirm}
-                      onChange={(e) => setSignupPasswordConfirm(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
 
                   <Button
                     type="submit"
                     className="w-full"
                     size="lg"
-                    disabled={loading || signupPassword.length < 6 || !fullName.trim()}
+                    disabled={loading || !fullName.trim()}
                   >
-                    {loading ? "Creating Account..." : "Create Account & Sign In"}
+                    {loading ? "Creating Account..." : "Create Account"}
                   </Button>
                 </form>
               )}
@@ -544,6 +676,7 @@ function AuthPage() {
             <button
               type="button"
               onClick={() => {
+                if (googleFlow) return;
                 setIsLogin(!isLogin);
                 setSignupStep("email");
                 setSignupOtp("");

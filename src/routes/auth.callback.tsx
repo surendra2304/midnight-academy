@@ -41,21 +41,41 @@ function AuthCallbackPage() {
           return;
         }
 
-        // Ensure new Google user has a default profile and student role if not
-        // present. Must run server-side: RLS forbids clients from inserting
-        // into user_roles, which previously left OAuth users without a role.
+        // Decide server-side (service role) whether this Google identity
+        // already has an account. Existing users sign straight in; first-time
+        // identities are NEVER auto-registered — they continue signup with
+        // password + role + details on the auth page.
+        let hasAccount = false;
+        let googleEmail: string | null = null;
+        let googleName: string | null = null;
         try {
-          const { ensureOAuthProfile } = await import("@/lib/auth.functions");
-          await ensureOAuthProfile();
+          const { getOAuthAccountStatus } = await import("@/lib/auth.functions");
+          const status = await getOAuthAccountStatus();
+          hasAccount = status.hasAccount;
+          googleEmail = status.email;
+          googleName = status.fullName;
         } catch {
-          // Handled below by restoreSession / role resolution
+          // Fall through: without a definitive answer, treat as sign-in attempt
+          hasAccount = true;
+        }
+
+        if (!active) return;
+
+        if (!hasAccount) {
+          navigate({
+            to: "/auth",
+            search: {
+              flow: "google-new",
+              email: googleEmail ?? undefined,
+              name: googleName ?? undefined,
+            },
+          });
+          return;
         }
 
         // Synchronize auth-store with authoritative server role
         await authStore.restoreSession();
         const storedUser = authStore.getUser();
-
-        if (!active) return;
 
         if (storedUser?.role === "ADMIN") {
           navigate({ to: "/admin" });
