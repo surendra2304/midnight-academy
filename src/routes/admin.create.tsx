@@ -9,6 +9,7 @@ import {
   FileType2,
   Loader2,
   PencilLine,
+  Plus,
   Trash2,
 } from "lucide-react";
 import { PageShell, Panel, SectionHeading, Tag } from "@/components/kit";
@@ -243,10 +244,14 @@ function Source({
 }) {
   const [sourceText, setSourceText] = useState("");
   const [drafting, setDrafting] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  // Once a PDF is parsed (or questions are split), they are shown as editable boxes
+  const [extracted, setExtracted] = useState<string[] | null>(null);
 
-  const handleDraft = async (rawContent: string, useAi = true) => {
+  const handleDraft = async (questions: string[], useAi = true) => {
+    const rawContent = questions.join("\n\n");
     if (rawContent.trim().length < 20) {
-      toast.error("Please paste at least one full question statement.");
+      toast.error("Add at least one full question statement.");
       return;
     }
 
@@ -290,6 +295,51 @@ function Source({
     }
   };
 
+  // --- PDF upload ---
+  const handlePdfUpload = async (file: File) => {
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Please choose a PDF file.");
+      return;
+    }
+    setParsing(true);
+    try {
+      const pdfjs = await import("pdfjs-dist");
+      const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+      pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+
+      const buffer = await file.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
+      const pages: string[] = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        pages.push(
+          content.items
+            .map((item) => ("str" in item ? (item as { str: string }).str : ""))
+            .join(" "),
+        );
+      }
+      const text = pages
+        .join("\n")
+        .replace(/\s+/g, " ")
+        .replace(/ (\d+\.|Q\d+)/g, "\n\n$1");
+      const questions = splitIntoQuestions(text);
+      if (questions.length === 0) {
+        toast.error("No questions could be read from that PDF. Try copying them as text instead.");
+      } else {
+        setExtracted(questions);
+        toast.success(`${questions.length} questions read from the PDF. Review them below.`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err instanceof Error ? `Could not read the PDF: ${err.message}` : "Could not read the PDF.",
+      );
+    } finally {
+      setParsing(false);
+    }
+  };
+
   if (drafting) {
     return (
       <Panel>
@@ -305,26 +355,136 @@ function Source({
     );
   }
 
+  // --- Uploaded/extracted questions as editable boxes ---
+  if (extracted) {
+    const update = (i: number, text: string) =>
+      setExtracted(extracted.map((q, idx) => (idx === i ? text : q)));
+    const remove = (i: number) => {
+      const next = extracted.filter((_, idx) => idx !== i);
+      setExtracted(next.length > 0 ? next : null);
+    };
+
+    return (
+      <Panel>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-foreground">
+            Questions from PDF ({extracted.length})
+          </h2>
+          <Button variant="ghost" size="sm" onClick={() => setExtracted(null)}>
+            <Trash2 className="size-4" /> Discard & re-upload
+          </Button>
+        </div>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Edit or remove any question, or add more below. Then continue — AI will fill in concepts,
+          constraints and reference answers for your review.
+        </p>
+
+        <div className="mt-6 space-y-4">
+          {extracted.map((q, i) => (
+            <div key={i} className="rounded-xl border border-border bg-surface-2/30 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Question {i + 1}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive"
+                  onClick={() => remove(i)}
+                >
+                  <Trash2 className="size-4" /> Remove
+                </Button>
+              </div>
+              <Textarea
+                value={q}
+                onChange={(e) => update(i, e.target.value)}
+                className="min-h-[90px] text-sm leading-relaxed"
+              />
+            </div>
+          ))}
+
+          <Button
+            variant="outline"
+            onClick={() => setExtracted([...extracted, ""])}
+            disabled={extracted.length >= 25}
+          >
+            <Plus className="size-4" /> Add Question
+          </Button>
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <Button size="lg" onClick={() => handleDraft(extracted, true)} disabled={drafting}>
+            Draft with AI & Continue <ArrowRight className="size-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => handleDraft(extracted, false)}
+            disabled={drafting}
+          >
+            Continue Without AI <ArrowRight className="size-4" />
+          </Button>
+        </div>
+      </Panel>
+    );
+  }
+
   return (
     <Panel>
       <h2 className="text-base font-semibold text-foreground">Add Questions</h2>
       <p className="mt-1.5 text-sm text-muted-foreground">
-        Paste your technical question statements below, then continue. AI will draft concepts,
-        constraints, and reference answers automatically — or skip AI and fill them in yourself on
-        the next step.
+        Upload a PDF with your questions — or paste them below. You can edit, remove or add more
+        after reading them in.
       </p>
 
       <div className="mt-6 space-y-4">
+        <div className="rounded-xl border border-dashed border-border-strong bg-surface-2/30 p-6 text-center">
+          <input
+            id="pdf-upload"
+            type="file"
+            accept="application/pdf,.pdf"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) handlePdfUpload(file);
+            }}
+          />
+          <Button asChild variant="outline" size="lg" disabled={parsing}>
+            <label htmlFor="pdf-upload" className="cursor-pointer">
+              {parsing ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" /> Reading PDF...
+                </>
+              ) : (
+                <>
+                  <FileText className="mr-2 size-4" /> Upload Question PDF
+                </>
+              )}
+            </label>
+          </Button>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Text-based PDFs work best (not scans). Each question is detected automatically.
+          </p>
+        </div>
+
+        <div className="relative py-1 text-center">
+          <span className="relative z-10 bg-background px-3 text-xs uppercase tracking-wider text-muted-foreground">
+            or paste manually
+          </span>
+          <span className="absolute left-0 right-0 top-1/2 border-t" />
+        </div>
+
         <Textarea
           value={sourceText}
           onChange={(e) => setSourceText(e.target.value)}
-          placeholder={`1. Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume each input would have exactly one solution.\n\n2. Given an integer array nums, find a subarray that has the largest product, and return the product. The test cases are generated so that the answer will fit in a 32-bit integer.`}
-          className="min-h-[220px] font-mono text-sm leading-relaxed"
+          placeholder={`1. Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume each input would have exactly one solution.\n\n2. Given an integer array nums, find a subarray that has the largest product, and return the product.`}
+          className="min-h-[160px] font-mono text-sm leading-relaxed"
         />
         <div className="flex flex-wrap items-center gap-3">
           <Button
             size="lg"
-            onClick={() => handleDraft(sourceText, true)}
+            onClick={() => handleDraft(splitIntoQuestions(sourceText), true)}
             disabled={sourceText.trim().length < 20 || drafting}
           >
             Draft with AI & Continue <ArrowRight className="size-4" />
@@ -332,7 +492,7 @@ function Source({
           <Button
             variant="outline"
             size="lg"
-            onClick={() => handleDraft(sourceText, false)}
+            onClick={() => handleDraft(splitIntoQuestions(sourceText), false)}
             disabled={sourceText.trim().length < 20 || drafting}
           >
             Continue Without AI <ArrowRight className="size-4" />
@@ -356,6 +516,29 @@ function Source({
       </div>
     </Panel>
   );
+}
+
+/**
+ * Splits raw text (pasted or extracted from a PDF) into individual questions.
+ * Mirrors the server-side logic so the instructor sees the same split.
+ */
+function splitIntoQuestions(raw: string): string[] {
+  const cleaned = raw
+    .replace(/\r/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n");
+  const byNumber = cleaned
+    .split(/(?=\n?\s*(?:Q?\d+[).:]\s))/g)
+    .map((chunk) => chunk.replace(/^\s*Q?\d+[).:]\s*/i, "").trim())
+    .filter((chunk) => chunk.length > 20);
+  if (byNumber.length > 1) return byNumber.slice(0, 25);
+  const byBlank = cleaned
+    .split(/\n\s*\n/)
+    .map((chunk) => chunk.replace(/^\s*(?:Q?\d+[).:]|[-*])\s*/i, "").trim())
+    .filter((chunk) => chunk.length > 20);
+  if (byBlank.length > 1) return byBlank.slice(0, 25);
+  const one = cleaned.trim();
+  return one.length > 20 ? [one] : [];
 }
 
 function Review({
