@@ -51,6 +51,7 @@ function PracticeLibrary() {
   const [tests, setTests] = useState<PracticeTest[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [startingCode, setStartingCode] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>("All");
 
   useEffect(() => {
     let cancelled = false;
@@ -70,9 +71,14 @@ function PracticeLibrary() {
     };
   }, []);
 
+  const filtered = useMemo(
+    () => (tests ?? []).filter((t) => activeCategory === "All" || t.category === activeCategory),
+    [tests, activeCategory],
+  );
+
   const grouped = useMemo(() => {
     const map = new Map<string, PracticeTest[]>();
-    for (const t of tests ?? []) {
+    for (const t of filtered) {
       map.set(t.category, [...(map.get(t.category) ?? []), t]);
     }
     const ordered: Array<[string, PracticeTest[]]> = [];
@@ -84,7 +90,7 @@ function PracticeLibrary() {
       if (!CATEGORIES.includes(c as (typeof CATEGORIES)[number])) ordered.push([c, list]);
     }
     return ordered;
-  }, [tests]);
+  }, [filtered]);
 
   const handleStart = async (code: string) => {
     setStartingCode(code);
@@ -129,12 +135,30 @@ function PracticeLibrary() {
           </div>
         </section>
 
+        <div className="mt-8 flex flex-wrap gap-2">
+          {["All", ...CATEGORIES].map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setActiveCategory(c)}
+              className={
+                "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors " +
+                (activeCategory === c
+                  ? "border-primary/60 bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-border-strong hover:text-foreground")
+              }
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Loading the practice library...</p>
           </div>
-        ) : (tests?.length ?? 0) === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="panel-quiet mt-8 p-10 text-center">
             <p className="text-sm font-semibold text-foreground">No practice tests available yet</p>
             <p className="mt-2 text-sm text-muted-foreground">

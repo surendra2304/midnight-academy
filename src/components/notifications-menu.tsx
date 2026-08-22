@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { formatToIST } from "@/lib/format";
 import { Bell, Check, Loader2 } from "lucide-react";
 import { fetchNotifications, markAsRead, markAllAsRead } from "@/lib/notifications.functions";
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,7 @@ export function NotificationsMenu() {
                 </div>
                 <p className="line-clamp-2 text-xs text-muted-foreground">{n.message}</p>
                 <span className="text-[10px] text-muted-foreground/60">
-                  {new Date(n.created_at).toLocaleDateString()}
+                  {formatToIST(n.created_at)}
                 </span>
               </DropdownMenuItem>
             ))

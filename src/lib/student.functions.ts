@@ -12,7 +12,8 @@ export type StudentAnalytics = {
     institution: string | null;
     year: string | null;
     onboarded: boolean;
-    accessibilityMode: boolean;
+    codeNumber: string | null;
+    branch: string | null;
   };
   stats: {
     testsTaken: number;
@@ -70,7 +71,7 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
     const [{ data: profileRow }, { data: attempts }] = await Promise.all([
       supabaseAdmin
         .from("profiles")
-        .select("full_name, email, institution, year, onboarded, accessibility_mode")
+        .select("full_name, email, institution, year, onboarded, code_number, branch")
         .eq("id", context.userId)
         .maybeSingle(),
       supabaseAdmin
@@ -88,7 +89,8 @@ export const getStudentDashboardData = createServerFn({ method: "GET" })
       institution: profileRow?.institution || null,
       year: profileRow?.year || null,
       onboarded: profileRow?.onboarded ?? false,
-      accessibilityMode: profileRow?.accessibility_mode ?? false,
+      codeNumber: profileRow?.code_number || null,
+      branch: profileRow?.branch || null,
     };
 
     const allAttempts = attempts ?? [];
@@ -258,9 +260,12 @@ export const updateStudentProfile = createServerFn({ method: "POST" })
     z
       .object({
         fullName: z.string().min(1).max(100),
-        institution: z.string().max(120).optional(),
         year: z.string().max(80).optional(),
-        accessibilityMode: z.boolean().optional(),
+        branch: z.string().max(60).optional(),
+        regdNumber: z
+          .string()
+          .regex(/^[A-Za-z0-9]{10}$/, "Registration number must be exactly 10 characters.")
+          .optional(),
       })
       .parse(data),
   )
@@ -269,20 +274,20 @@ export const updateStudentProfile = createServerFn({ method: "POST" })
 
     const updatePayload: {
       full_name: string;
-      institution?: string;
       year?: string;
-      accessibility_mode?: boolean;
+      branch?: string;
+      code_number?: string;
     } = {
       full_name: data.fullName,
     };
-    if (data.accessibilityMode !== undefined) {
-      updatePayload.accessibility_mode = data.accessibilityMode;
-    }
-    if (data.institution !== undefined) {
-      updatePayload.institution = data.institution;
-    }
     if (data.year !== undefined) {
       updatePayload.year = data.year;
+    }
+    if (data.branch !== undefined) {
+      updatePayload.branch = data.branch;
+    }
+    if (data.regdNumber !== undefined) {
+      updatePayload.code_number = data.regdNumber.trim().toUpperCase();
     }
 
     const { error } = await supabaseAdmin

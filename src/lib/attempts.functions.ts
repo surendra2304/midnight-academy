@@ -62,16 +62,6 @@ export const startAttempt = createServerFn({ method: "POST" })
       .eq("attempt_id", attemptId)
       .not("submitted_at", "is", null);
 
-    // Accessibility mode grants a 1.5x reading window for students who need it
-    const { data: studentProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("accessibility_mode")
-      .eq("id", context.userId)
-      .maybeSingle();
-    const readingSeconds = studentProfile?.accessibility_mode
-      ? Math.round(test.seconds_per_question * 1.5)
-      : test.seconds_per_question;
-
     return {
       attemptId,
       answered: answered ?? 0,
@@ -82,7 +72,7 @@ export const startAttempt = createServerFn({ method: "POST" })
         category: test.category,
         difficulty: test.difficulty,
         code,
-        secondsPerQuestion: readingSeconds,
+        secondsPerQuestion: test.seconds_per_question,
         responseSeconds: test.response_seconds,
       },
     };

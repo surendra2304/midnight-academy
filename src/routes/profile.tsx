@@ -29,12 +29,12 @@ export const Route = createFileRoute("/profile")({
       { title: "Profile & Settings — Midnight Academy" },
       {
         name: "description",
-        content: "Update your details, notification preferences and reading-time accommodations.",
+        content: "Update your name, registration number, branch and notification preferences.",
       },
       { property: "og:title", content: "Profile & Settings — Midnight Academy" },
       {
         property: "og:description",
-        content: "Manage your Midnight Academy account and accessibility settings.",
+        content: "Manage your Midnight Academy account details.",
       },
     ],
   }),
@@ -61,14 +61,17 @@ function Row({
   );
 }
 
+const BRANCHES = ["CSE", "IT", "ECE", "EEE", "Mechanical", "Civil", "AI & ML", "Other"];
+const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduated"];
+
 function ProfilePage() {
   const [data, setData] = useState<StudentAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [accessibility, setAccessibility] = useState(false);
   const [name, setName] = useState("");
-  const [inst, setInst] = useState("");
+  const [regdNumber, setRegdNumber] = useState("");
   const [year, setYear] = useState("");
+  const [branch, setBranch] = useState("");
 
   useEffect(() => {
     async function loadProfile() {
@@ -76,9 +79,9 @@ function ProfilePage() {
         const res = await getStudentDashboardData();
         setData(res);
         setName(res.profile.fullName);
-        setInst(res.profile.institution || "");
+        setRegdNumber(res.profile.codeNumber || "");
         setYear(res.profile.year || "");
-        setAccessibility(res.profile.accessibilityMode ?? false);
+        setBranch(res.profile.branch || "");
       } catch {
         // Fallback
       } finally {
@@ -90,14 +93,18 @@ function ProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (regdNumber.length !== 10) {
+      toast.error("Regd. Number must be exactly 10 characters.");
+      return;
+    }
     setSaving(true);
     try {
       await updateStudentProfile({
         data: {
           fullName: name.trim(),
-          institution: inst.trim() || undefined,
-          year: year.trim() || undefined,
-          accessibilityMode: accessibility,
+          regdNumber: regdNumber.trim().toUpperCase(),
+          year: year || undefined,
+          branch: branch || undefined,
         },
       });
       setData((prev) =>
@@ -107,8 +114,9 @@ function ProfilePage() {
               profile: {
                 ...prev.profile,
                 fullName: name.trim(),
-                institution: inst.trim() || null,
-                year: year.trim() || null,
+                codeNumber: regdNumber.trim().toUpperCase(),
+                year: year || null,
+                branch: branch || null,
               },
             }
           : prev,
@@ -142,14 +150,14 @@ function ProfilePage() {
       <PageShell className="max-w-[900px]">
         <SectionHeading
           title="Profile & Settings"
-          subtitle="Your account, alerts and accommodations."
+          subtitle="Your account details and alert preferences."
         />
 
         <Panel>
           <h2 className="text-base font-semibold text-foreground">Profile</h2>
           <form className="mt-5 grid gap-4 sm:grid-cols-2" onSubmit={handleSave}>
             <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
                 value={name}
@@ -163,27 +171,51 @@ function ProfilePage() {
               <Input id="pemail" type="email" value={data?.profile.email || ""} disabled />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="inst">Institution</Label>
+              <Label htmlFor="regd">Regd. Number</Label>
               <Input
-                id="inst"
-                value={inst}
-                onChange={(e) => setInst(e.target.value)}
-                placeholder="e.g. Stanford University"
+                id="regd"
+                value={regdNumber}
+                onChange={(e) => setRegdNumber(e.target.value.toUpperCase())}
+                minLength={10}
+                maxLength={10}
+                placeholder="21P31A0501"
+                required
                 disabled={saving}
               />
+              <p className="text-xs text-muted-foreground">Exactly 10 characters.</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="year">Year & programme</Label>
-              <Input
-                id="year"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                placeholder="e.g. 3rd Year B.Tech CSE"
-                disabled={saving}
-              />
+              <Label>Year</Label>
+              <Select value={year} onValueChange={setYear} disabled={saving}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEARS.map((y) => (
+                    <SelectItem key={y} value={y}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="sm:col-span-2">
-              <Button type="submit" disabled={saving || !name.trim()}>
+            <div className="space-y-2">
+              <Label>Branch</Label>
+              <Select value={branch} onValueChange={setBranch} disabled={saving}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BRANCHES.map((b) => (
+                    <SelectItem key={b} value={b}>
+                      {b}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end sm:col-span-2">
+              <Button type="submit" disabled={saving || !name.trim() || regdNumber.length !== 10}>
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" /> Saving...
@@ -214,35 +246,6 @@ function ProfilePage() {
             <Row
               title="Weekly progress digest"
               description="A short Sunday summary of your five-axis movement and one suggested drill."
-            >
-              <Switch />
-            </Row>
-          </div>
-        </Panel>
-
-        <Panel className="mt-6">
-          <h2 className="text-base font-semibold text-foreground">
-            Accessibility & accommodations
-          </h2>
-          <div className="mt-3">
-            <Row
-              title="Extended reading time"
-              description="Gives you a 1.5x longer reading window on every question, applied automatically to all tests and practice."
-            >
-              <Switch
-                checked={accessibility}
-                onCheckedChange={(checked) => setAccessibility(checked)}
-              />
-            </Row>
-            <Row
-              title="Larger question text"
-              description="Renders question statements one step larger during the reading stage."
-            >
-              <Switch />
-            </Row>
-            <Row
-              title="Reduce motion"
-              description="Turns off count-up animations and stage transitions across the app."
             >
               <Switch />
             </Row>

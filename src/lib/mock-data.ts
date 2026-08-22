@@ -727,7 +727,9 @@ export function scoreTextClass(score: number) {
 }
 
 export function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
+  // All dates across the app render in Indian Standard Time
+  return new Date(iso).toLocaleDateString("en-GB", {
+    timeZone: "Asia/Kolkata",
     month: "short",
     day: "numeric",
     year: "numeric",

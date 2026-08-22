@@ -161,7 +161,6 @@ export type Database = {
       };
       profiles: {
         Row: {
-          accessibility_mode: boolean;
           branch: string | null;
           code_number: string | null;
           subject: string | null;
@@ -174,7 +173,6 @@ export type Database = {
           year: string;
         };
         Insert: {
-          accessibility_mode?: boolean;
           branch?: string | null;
           code_number?: string | null;
           subject?: string | null;
@@ -187,7 +185,6 @@ export type Database = {
           year?: string;
         };
         Update: {
-          accessibility_mode?: boolean;
           branch?: string | null;
           code_number?: string | null;
           created_at?: string;

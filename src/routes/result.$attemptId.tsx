@@ -397,8 +397,8 @@ function ResultPage() {
                     ) : null}
                   </header>
 
-                  <div className="grid gap-0 lg:grid-cols-3">
-                    <div className="border-b border-border p-5 lg:border-b-0 lg:border-r">
+                  <div className="grid gap-0 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="border-b border-border p-5 md:border-b-0 md:border-r">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         Statement
                       </p>
@@ -406,15 +406,15 @@ function ResultPage() {
                         {a.question?.text || "Question text unavailable."}
                       </p>
                     </div>
-                    <div className="border-b border-border p-5 lg:border-b-0 lg:border-r">
+                    <div className="border-b border-border p-5 md:border-b-0 md:border-r">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        Student Understanding
+                        Your Understanding
                       </p>
                       <p className="mt-3 text-sm leading-relaxed text-foreground">
                         {a.response || "(No answer submitted)"}
                       </p>
                     </div>
-                    <div className="bg-surface-2/40 p-5">
+                    <div className="border-b border-border bg-surface-2/40 p-5 md:border-b-0 md:border-r">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
                         AI Evaluation
                       </p>
@@ -445,16 +445,14 @@ function ResultPage() {
                           </p>
                         </div>
                       ) : null}
-                      {a.question?.reference_answer ? (
-                        <details className="mt-4">
-                          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-success">
-                            Reference understanding
-                          </summary>
-                          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                            {a.question.reference_answer}
-                          </p>
-                        </details>
-                      ) : null}
+                    </div>
+                    <div className="bg-success/6 p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-success">
+                        Reference Understanding
+                      </p>
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                        {a.question?.reference_answer || "No reference answer available."}
+                      </p>
                     </div>
                   </div>
 
