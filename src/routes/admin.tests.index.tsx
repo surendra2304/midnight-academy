@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { DifficultyTag, PageShell, SectionHeading, StatusTag, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { formatDate, scoreTextClass } from "@/lib/mock-data";
+import { scoreTextClass } from "@/lib/mock-data";
+import { formatToIST } from "@/lib/format";
 import { listAdminTests } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/tests/")({
@@ -119,7 +120,7 @@ function AdminTests() {
                   {t.average ? `${t.average}% avg` : "No attempts"}
                 </span>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">Created {formatDate(t.created)}</p>
+              <p className="mt-2 text-xs text-muted-foreground">Created {formatToIST(t.created)}</p>
             </Link>
           ))}
         </div>

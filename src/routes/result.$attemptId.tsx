@@ -7,8 +7,18 @@ import { AppNav } from "@/components/app-nav";
 import { ComprehensionBreakdown } from "@/components/comprehension";
 import { CountUp, PageShell, Panel, SectionHeading, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { flagEvaluation, getResult, processAttemptEvaluation } from "@/lib/attempts.functions";
+import {
+  flagEvaluation,
+  getResult,
+  processAttemptEvaluation,
+  saveManualReview,
+} from "@/lib/attempts.functions";
 import { scoreTextClass } from "@/lib/mock-data";
+import { useAuth } from "@/hooks/use-auth";
+import { formatToIST } from "@/lib/format";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/result/$attemptId")({
   beforeLoad: ({ location }) => requireAuth({ location }),
@@ -33,6 +43,11 @@ export const Route = createFileRoute("/result/$attemptId")({
 type ResultData = {
   id: string;
   status: string;
+  student?: {
+    id: string;
+    name: string;
+    codeNumber: string | null;
+  };
   score: number | null;
   axes: Record<string, number> | null;
   blurCount: number;
@@ -52,6 +67,8 @@ type ResultData = {
     missedConcepts: string[];
     missedConstraints: string[];
     flagged: boolean;
+    manualScore?: number | null;
+    manualFeedback?: string | null;
     question: {
       text: string;
       topic: string;
@@ -65,7 +82,16 @@ type ResultData = {
 
 function ResultPage() {
   const { attemptId } = useParams({ from: "/result/$attemptId" });
-  const [data, setData] = useState<ResultData | null>(null);
+  // The signed-in viewer (instructor or student). The student's attempt data
+  // lives only in studentAttemptData — the global auth session is never
+  // touched, so the top bar always shows the signed-in user.
+  const { user } = useAuth();
+  const isInstructor = user?.role === "ADMIN";
+  const [reviewDrafts, setReviewDrafts] = useState<
+    Record<string, { score: string; feedback: string }>
+  >({});
+  const [savingReviewId, setSavingReviewId] = useState<string | null>(null);
+  const [studentAttemptData, setStudentAttemptData] = useState<ResultData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [flaggingIds, setFlaggingIds] = useState<string[]>([]);
@@ -85,7 +111,7 @@ function ResultPage() {
         let attempts = 0;
         while (res.status !== "evaluated" && attempts < 12 && !cancelled) {
           if (attempts === 0) {
-            setData(res);
+            setStudentAttemptData(res);
             setLoading(false);
           }
           try {
@@ -95,7 +121,7 @@ function ResultPage() {
           }
           await new Promise((r) => setTimeout(r, 5000));
           res = (await getResult({ data: { attemptId } })) as ResultData;
-          if (res.status === "evaluated" && !cancelled) setData(res);
+          if (res.status === "evaluated" && !cancelled) setStudentAttemptData(res);
           attempts += 1;
         }
 
@@ -104,9 +130,9 @@ function ResultPage() {
           setError(
             "Evaluation is still in progress. Refresh this page in a moment to see your results.",
           );
-          setData(res);
+          setStudentAttemptData(res);
         } else {
-          setData(res);
+          setStudentAttemptData(res);
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to load test results";
@@ -122,12 +148,45 @@ function ResultPage() {
     };
   }, [attemptId]);
 
+  const handleSaveReview = async (answerId: string) => {
+    const draft = reviewDrafts[answerId];
+    if (!draft) return;
+    const score = Number(draft.score);
+    if (!Number.isInteger(score) || score < 0 || score > 10) {
+      toast.error("Manual score must be a whole number between 0 and 10.");
+      return;
+    }
+    setSavingReviewId(answerId);
+    try {
+      await saveManualReview({
+        data: { answerId, manualScore: score, manualFeedback: draft.feedback },
+      });
+      setStudentAttemptData((prev) =>
+        prev
+          ? {
+              ...prev,
+              answers: prev.answers.map((a) =>
+                a.id === answerId
+                  ? { ...a, manualScore: score, manualFeedback: draft.feedback.trim() || null }
+                  : a,
+              ),
+            }
+          : prev,
+      );
+      toast.success("Instructor review saved");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not save the review");
+    } finally {
+      setSavingReviewId(null);
+    }
+  };
+
   const handleFlagAnswer = async (answerId: string) => {
     setFlaggingIds((ids) => [...ids, answerId]);
     try {
       await flagEvaluation({ data: { answerId } });
       toast.success("Evaluation flagged for instructor review");
-      setData((prev) =>
+      setStudentAttemptData((prev) =>
         prev
           ? {
               ...prev,
@@ -157,7 +216,7 @@ function ResultPage() {
     );
   }
 
-  if (data && data.status !== "evaluated" && !loading) {
+  if (studentAttemptData && studentAttemptData.status !== "evaluated" && !loading) {
     return (
       <div className="min-h-screen">
         <AppNav />
@@ -175,7 +234,7 @@ function ResultPage() {
     );
   }
 
-  if (error || !data) {
+  if (error || !studentAttemptData) {
     return (
       <div className="min-h-screen">
         <AppNav />
@@ -199,6 +258,7 @@ function ResultPage() {
     );
   }
 
+  const data = studentAttemptData;
   const stillEvaluating = data.status !== "evaluated";
 
   const overallScore = data.score ?? 0;
@@ -224,11 +284,18 @@ function ResultPage() {
       <PageShell>
         <section className="panel grid-backdrop p-7 text-center lg:p-12">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-            Test Complete
+            {isInstructor ? "Instructor View · Student Evaluation" : "Test Complete"}
           </p>
           <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-foreground lg:text-3xl">
-            Here's how well you understood the problems.
+            {isInstructor
+              ? `Evaluation for ${data.student?.name ?? "Student"}${data.student?.codeNumber ? ` (${data.student.codeNumber})` : ""}`
+              : "Here's how well you understood the problems."}
           </h1>
+          {data.completedAt ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Completed {formatToIST(data.completedAt)} IST
+            </p>
+          ) : null}
           <p className="mt-8 text-6xl font-extrabold text-gradient lg:text-7xl">
             <CountUp value={overallScore} suffix="%" />
           </p>
@@ -310,24 +377,49 @@ function ResultPage() {
                     <span className={`ml-auto text-sm font-bold ${scoreTextClass(scoreTen * 10)}`}>
                       {scoreTen}/10
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => handleFlagAnswer(a.id)}
-                      disabled={isFlagged || isFlagging}
-                      className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
-                    >
-                      <Flag className="size-3.5" />
-                      {isFlagging ? "Flagging..." : isFlagged ? "Flagged" : "Flag this evaluation"}
-                    </button>
+                    {a.manualScore !== null && a.manualScore !== undefined ? (
+                      <Tag tone="violet">Instructor: {a.manualScore}/10</Tag>
+                    ) : null}
+                    {!isInstructor ? (
+                      <button
+                        type="button"
+                        onClick={() => handleFlagAnswer(a.id)}
+                        disabled={isFlagged || isFlagging}
+                        className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+                      >
+                        <Flag className="size-3.5" />
+                        {isFlagging
+                          ? "Flagging..."
+                          : isFlagged
+                            ? "Flagged"
+                            : "Flag this evaluation"}
+                      </button>
+                    ) : null}
                   </header>
 
                   <div className="grid gap-0 lg:grid-cols-3">
                     <div className="border-b border-border p-5 lg:border-b-0 lg:border-r">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        Your understanding
+                        Statement
+                      </p>
+                      <p className="mt-3 text-sm leading-relaxed text-foreground">
+                        {a.question?.text || "Question text unavailable."}
+                      </p>
+                    </div>
+                    <div className="border-b border-border p-5 lg:border-b-0 lg:border-r">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Student Understanding
                       </p>
                       <p className="mt-3 text-sm leading-relaxed text-foreground">
                         {a.response || "(No answer submitted)"}
+                      </p>
+                    </div>
+                    <div className="bg-surface-2/40 p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+                        AI Evaluation
+                      </p>
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                        {a.feedback || "Comprehension processed successfully."}
                       </p>
                       {a.missedConstraints.length > 0 || a.missedConcepts.length > 0 ? (
                         <div className="mt-4 flex flex-wrap gap-1.5">
@@ -343,24 +435,82 @@ function ResultPage() {
                           ))}
                         </div>
                       ) : null}
-                    </div>
-                    <div className="border-b border-border bg-surface-2/40 p-5 lg:border-b-0 lg:border-r">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                        AI evaluation
-                      </p>
-                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                        {a.feedback || "Comprehension processed successfully."}
-                      </p>
-                    </div>
-                    <div className="bg-success/6 p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-success">
-                        Reference understanding
-                      </p>
-                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                        {a.question?.reference_answer || "No reference answer available."}
-                      </p>
+                      {a.manualFeedback ? (
+                        <div className="mt-4 rounded-lg border border-violet/40 bg-violet/8 p-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-violet">
+                            Instructor note
+                          </p>
+                          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                            {a.manualFeedback}
+                          </p>
+                        </div>
+                      ) : null}
+                      {a.question?.reference_answer ? (
+                        <details className="mt-4">
+                          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-success">
+                            Reference understanding
+                          </summary>
+                          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                            {a.question.reference_answer}
+                          </p>
+                        </details>
+                      ) : null}
                     </div>
                   </div>
+
+                  {isInstructor ? (
+                    <div className="border-t border-border p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet">
+                        Instructor Review
+                      </p>
+                      <div className="mt-3 grid gap-3 lg:grid-cols-[120px_minmax(0,1fr)_auto] lg:items-end">
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`manual-score-${a.id}`}>Score (0–10)</Label>
+                          <Input
+                            id={`manual-score-${a.id}`}
+                            type="number"
+                            min={0}
+                            max={10}
+                            value={reviewDrafts[a.id]?.score ?? String(a.manualScore ?? "")}
+                            onChange={(e) =>
+                              setReviewDrafts((prev) => ({
+                                ...prev,
+                                [a.id]: {
+                                  score: e.target.value,
+                                  feedback: prev[a.id]?.feedback ?? a.manualFeedback ?? "",
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`manual-feedback-${a.id}`}>Feedback</Label>
+                          <Textarea
+                            id={`manual-feedback-${a.id}`}
+                            value={reviewDrafts[a.id]?.feedback ?? a.manualFeedback ?? ""}
+                            onChange={(e) =>
+                              setReviewDrafts((prev) => ({
+                                ...prev,
+                                [a.id]: {
+                                  score: prev[a.id]?.score ?? String(a.manualScore ?? ""),
+                                  feedback: e.target.value,
+                                },
+                              }))
+                            }
+                            className="min-h-[60px] text-sm"
+                            placeholder="A note for the student about this answer..."
+                          />
+                        </div>
+                        <Button
+                          size="sm"
+                          disabled={savingReviewId === a.id}
+                          onClick={() => handleSaveReview(a.id)}
+                        >
+                          {savingReviewId === a.id ? "Saving..." : "Save Review"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
                 </article>
               );
             })}
@@ -368,14 +518,10 @@ function ResultPage() {
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <Button asChild size="lg">
-            <Link to="/practice">
-              Practice Weak Areas <ArrowRight className="size-4" />
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link to="/dashboard">
-              <LayoutDashboard className="size-4" /> Back to Dashboard
+          <Button asChild size="lg" variant={isInstructor ? "default" : "outline"}>
+            <Link to={isInstructor ? "/admin/tests" : "/dashboard"}>
+              <LayoutDashboard className="size-4" />
+              {isInstructor ? "Back to Tests" : "Back to Dashboard"}
             </Link>
           </Button>
         </div>

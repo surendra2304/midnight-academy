@@ -28,7 +28,6 @@ const adminNav: NavItem[] = [
   { label: "Create Test", to: "/admin/create" },
   { label: "Students", to: "/admin/students" },
   { label: "Analytics", to: "/admin/analytics" },
-  { label: "Review Queue", to: "/admin/review" },
 ];
 
 function NavLinks({ items }: { items: NavItem[] }) {

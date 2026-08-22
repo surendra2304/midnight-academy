@@ -51,6 +51,8 @@ export type Database = {
       };
       attempt_answers: {
         Row: {
+          manual_feedback: string | null;
+          manual_score: number | null;
           attempt_id: string;
           feedback: string | null;
           flagged: boolean;
@@ -65,6 +67,8 @@ export type Database = {
           submitted_at: string | null;
         };
         Insert: {
+          manual_feedback?: string | null;
+          manual_score?: number | null;
           attempt_id: string;
           feedback?: string | null;
           flagged?: boolean;
@@ -79,6 +83,8 @@ export type Database = {
           submitted_at?: string | null;
         };
         Update: {
+          manual_feedback?: string | null;
+          manual_score?: number | null;
           attempt_id?: string;
           feedback?: string | null;
           flagged?: boolean;

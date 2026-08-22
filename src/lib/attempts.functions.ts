@@ -490,6 +490,12 @@ export const getResult = createServerFn({ method: "GET" })
 
     if (!attempt) throw new Error("Attempt not found.");
 
+    const { data: studentProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name, code_number")
+      .eq("id", attempt.student_id)
+      .maybeSingle();
+
     const isOwner = attempt.student_id === context.userId;
     if (!isOwner) {
       const { data: test } = await supabaseAdmin
@@ -503,7 +509,7 @@ export const getResult = createServerFn({ method: "GET" })
     const { data: answers } = await supabaseAdmin
       .from("attempt_answers")
       .select(
-        "id, position, response, score, feedback, missed_concepts, missed_constraints, flagged, questions(text, topic, difficulty, concepts, constraints, reference_answer)",
+        "id, position, response, score, feedback, missed_concepts, missed_constraints, flagged, manual_score, manual_feedback, questions(text, topic, difficulty, concepts, constraints, reference_answer)",
       )
       .eq("attempt_id", attempt.id)
       .order("position", { ascending: true });
@@ -511,6 +517,11 @@ export const getResult = createServerFn({ method: "GET" })
     return {
       id: attempt.id,
       status: attempt.status,
+      student: {
+        id: attempt.student_id,
+        name: studentProfile?.full_name || "Student",
+        codeNumber: studentProfile?.code_number ?? null,
+      },
       score: attempt.score,
       axes: attempt.axes as Record<string, number> | null,
       blurCount: attempt.blur_count,
@@ -525,6 +536,8 @@ export const getResult = createServerFn({ method: "GET" })
         missedConcepts: a.missed_concepts,
         missedConstraints: a.missed_constraints,
         flagged: a.flagged,
+        manualScore: a.manual_score === null ? null : Number(a.manual_score),
+        manualFeedback: a.manual_feedback,
         question: a.questions,
       })),
     };
@@ -536,14 +549,18 @@ export const flagEvaluation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Verify answer belongs to attempt owned by the current student
+    // Verify the caller is the attempt's student OR the instructor who owns
+    // the test (previously instructors got a 403 because only the student path
+    // was authorised).
     const { data: answer } = await supabaseAdmin
       .from("attempt_answers")
-      .select("id, attempt_id, attempts!inner(student_id)")
+      .select("id, attempts!inner(student_id, tests!inner(owner_id))")
       .eq("id", data.answerId)
       .maybeSingle();
 
-    if (!answer || answer.attempts?.student_id !== context.userId) {
+    const isStudent = answer?.attempts?.student_id === context.userId;
+    const isInstructor = answer?.attempts?.tests?.owner_id === context.userId;
+    if (!answer || (!isStudent && !isInstructor)) {
       throw new Error("Answer not found or unauthorized.");
     }
 
@@ -585,4 +602,45 @@ export const getStudentOverview = createServerFn({ method: "GET" })
         test: a.tests,
       })),
     };
+  });
+
+/**
+ * Saves an instructor's manual review (override score + feedback) for one
+ * answer. Only the instructor who owns the test may review.
+ */
+export const saveManualReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data) =>
+    z
+      .object({
+        answerId: z.string().uuid(),
+        manualScore: z.number().int().min(0).max(10),
+        manualFeedback: z.string().max(2000),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: answer } = await supabaseAdmin
+      .from("attempt_answers")
+      .select("id, attempts!inner(tests!inner(owner_id))")
+      .eq("id", data.answerId)
+      .maybeSingle();
+
+    if (!answer || answer.attempts?.tests?.owner_id !== context.userId) {
+      throw new Error("Only the instructor who owns this test can review answers.");
+    }
+
+    const { error } = await supabaseAdmin
+      .from("attempt_answers")
+      .update({
+        manual_score: data.manualScore,
+        manual_feedback: data.manualFeedback.trim() || null,
+      })
+      .eq("id", data.answerId);
+    if (error) {
+      throw new Error(error.message || "Could not save the review.");
+    }
+    return { ok: true };
   });

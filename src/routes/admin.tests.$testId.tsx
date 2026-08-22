@@ -14,6 +14,7 @@ import {
 } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { formatDate, scoreTextClass } from "@/lib/mock-data";
+import { formatToIST } from "@/lib/format";
 import { deleteQuestion, deleteTest, getAdminTest, setTestStatus } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/tests/$testId")({
@@ -368,6 +369,11 @@ function TestDetail() {
                       <span className="block truncate text-xs text-muted-foreground">
                         {s.codeNumber ? `${s.codeNumber} · ${s.email}` : s.email}
                       </span>
+                      {s.completedAt ? (
+                        <span className="block truncate text-[10px] text-muted-foreground/70">
+                          {formatToIST(s.completedAt)} IST
+                        </span>
+                      ) : null}
                     </div>
                   </Link>
                   <div className="flex items-center gap-3">

@@ -5,6 +5,7 @@ import { ScoreBars } from "@/components/charts";
 import { PageShell, Panel, SectionHeading, StatCard, StatusTag, Tag } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { scoreTextClass } from "@/lib/mock-data";
+import { formatToIST } from "@/lib/format";
 import { getAdminOverview } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/")({
@@ -150,24 +151,8 @@ function AdminDashboard() {
           )}
         </Panel>
         <Panel>
-          <SectionHeading title="Queue & Highlights" />
+          <SectionHeading title="Highlights" />
           <div className="space-y-4">
-            <div className="rounded-xl border border-border bg-surface-2/40 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Evaluation Review Queue
-              </p>
-              <p className="mt-1 text-2xl font-extrabold text-foreground">{totals.flagged}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {totals.flagged === 0
-                  ? "All student flags resolved."
-                  : "Flagged AI evaluations awaiting instructor decision."}
-              </p>
-              {totals.flagged > 0 ? (
-                <Button asChild size="sm" className="mt-3">
-                  <Link to="/admin/review">Open Review Queue</Link>
-                </Button>
-              ) : null}
-            </div>
             <div className="rounded-xl border border-border bg-surface-2/40 p-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Average Comprehension
