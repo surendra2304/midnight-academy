@@ -54,7 +54,7 @@ async function callFn(name, data, token, method = "POST") {
   }
 }
 
-async function supa(path, opts = {}) {
+async function supa(path, opts = {}, attempt = 0) {
   const res = await fetch(`${SUPA_URL}${path}`, {
     ...opts,
     headers: {
@@ -64,7 +64,9 @@ async function supa(path, opts = {}) {
       ...(opts.headers || {}),
     },
   });
-  return { status: res.status, body: await res.json() };
+  const text = await res.text();
+  if (!text && attempt < 2) return supa(path, opts, attempt + 1);
+  return { status: res.status, body: text ? JSON.parse(text) : {} };
 }
 
 const PASSWORD = "E2eTest#2026";
