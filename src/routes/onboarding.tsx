@@ -19,7 +19,7 @@ const slides = [
   {
     icon: Gauge,
     title: "AI scores your understanding, not your English.",
-    body: "You receive a comprehension score across five axes, the concepts and constraints you missed, and the actual answer — so you learn where your reading went wrong.",
+    body: "You receive a score across the TCS CARE axes — Comprehend, Absorb, Recall, Express, the concepts and constraints you missed, and the actual answer — so you learn where your reading went wrong.",
   },
 ];
 

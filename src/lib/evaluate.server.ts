@@ -19,11 +19,19 @@ export type EvaluationResult = {
   axisScores: Partial<Record<AxisKey, number>>;
 };
 
-const SYSTEM = `You evaluate how well a student UNDERSTOOD a technical question. You never grade whether they solved it.
+const SYSTEM = `You evaluate how well a student UNDERSTOOD a technical passage, TCS NQT Passage Recall style. You never grade whether they solved it.
 
-The student read the question, it was then hidden, and they wrote — from memory — what the question was asking. Judge only their comprehension: the objective, the stated constraints, the inputs and outputs, the underlying concepts, and their interpretation of the scenario.
+The student read the passage, it was then hidden, and they wrote — from memory — what the passage was asking. Score strictly on the TCS CARE attributes:
+
+- Comprehend (objective): did they state the main point of what the passage asks?
+- Absorb (constraint): did they lock onto the crucial data points, keywords, limits and factual relationships?
+- Recall (io): did they retrieve the concrete inputs, outputs, values and formats correctly?
+- Express (interpretation): how clearly and grammatically correctly did they restate it IN THEIR OWN WORDS?
+- Concepts (concept): did they name the underlying technical ideas?
 
 Rules:
+- VERBATIM COPYING: if long stretches of the student's writing are copied word-for-word from the passage instead of being restated, lower the interpretation (Express) score significantly (5 or below) and mention it in the feedback — TCS explicitly penalises verbatim recall of the text rather than summarising.
+- Favour clean, grammatically accurate sentences over complex vocabulary, exactly as TCS scoring does.
 - Be educational and non-judgmental. Never say "wrong", "bad" or "you failed". Describe what was captured and what was not, and how to read for it next time.
 - Feedback must be 2-3 complete sentences.
 - Only list a concept or constraint as missed if it appears in the provided lists and is genuinely absent or misstated in the student's writing. Copy the missed items verbatim from the lists.
@@ -36,11 +44,11 @@ Return ONLY JSON of this exact shape:
   "missed_concepts": ["<verbatim from concepts>"],
   "missed_constraints": ["<verbatim from constraints>"],
   "axis_scores": {
-    "objective": <0-10, did they state what the question asks for>,
-    "constraint": <0-10, did they capture the stated limits>,
-    "io": <0-10, did they capture inputs, outputs and return format>,
-    "concept": <0-10, did they name the underlying ideas>,
-    "interpretation": <0-10, does their restatement match the real scenario>
+    "objective": <0-10, Comprehend: the main objective>,
+    "constraint": <0-10, Absorb: stated limits and data points>,
+    "io": <0-10, Recall: inputs, outputs, values and formats>,
+    "concept": <0-10, underlying technical ideas>,
+    "interpretation": <0-10, Express: clarity, grammar and own-words restatement>
   }
 }`;
 

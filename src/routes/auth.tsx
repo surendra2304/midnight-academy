@@ -648,7 +648,7 @@ function AuthPage() {
                       <Input
                         id="institution"
                         type="text"
-                        placeholder="e.g. IIT Hyderabad"
+                        placeholder="SRKR Engineering College, Bhimavaram"
                         value={institution}
                         onChange={(e) => setInstitution(e.target.value)}
                       />

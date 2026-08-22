@@ -76,8 +76,8 @@ function CreateTest() {
     name: "Arrays & Technical Comprehension",
     category: "DSA",
     difficulty: "Medium",
-    secondsPerQuestion: 45,
-    responseSeconds: 180,
+    secondsPerQuestion: 25,
+    responseSeconds: 90,
   });
   const [questions, setQuestions] = useState<QuestionDraft[]>([]);
 
@@ -85,7 +85,7 @@ function CreateTest() {
     <PageShell className="max-w-[1000px]">
       <SectionHeading
         title="Create Test"
-        subtitle="Four steps from a blank test to a shareable code."
+        subtitle="TCS NQT Passage Recall format — students read each passage briefly, then rewrite it from memory."
       />
       <ol className="mb-8 flex flex-wrap gap-2">
         {steps.map((s, i) => (
@@ -214,7 +214,7 @@ function Details({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="qtime">Time per question (seconds)</Label>
+          <Label htmlFor="qtime">Reading time per passage (seconds)</Label>
           <Input
             id="qtime"
             type="number"
@@ -619,7 +619,7 @@ function Publish({
           ["Questions", `${approvedCount} approved`],
           ["Category", config.category],
           ["Difficulty", config.difficulty],
-          ["Time per question", `${config.secondsPerQuestion} seconds`],
+          ["Reading time", `${config.secondsPerQuestion} seconds`],
         ].map(([k, v]) => (
           <div key={k} className="flex justify-between gap-6 py-3">
             <dt className="text-muted-foreground">{k}</dt>

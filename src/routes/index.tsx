@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Midnight Academy trains students to accurately understand technical questions — DSA, DBMS, OS, Networks, OOP and Aptitude — before attempting to solve them.",
+          "TCS NQT Passage Recall practice for B.Tech students of SRKR Engineering College, Bhimavaram — read, recall and express technical passages with AI CARE-based feedback.",
       },
       { property: "og:title", content: "Midnight Academy — Don't Solve Yet. Understand First." },
       {
@@ -112,15 +112,17 @@ function Landing() {
       <section className="grid-backdrop border-b border-border">
         <div className="mx-auto grid max-w-[1400px] gap-14 px-5 py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:items-center lg:px-8 lg:py-28">
           <div className="animate-fade-up">
-            <Tag tone="primary">Read. Understand. Explain. Improve.</Tag>
+            <Tag tone="primary">TCS NQT Passage Recall Practice · SRKR Engineering College</Tag>
             <h1 className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Don't Solve Yet.
               <br />
               <span className="text-gradient">Understand First.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground lg:text-lg">
-              Midnight Academy trains students to accurately understand technical questions before
-              attempting to solve them.
+              Built for B.Tech students of SRKR Engineering College, Bhimavaram. Practice the TCS
+              NQT Passage Recall round: read a technical passage under a strict timer, rewrite it
+              from memory, and get AI feedback on Comprehend, Absorb, Recall and Express — the exact
+              attributes TCS scores.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild size="lg">
