@@ -68,6 +68,7 @@ type TestDetailData = {
     initials: string;
     email: string;
     score: number;
+    codeNumber?: string;
     status: string;
     blurCount: number;
     completedAt: string | null;
@@ -269,7 +270,7 @@ function TestDetail() {
                         {s.name}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {s.email}
+                        {s.codeNumber ? `${s.codeNumber} · ${s.email}` : s.email}
                       </span>
                     </div>
                   </Link>

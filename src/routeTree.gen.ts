@@ -24,6 +24,7 @@ import { Route as AdminQuestionBankRouteImport } from './routes/admin.question-b
 import { Route as AdminReviewRouteImport } from './routes/admin.review'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthErrorRouteImport } from './routes/auth.error'
+import { Route as PracticeRunRouteImport } from './routes/practice.run'
 import { Route as ResultAttemptIdRouteImport } from './routes/result.$attemptId'
 import { Route as TestIndexRouteImport } from './routes/test.index'
 import { Route as TestRunRouteImport } from './routes/test.run'
@@ -107,6 +108,11 @@ const AuthErrorRoute = AuthErrorRouteImport.update({
   path: '/error',
   getParentRoute: () => AuthRoute,
 } as any)
+const PracticeRunRoute = PracticeRunRouteImport.update({
+  id: '/run',
+  path: '/run',
+  getParentRoute: () => PracticeRoute,
+} as any)
 const ResultAttemptIdRoute = ResultAttemptIdRouteImport.update({
   id: '/result/$attemptId',
   path: '/result/$attemptId',
@@ -149,7 +155,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/history': typeof HistoryRoute
-  '/practice': typeof PracticeRoute
+  '/practice': typeof PracticeRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/admin/review': typeof AdminReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
+  '/practice/run': typeof PracticeRunRoute
   '/result/$attemptId': typeof ResultAttemptIdRoute
   '/test/run': typeof TestRunRoute
   '/admin/': typeof AdminIndexRoute
@@ -172,7 +179,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/history': typeof HistoryRoute
-  '/practice': typeof PracticeRoute
+  '/practice': typeof PracticeRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/admin/review': typeof AdminReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
+  '/practice/run': typeof PracticeRunRoute
   '/result/$attemptId': typeof ResultAttemptIdRoute
   '/test/run': typeof TestRunRoute
   '/admin': typeof AdminIndexRoute
@@ -197,7 +205,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/history': typeof HistoryRoute
-  '/practice': typeof PracticeRoute
+  '/practice': typeof PracticeRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/admin/review': typeof AdminReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
+  '/practice/run': typeof PracticeRunRoute
   '/result/$attemptId': typeof ResultAttemptIdRoute
   '/test/run': typeof TestRunRoute
   '/admin/': typeof AdminIndexRoute
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
     | '/admin/review'
     | '/auth/callback'
     | '/auth/error'
+    | '/practice/run'
     | '/result/$attemptId'
     | '/test/run'
     | '/admin/'
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
     | '/admin/review'
     | '/auth/callback'
     | '/auth/error'
+    | '/practice/run'
     | '/result/$attemptId'
     | '/test/run'
     | '/admin'
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/admin/review'
     | '/auth/callback'
     | '/auth/error'
+    | '/practice/run'
     | '/result/$attemptId'
     | '/test/run'
     | '/admin/'
@@ -295,7 +307,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   HistoryRoute: typeof HistoryRoute
-  PracticeRoute: typeof PracticeRoute
+  PracticeRoute: typeof PracticeRouteWithChildren
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   ResultAttemptIdRoute: typeof ResultAttemptIdRoute
@@ -410,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthErrorRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/practice/run': {
+      id: '/practice/run'
+      path: '/run'
+      fullPath: '/practice/run'
+      preLoaderRoute: typeof PracticeRunRouteImport
+      parentRoute: typeof PracticeRoute
+    }
     '/result/$attemptId': {
       id: '/result/$attemptId'
       path: '/result/$attemptId'
@@ -500,13 +519,25 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface PracticeRouteChildren {
+  PracticeRunRoute: typeof PracticeRunRoute
+}
+
+const PracticeRouteChildren: PracticeRouteChildren = {
+  PracticeRunRoute: PracticeRunRoute,
+}
+
+const PracticeRouteWithChildren = PracticeRoute._addFileChildren(
+  PracticeRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   DashboardRoute: DashboardRoute,
   HistoryRoute: HistoryRoute,
-  PracticeRoute: PracticeRoute,
+  PracticeRoute: PracticeRouteWithChildren,
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   ResultAttemptIdRoute: ResultAttemptIdRoute,

@@ -78,6 +78,7 @@ function AuthPage() {
   const [fullName, setFullName] = useState(search.name ?? "");
   const [studyYear, setStudyYear] = useState("");
   const [branch, setBranch] = useState("");
+  const [codeNumber, setCodeNumber] = useState("");
   const [institution, setInstitution] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -213,6 +214,7 @@ function AuthPage() {
             role: signupRole,
             year: studyYear || undefined,
             branch: branch || undefined,
+            codeNumber: codeNumber || undefined,
             institution: institution || undefined,
           },
         });
@@ -599,49 +601,65 @@ function AuthPage() {
                   </div>
 
                   {signupRole === "student" ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="study-year">B.Tech Year</Label>
-                        <Select value={studyYear} onValueChange={setStudyYear}>
-                          <SelectTrigger id="study-year">
-                            <SelectValue placeholder="Select year" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduated"].map(
-                              (y) => (
-                                <SelectItem key={y} value={y}>
-                                  {y}
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="study-year">B.Tech Year</Label>
+                          <Select value={studyYear} onValueChange={setStudyYear}>
+                            <SelectTrigger id="study-year">
+                              <SelectValue placeholder="Select year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduated"].map(
+                                (y) => (
+                                  <SelectItem key={y} value={y}>
+                                    {y}
+                                  </SelectItem>
+                                ),
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="branch">Branch</Label>
+                          <Select value={branch} onValueChange={setBranch}>
+                            <SelectTrigger id="branch">
+                              <SelectValue placeholder="Select branch" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[
+                                "CSE",
+                                "IT",
+                                "ECE",
+                                "EEE",
+                                "Mechanical",
+                                "Civil",
+                                "AI & ML",
+                                "Other",
+                              ].map((b) => (
+                                <SelectItem key={b} value={b}>
+                                  {b}
                                 </SelectItem>
-                              ),
-                            )}
-                          </SelectContent>
-                        </Select>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="branch">Branch</Label>
-                        <Select value={branch} onValueChange={setBranch}>
-                          <SelectTrigger id="branch">
-                            <SelectValue placeholder="Select branch" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[
-                              "CSE",
-                              "IT",
-                              "ECE",
-                              "EEE",
-                              "Mechanical",
-                              "Civil",
-                              "AI & ML",
-                              "Other",
-                            ].map((b) => (
-                              <SelectItem key={b} value={b}>
-                                {b}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="code-number">Code / Roll Number</Label>
+                        <Input
+                          id="code-number"
+                          type="text"
+                          placeholder="e.g. Y21CS058"
+                          value={codeNumber}
+                          onChange={(e) => setCodeNumber(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Your college-issued code number, used to identify you in instructor test
+                          reports.
+                        </p>
                       </div>
-                    </div>
+                    </>
                   ) : (
                     <div className="space-y-2">
                       <Label htmlFor="institution">Institution / Organization</Label>

@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "TCS NQT Passage Recall practice for B.Tech students of SRKR Engineering College, Bhimavaram — read, recall and express technical passages with AI CARE-based feedback.",
+          "Read, recall and express technical passages under exam conditions — AI-evaluated comprehension practice for B.Tech students of SRKR Engineering College, Bhimavaram.",
       },
       { property: "og:title", content: "Midnight Academy — Don't Solve Yet. Understand First." },
       {
@@ -112,17 +112,19 @@ function Landing() {
       <section className="grid-backdrop border-b border-border">
         <div className="mx-auto grid max-w-[1400px] gap-14 px-5 py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:items-center lg:px-8 lg:py-28">
           <div className="animate-fade-up">
-            <Tag tone="primary">TCS NQT Passage Recall Practice · SRKR Engineering College</Tag>
+            <Tag tone="primary">
+              Read · Recall · Express — Placement Readiness for SRKR Engineering College
+            </Tag>
             <h1 className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Don't Solve Yet.
               <br />
               <span className="text-gradient">Understand First.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground lg:text-lg">
-              Built for B.Tech students of SRKR Engineering College, Bhimavaram. Practice the TCS
-              NQT Passage Recall round: read a technical passage under a strict timer, rewrite it
-              from memory, and get AI feedback on Comprehend, Absorb, Recall and Express — the exact
-              attributes TCS scores.
+              Built for B.Tech students of SRKR Engineering College, Bhimavaram. Read a technical
+              passage under a strict timer, rewrite it from memory, and get AI feedback on how well
+              you grasped the objective, absorbed the details, recalled the facts and expressed it
+              in your own words — the reading skills placement tests look for.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild size="lg">

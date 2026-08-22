@@ -85,7 +85,7 @@ function CreateTest() {
     <PageShell className="max-w-[1000px]">
       <SectionHeading
         title="Create Test"
-        subtitle="TCS NQT Passage Recall format — students read each passage briefly, then rewrite it from memory."
+        subtitle="Read-and-recall format — students read each passage briefly, then rewrite it from memory."
       />
       <ol className="mb-8 flex flex-wrap gap-2">
         {steps.map((s, i) => (

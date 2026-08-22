@@ -82,7 +82,10 @@ export const getAdminTest = createServerFn({ method: "GET" })
 
     const studentIds = (attempts ?? []).map((a) => a.student_id);
     const { data: profiles } = studentIds.length
-      ? await context.supabase.from("profiles").select("id, full_name, email").in("id", studentIds)
+      ? await context.supabase
+          .from("profiles")
+          .select("id, full_name, email, code_number")
+          .in("id", studentIds)
       : { data: [] };
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
@@ -93,6 +96,16 @@ export const getAdminTest = createServerFn({ method: "GET" })
       list.push(Number(answer.score) * 10);
       byPosition.set(answer.position, list);
     }
+
+    // Order participants by the students college code / roll number
+    const sortedAttempts = [...(attempts ?? [])].sort((x, y) => {
+      const cx = profileMap.get(x.student_id)?.code_number ?? "";
+      const cy = profileMap.get(y.student_id)?.code_number ?? "";
+      if (cx && cy) return cx.localeCompare(cy, undefined, { numeric: true });
+      if (cx) return -1;
+      if (cy) return 1;
+      return 0;
+    });
 
     return {
       test: {
@@ -122,7 +135,7 @@ export const getAdminTest = createServerFn({ method: "GET" })
         referenceAnswer: q.reference_answer,
         approved: q.approved,
       })),
-      participants: (attempts ?? []).map((a) => {
+      participants: sortedAttempts.map((a) => {
         const prof = profileMap.get(a.student_id);
         const name = prof?.full_name || "Student";
         const initials = name
@@ -137,6 +150,7 @@ export const getAdminTest = createServerFn({ method: "GET" })
           name,
           initials: initials || "ST",
           email: prof?.email ?? "",
+          codeNumber: prof?.code_number ?? "",
           score: a.score !== null ? Number(a.score) : 0,
           status: a.status,
           blurCount: a.blur_count,
@@ -490,7 +504,7 @@ export const getAdminStudent = createServerFn({ method: "GET" })
 
     const { data: profile } = await context.supabase
       .from("profiles")
-      .select("id, full_name, email, institution, year, branch")
+      .select("id, full_name, email, institution, year, branch, code_number")
       .eq("id", data.studentId)
       .maybeSingle();
     if (!profile) throw new Error("Student not found.");
@@ -529,6 +543,7 @@ export const getAdminStudent = createServerFn({ method: "GET" })
         institution: profile.institution,
         year: profile.year,
         branch: profile.branch,
+        codeNumber: profile.code_number,
         attempts: attempts?.length ?? 0,
         average: average(scores),
         weakest: weakestAxis(attempts ?? []),

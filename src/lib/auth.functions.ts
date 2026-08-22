@@ -201,6 +201,7 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
         role: z.enum(["student", "admin"]).default("student"),
         year: z.string().max(30).optional(),
         branch: z.string().max(60).optional(),
+        codeNumber: z.string().max(40).optional(),
         institution: z.string().max(160).optional(),
       })
       .parse(data),
@@ -264,6 +265,7 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
       full_name: displayName,
       ...(data.year ? { year: data.year } : {}),
       ...(data.branch ? { branch: data.branch } : {}),
+      ...(data.codeNumber ? { code_number: data.codeNumber } : {}),
       ...(data.institution ? { institution: data.institution } : {}),
       onboarded: false,
     });
@@ -344,6 +346,7 @@ export const completeGoogleRegistration = createServerFn({ method: "POST" })
         role: z.enum(["student", "admin"]),
         year: z.string().max(30).optional(),
         branch: z.string().max(60).optional(),
+        codeNumber: z.string().max(40).optional(),
         institution: z.string().max(160).optional(),
       })
       .parse(data),
@@ -384,6 +387,7 @@ export const completeGoogleRegistration = createServerFn({ method: "POST" })
       full_name: data.fullName.trim(),
       ...(data.year ? { year: data.year } : {}),
       ...(data.branch ? { branch: data.branch } : {}),
+      ...(data.codeNumber ? { code_number: data.codeNumber } : {}),
       ...(data.institution ? { institution: data.institution } : {}),
       onboarded: false,
     });

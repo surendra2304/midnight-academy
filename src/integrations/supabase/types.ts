@@ -156,6 +156,7 @@ export type Database = {
       profiles: {
         Row: {
           branch: string | null;
+          code_number: string | null;
           created_at: string;
           email: string;
           full_name: string;
@@ -166,6 +167,7 @@ export type Database = {
         };
         Insert: {
           branch?: string | null;
+          code_number?: string | null;
           created_at?: string;
           email?: string;
           full_name?: string;
@@ -176,6 +178,7 @@ export type Database = {
         };
         Update: {
           branch?: string | null;
+          code_number?: string | null;
           created_at?: string;
           email?: string;
           full_name?: string;

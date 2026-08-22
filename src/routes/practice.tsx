@@ -106,6 +106,27 @@ function PracticeLibrary() {
           subtitle="Active comprehension assessments available for practice."
         />
 
+        <div className="panel grid-backdrop mt-6 flex flex-wrap items-center justify-between gap-4 p-6">
+          <div>
+            <h2 className="text-base font-bold text-foreground">
+              Open Practice — no test code needed
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Read a passage, rewrite it from memory and get instant AI feedback. Unlimited
+              attempts, never counted in official scores.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {CATEGORIES.map((c) => (
+                <Button asChild key={c} size="sm" variant="outline">
+                  <Link to="/practice/run" search={{ category: c }}>
+                    Practice {c}
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="panel p-5">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

@@ -19,24 +19,23 @@ export const AXIS_KEYS = ["objective", "constraint", "io", "concept", "interpret
 export type AxisKey = (typeof AXIS_KEYS)[number];
 
 /**
- * Axis display names follow the TCS NQT Passage Recall CARE attributes:
- * Comprehend, Absorb, Recall, Express — plus Concept Identification for
- * technical passages. The internal keys stay stable for stored data.
+ * Axis display names describe passage-recall reading skills.
+ * The internal keys stay stable for stored data.
  */
 export const AXIS_LABELS: Record<AxisKey, string> = {
-  objective: "Comprehend — grasp the main objective",
-  constraint: "Absorb — capture stated constraints & data points",
-  io: "Recall — inputs, outputs & factual relationships",
+  objective: "Objective Grasp — the main point of the passage",
+  constraint: "Detail Capture — limits, keywords & data points",
+  io: "Fact Recall — inputs, outputs & relationships",
   concept: "Concept Identification — underlying technical ideas",
-  interpretation: "Express — restate the scenario in your own words",
+  interpretation: "Clear Expression — restate in your own words",
 };
 
 export const AXIS_SHORT: Record<AxisKey, string> = {
-  objective: "Comprehend",
-  constraint: "Absorb",
+  objective: "Objective",
+  constraint: "Details",
   io: "Recall",
   concept: "Concepts",
-  interpretation: "Express",
+  interpretation: "Expression",
 };
 
 export type AxisScores = Record<AxisKey, number>;
