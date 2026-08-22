@@ -295,23 +295,33 @@ export const getOAuthAccountStatus = createServerFn({ method: "POST" })
     if (!authUserId) throw new Error("Unauthorized.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: existingRoles } = await supabaseAdmin
+    const { data: existingRoles, error: rolesError } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", authUserId);
+
+    if (rolesError) {
+      console.error("[getOAuthAccountStatus] roles query failed:", rolesError.message);
+      throw new Error("Could not check the account status. Please try again.");
+    }
 
     const roles = existingRoles ?? [];
     if (roles.length === 0) {
       return { hasAccount: false as const, email: null, fullName: null };
     }
 
-    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(authUserId);
-    const metadata = (userData?.user?.user_metadata ?? {}) as Record<string, unknown>;
+    const { data: userData, error: userError } =
+      await supabaseAdmin.auth.admin.getUserById(authUserId);
+    if (userError || !userData?.user) {
+      console.error("[getOAuthAccountStatus] getUserById failed:", userError?.message);
+      throw new Error("Could not load the account. Please try again.");
+    }
+    const metadata = (userData.user.user_metadata ?? {}) as Record<string, unknown>;
 
     return {
       hasAccount: true as const,
       role: (roles[0]?.role ?? "student") as "admin" | "student",
-      email: userData?.user?.email ?? null,
+      email: userData.user.email ?? null,
       fullName:
         typeof metadata["full_name"] === "string" && metadata["full_name"]
           ? metadata["full_name"]
@@ -344,10 +354,14 @@ export const completeGoogleRegistration = createServerFn({ method: "POST" })
     if (!authUserId) throw new Error("Unauthorized.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: existingRoles } = await supabaseAdmin
+    const { data: existingRoles, error: rolesError } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", authUserId);
+
+    if (rolesError) {
+      console.error("[completeGoogleRegistration] roles query failed:", rolesError.message);
+    }
 
     if (existingRoles && existingRoles.length > 0) {
       throw new Error("This Google account is already registered. Please sign in.");
