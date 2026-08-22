@@ -25,6 +25,12 @@ export async function requireAuth(args: { role?: AppRole; location: { pathname: 
 
 export async function requireUnauth(_args?: { location?: { pathname: string } }) {
   await authStore.getRestorePromise();
+
+  // Rule: never act while auth state is still resolving — a momentary null
+  // user mid-login must not bounce anyone off /auth, and a momentary session
+  // must not fire a premature dashboard redirect.
+  if (authStore.isLoading()) return;
+
   const user = authStore.getUser();
 
   // Rule: Logged-in users visiting /auth are redirected to their respective dashboard

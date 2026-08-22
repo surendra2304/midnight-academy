@@ -96,8 +96,14 @@ if (typeof window !== "undefined" && !isInitialized) {
     if (event === "SIGNED_OUT" || !session?.user) {
       updateState({ user: null, loading: false });
     } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
-      const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
-      updateState({ user, loading: false });
+      updateState({ loading: true });
+      try {
+        const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
+        updateState({ user, loading: false });
+      } catch {
+        // Role-less or unresolvable profile: treat as signed-out for guards
+        updateState({ user: null, loading: false });
+      }
     }
   });
 }
@@ -108,6 +114,11 @@ export const authStore = {
     return () => {
       listeners = listeners.filter((l) => l !== listener);
     };
+  },
+
+  /** True while a session/profile/role resolution is still in flight. */
+  isLoading() {
+    return state.loading;
   },
 
   // Client snapshot — returns live mutable state

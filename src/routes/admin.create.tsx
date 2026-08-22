@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
   Copy,
@@ -106,7 +107,8 @@ function CreateTest() {
         ))}
       </ol>
 
-      {step === 0 ? (
+      {/* Steps stay mounted (hidden when inactive) so going back never loses state */}
+      <div hidden={step !== 0}>
         <Details
           initial={config}
           onNext={(newConfig) => {
@@ -114,8 +116,8 @@ function CreateTest() {
             setStep(1);
           }}
         />
-      ) : null}
-      {step === 1 ? (
+      </div>
+      <div hidden={step !== 1}>
         <Source
           config={config}
           onDrafted={(testId, draftedQuestions) => {
@@ -124,15 +126,16 @@ function CreateTest() {
             setStep(2);
           }}
         />
-      ) : null}
-      {step === 2 ? (
+      </div>
+      <div hidden={step !== 2}>
         <Review
-          testId={config.testId!}
+          testId={config.testId ?? ""}
           questions={questions}
           onQuestionsUpdated={(updated) => setQuestions(updated)}
+          onBack={() => setStep(1)}
           onNext={() => setStep(3)}
         />
-      ) : null}
+      </div>
       {step === 3 ? (
         <Publish
           config={config}
@@ -574,11 +577,13 @@ function Review({
   testId,
   questions,
   onQuestionsUpdated,
+  onBack,
   onNext,
 }: {
   testId: string;
   questions: QuestionDraft[];
   onQuestionsUpdated: (updated: QuestionDraft[]) => void;
+  onBack: () => void;
   onNext: () => void;
 }) {
   const [saving, setSaving] = useState(false);
@@ -742,20 +747,30 @@ function Review({
         ))}
       </div>
 
-      <Button
-        size="lg"
-        className="mt-6"
-        disabled={approvedCount === 0 || saving}
-        onClick={handleSaveAndContinue}
-      >
-        {saving ? (
-          <>
-            <Loader2 className="mr-2 size-4 animate-spin" /> Saving...
-          </>
-        ) : (
-          `Next (${approvedCount} Approved)`
-        )}
-      </Button>
+      {questions.length === 0 ? (
+        <div className="mt-6 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm text-warning">
+          No questions to review. Please go back and add questions.
+        </div>
+      ) : null}
+
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <Button variant="outline" size="lg" onClick={onBack} disabled={saving}>
+          <ArrowLeft className="size-4" /> Back to Questions
+        </Button>
+        <Button
+          size="lg"
+          disabled={approvedCount === 0 || saving || questions.length === 0}
+          onClick={handleSaveAndContinue}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" /> Saving...
+            </>
+          ) : (
+            `Next (${approvedCount} Approved)`
+          )}
+        </Button>
+      </div>
     </>
   );
 }
