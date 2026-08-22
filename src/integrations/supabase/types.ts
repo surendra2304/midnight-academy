@@ -249,6 +249,7 @@ export type Database = {
       };
       tests: {
         Row: {
+          is_practice: boolean;
           category: string;
           code: string | null;
           created_at: string;
@@ -263,6 +264,7 @@ export type Database = {
           status: Database["public"]["Enums"]["test_status"];
         };
         Insert: {
+          is_practice?: boolean;
           category: string;
           code?: string | null;
           created_at?: string;
@@ -277,6 +279,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["test_status"];
         };
         Update: {
+          is_practice?: boolean;
           category?: string;
           code?: string | null;
           created_at?: string;
