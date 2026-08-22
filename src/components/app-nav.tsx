@@ -104,7 +104,7 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
         <DropdownMenuItem
           onClick={async () => {
             await signOut();
-            navigate({ to: "/auth" });
+            navigate({ to: "/" });
           }}
         >
           <LogOut className="mr-2 size-4" /> Sign out

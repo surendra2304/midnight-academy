@@ -120,6 +120,9 @@ function Landing() {
               <br />
               <span className="text-gradient">Understand First.</span>
             </h1>
+            <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/8 px-4 py-1.5 text-sm font-semibold text-primary">
+              SRKR Engineering College · Bhimavaram
+            </p>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground lg:text-lg">
               Built for B.Tech students of SRKR Engineering College, Bhimavaram. Read a technical
               passage under a strict timer, rewrite it from memory, and get AI feedback on how well
