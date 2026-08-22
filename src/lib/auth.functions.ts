@@ -263,7 +263,7 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
     const userId = createdUser.user.id;
 
     // Create/update profile (with basic details) and the selected role
-    await supabaseAdmin.from("profiles").upsert({
+    const { error: profileError } = await supabaseAdmin.from("profiles").upsert({
       id: userId,
       email,
       full_name: displayName,
@@ -274,11 +274,17 @@ export const completeRegistrationWithPassword = createServerFn({ method: "POST" 
       ...(data.subject ? { subject: data.subject } : {}),
       onboarded: false,
     });
+    if (profileError) {
+      throw new Error(profileError.message || "Could not save the profile details.");
+    }
 
-    await supabaseAdmin.from("user_roles").upsert({
+    const { error: roleError } = await supabaseAdmin.from("user_roles").upsert({
       user_id: userId,
       role: data.role,
     });
+    if (roleError) {
+      throw new Error(roleError.message || "Could not assign the selected role.");
+    }
 
     return {
       success: true,
@@ -398,7 +404,7 @@ export const completeGoogleRegistration = createServerFn({ method: "POST" })
       }
     }
 
-    await supabaseAdmin.from("profiles").upsert({
+    const { error: googleProfileError } = await supabaseAdmin.from("profiles").upsert({
       id: user.id,
       email: user.email ?? "",
       full_name: data.fullName.trim(),
@@ -409,11 +415,17 @@ export const completeGoogleRegistration = createServerFn({ method: "POST" })
       ...(data.subject ? { subject: data.subject } : {}),
       onboarded: false,
     });
+    if (googleProfileError) {
+      throw new Error(googleProfileError.message || "Could not save the profile details.");
+    }
 
-    await supabaseAdmin.from("user_roles").insert({
+    const { error: googleRoleError } = await supabaseAdmin.from("user_roles").insert({
       user_id: user.id,
       role: data.role,
     });
+    if (googleRoleError) {
+      throw new Error(googleRoleError.message || "Could not assign the selected role.");
+    }
 
     return {
       success: true,

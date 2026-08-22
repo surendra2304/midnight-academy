@@ -225,12 +225,13 @@ export const revealQuestion = createServerFn({ method: "POST" })
 
     // First time reveal
     const revealedAt = new Date().toISOString();
-    await supabaseAdmin.from("attempt_answers").insert({
+    const { error: revealError } = await supabaseAdmin.from("attempt_answers").insert({
       attempt_id: attempt.id,
       question_id: question.id,
       position: data.position,
       revealed_at: revealedAt,
     });
+    if (revealError) throw new Error("Could not open this question. Please try again.");
 
     return {
       state: "ready" as const,
@@ -318,10 +319,11 @@ export const finishAttempt = createServerFn({ method: "POST" })
     // Mark for evaluation and return immediately — the heavy Gemini work runs
     // in processAttemptEvaluation (called by the result page / instructor),
     // so this request can never hit the serverless timeout.
-    await supabaseAdmin
+    const { error: flagError } = await supabaseAdmin
       .from("attempts")
       .update({ status: "evaluating", completed_at: new Date().toISOString() })
       .eq("id", attempt.id);
+    if (flagError) throw new Error("Could not submit the test. Please try again.");
 
     return { attemptId: attempt.id, status: "evaluating" };
   });
@@ -367,7 +369,7 @@ export const processAttemptEvaluation = createServerFn({ method: "POST" })
     try {
       const { scored, axes, overall } = await evaluateAttempt(answers ?? [], questionMap);
 
-      await Promise.all(
+      const answerUpdates = await Promise.all(
         scored.map((item) =>
           supabaseAdmin
             .from("attempt_answers")
@@ -380,8 +382,12 @@ export const processAttemptEvaluation = createServerFn({ method: "POST" })
             .eq("id", item.id),
         ),
       );
+      const failedUpdate = answerUpdates.find((u) => u.error);
+      if (failedUpdate?.error) {
+        throw new Error(failedUpdate.error.message || "Could not save the evaluation scores.");
+      }
 
-      await supabaseAdmin
+      const { error: attemptUpdateError } = await supabaseAdmin
         .from("attempts")
         .update({
           status: "evaluated",
@@ -390,6 +396,9 @@ export const processAttemptEvaluation = createServerFn({ method: "POST" })
           completed_at: new Date().toISOString(),
         })
         .eq("id", attempt.id);
+      if (attemptUpdateError) {
+        throw new Error(attemptUpdateError.message || "Could not finalize the evaluation.");
+      }
 
       // Notify student
       await supabaseAdmin.from("notifications").insert({
