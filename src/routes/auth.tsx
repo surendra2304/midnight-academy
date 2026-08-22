@@ -78,8 +78,9 @@ function AuthPage() {
   const [fullName, setFullName] = useState(search.name ?? "");
   const [studyYear, setStudyYear] = useState("");
   const [branch, setBranch] = useState("");
-  const [codeNumber, setCodeNumber] = useState("");
+  const [regdNumber, setRegdNumber] = useState("");
   const [institution, setInstitution] = useState("");
+  const [subject, setSubject] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const navigate = useNavigate();
@@ -214,8 +215,9 @@ function AuthPage() {
             role: signupRole,
             year: studyYear || undefined,
             branch: branch || undefined,
-            codeNumber: codeNumber || undefined,
+            regdNumber: regdNumber || undefined,
             institution: institution || undefined,
+            subject: subject || undefined,
           },
         });
 
@@ -235,6 +237,7 @@ function AuthPage() {
             year: studyYear || undefined,
             branch: branch || undefined,
             institution: institution || undefined,
+            subject: subject || undefined,
           },
         });
 
@@ -588,11 +591,13 @@ function AuthPage() {
                   </p>
 
                   <div className="space-y-2">
-                    <Label htmlFor="full-name">Full Name</Label>
+                    <Label htmlFor="full-name">
+                      {signupRole === "admin" ? "Full Name" : "Name"}
+                    </Label>
                     <Input
                       id="full-name"
                       type="text"
-                      placeholder="e.g. Surendra Kumar"
+                      placeholder={signupRole === "admin" ? "Dr. Anil Kumar" : "Surendra Kumar"}
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       required
@@ -602,76 +607,78 @@ function AuthPage() {
 
                   {signupRole === "student" ? (
                     <>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="study-year">B.Tech Year</Label>
-                          <Select value={studyYear} onValueChange={setStudyYear}>
-                            <SelectTrigger id="study-year">
-                              <SelectValue placeholder="Select year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduated"].map(
-                                (y) => (
-                                  <SelectItem key={y} value={y}>
-                                    {y}
-                                  </SelectItem>
-                                ),
-                              )}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="branch">Branch</Label>
-                          <Select value={branch} onValueChange={setBranch}>
-                            <SelectTrigger id="branch">
-                              <SelectValue placeholder="Select branch" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[
-                                "CSE",
-                                "IT",
-                                "ECE",
-                                "EEE",
-                                "Mechanical",
-                                "Civil",
-                                "AI & ML",
-                                "Other",
-                              ].map((b) => (
-                                <SelectItem key={b} value={b}>
-                                  {b}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
                       <div className="space-y-2">
-                        <Label htmlFor="code-number">Code / Roll Number</Label>
+                        <Label htmlFor="regd-number">Regd. Number</Label>
                         <Input
-                          id="code-number"
+                          id="regd-number"
                           type="text"
-                          placeholder="e.g. Y21CS058"
-                          value={codeNumber}
-                          onChange={(e) => setCodeNumber(e.target.value)}
+                          placeholder="21P31A0501"
+                          value={regdNumber}
+                          onChange={(e) => setRegdNumber(e.target.value.toUpperCase())}
+                          minLength={10}
+                          maxLength={10}
+                          required
                         />
                         <p className="text-xs text-muted-foreground">
-                          Your college-issued code number, used to identify you in instructor test
-                          reports.
+                          Exactly 10 characters, as printed on your college ID.
                         </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="branch">Branch</Label>
+                        <Select value={branch} onValueChange={setBranch}>
+                          <SelectTrigger id="branch">
+                            <SelectValue placeholder="Select branch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[
+                              "CSE",
+                              "IT",
+                              "ECE",
+                              "EEE",
+                              "Mechanical",
+                              "Civil",
+                              "AI & ML",
+                              "Other",
+                            ].map((b) => (
+                              <SelectItem key={b} value={b}>
+                                {b}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="study-year">Year</Label>
+                        <Select value={studyYear} onValueChange={setStudyYear}>
+                          <SelectTrigger id="study-year">
+                            <SelectValue placeholder="Select year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduated"].map(
+                              (y) => (
+                                <SelectItem key={y} value={y}>
+                                  {y}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </>
                   ) : (
                     <div className="space-y-2">
-                      <Label htmlFor="institution">Institution / Organization</Label>
+                      <Label htmlFor="subject">Subject</Label>
                       <Input
-                        id="institution"
+                        id="subject"
                         type="text"
-                        placeholder="SRKR Engineering College, Bhimavaram"
-                        value={institution}
-                        onChange={(e) => setInstitution(e.target.value)}
+                        placeholder="Data Structures"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Students will see this on your tests.
+                        The subject you teach. Students see it on your tests.
                       </p>
                     </div>
                   )}
@@ -680,7 +687,11 @@ function AuthPage() {
                     type="submit"
                     className="w-full"
                     size="lg"
-                    disabled={loading || !fullName.trim()}
+                    disabled={
+                      loading ||
+                      !fullName.trim() ||
+                      (signupRole === "student" && regdNumber.length !== 10)
+                    }
                   >
                     {loading ? "Creating Account..." : "Create Account"}
                   </Button>

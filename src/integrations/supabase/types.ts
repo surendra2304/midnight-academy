@@ -157,6 +157,7 @@ export type Database = {
         Row: {
           branch: string | null;
           code_number: string | null;
+          subject: string | null;
           created_at: string;
           email: string;
           full_name: string;
@@ -168,6 +169,7 @@ export type Database = {
         Insert: {
           branch?: string | null;
           code_number?: string | null;
+          subject?: string | null;
           created_at?: string;
           email?: string;
           full_name?: string;
