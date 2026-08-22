@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { AxisKey } from "@/lib/mock-data";
 
 const questionInput = z.object({
   id: z.string().uuid(),
@@ -384,7 +385,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     // Recent student submissions across this instructor's tests
     const recentRaw = [...allAttempts]
       .sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""))
-      .slice(0, 6);
+      .slice(0, 5);
     const recentIds = [...new Set(recentRaw.map((a) => a.student_id))];
     const { data: recentProfiles } = recentIds.length
       ? await context.supabase.from("profiles").select("id, full_name").in("id", recentIds)
@@ -484,7 +485,7 @@ export const listAdminStudents = createServerFn({ method: "GET" })
         institution: profile.institution,
         attempts: mine.length,
         average: average(scores),
-        weakest: weakestAxis(mine),
+        weakest: weakestAxis(mine) as AxisKey | null,
         lastActive:
           mine
             .map((a) => a.completed_at)
@@ -546,7 +547,7 @@ export const getAdminStudent = createServerFn({ method: "GET" })
         codeNumber: profile.code_number,
         attempts: attempts?.length ?? 0,
         average: average(scores),
-        weakest: weakestAxis(attempts ?? []),
+        weakest: weakestAxis(attempts ?? []) as AxisKey | null,
         lastActive: attempts?.[0]?.completed_at ?? "Recently",
       },
       attempts: (attempts ?? []).map((a) => ({
@@ -724,26 +725,60 @@ export const resolveFlag = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const listQuestionBank = createServerFn({ method: "GET" })
+/** Deletes a single question from an instructor-owned test. */
+export const deleteQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .validator((data) => z.object({ questionId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
     const { assertAdmin } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
 
-    const { data: questions } = await context.supabase
+    const { data: question } = await context.supabase
       .from("questions")
-      .select("id, text, category, topic, difficulty, concepts, constraints, reference_answer")
-      .eq("approved", true)
-      .order("created_at", { ascending: false });
+      .select("id, test_id, tests!inner(owner_id)")
+      .eq("id", data.questionId)
+      .maybeSingle();
 
-    return (questions ?? []).map((q) => ({
-      id: q.id,
-      text: q.text,
-      category: q.category,
-      topic: q.topic,
-      difficulty: q.difficulty,
-      concepts: q.concepts,
-      constraints: q.constraints,
-      answer: q.reference_answer,
-    }));
+    const owner =
+      (question as { tests?: Array<{ owner_id: string }> } | null)?.tests?.[0]?.owner_id ??
+      (question as { tests?: { owner_id: string } } | null)?.tests?.owner_id;
+    if (!question || owner !== context.userId) {
+      throw new Error("Question not found or unauthorized.");
+    }
+
+    const { error } = await context.supabase.from("questions").delete().eq("id", data.questionId);
+    if (error) throw new Error(error.message || "Could not delete the question.");
+
+    // Keep the stored question_count in sync
+    const { count } = await context.supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("test_id", question.test_id);
+    await context.supabase
+      .from("tests")
+      .update({ question_count: count ?? 0 })
+      .eq("id", question.test_id);
+
+    return { ok: true };
+  });
+
+/** Deletes an entire instructor-owned test (questions and attempts cascade). */
+export const deleteTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data) => z.object({ testId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertAdmin } = await import("./admin.server");
+    await assertAdmin(context.supabase, context.userId);
+
+    const { data: test } = await context.supabase
+      .from("tests")
+      .select("id")
+      .eq("id", data.testId)
+      .eq("owner_id", context.userId)
+      .maybeSingle();
+    if (!test) throw new Error("Test not found or unauthorized.");
+
+    const { error } = await context.supabase.from("tests").delete().eq("id", data.testId);
+    if (error) throw new Error(error.message || "Could not delete the test.");
+    return { ok: true };
   });

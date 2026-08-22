@@ -120,6 +120,7 @@ function CreateTest() {
       <div hidden={step !== 1}>
         <Source
           config={config}
+          onBack={() => setStep(0)}
           onDrafted={(testId, draftedQuestions) => {
             setConfig((prev) => ({ ...prev, testId }));
             setQuestions(draftedQuestions);
@@ -140,6 +141,7 @@ function CreateTest() {
         <Publish
           config={config}
           approvedCount={questions.filter((q) => q.approved).length}
+          onBack={() => setStep(2)}
           onPublished={(code) => setConfig((prev) => ({ ...prev, code }))}
         />
       ) : null}
@@ -240,9 +242,11 @@ function Details({
 
 function Source({
   config,
+  onBack,
   onDrafted,
 }: {
   config: TestConfig;
+  onBack: () => void;
   onDrafted: (testId: string, questions: QuestionDraft[]) => void;
 }) {
   const [sourceText, setSourceText] = useState("");
@@ -462,7 +466,12 @@ function Source({
 
   return (
     <Panel>
-      <h2 className="text-base font-semibold text-foreground">Add Questions</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-foreground">Add Questions</h2>
+        <Button variant="outline" size="sm" onClick={onBack} disabled={parsing}>
+          <ArrowLeft className="size-4" /> Back to Details
+        </Button>
+      </div>
       <p className="mt-1.5 text-sm text-muted-foreground">
         Upload a PDF with your questions — or paste them below. You can edit, remove or add more
         after reading them in.
@@ -778,10 +787,12 @@ function Review({
 function Publish({
   config,
   approvedCount,
+  onBack,
   onPublished,
 }: {
   config: TestConfig;
   approvedCount: number;
+  onBack: () => void;
   onPublished: (code: string) => void;
 }) {
   const [publishing, setPublishing] = useState(false);
@@ -854,20 +865,20 @@ function Publish({
           </div>
         ))}
       </dl>
-      <Button
-        size="lg"
-        className="mt-6"
-        onClick={handlePublish}
-        disabled={publishing || approvedCount === 0}
-      >
-        {publishing ? (
-          <>
-            <Loader2 className="mr-2 size-4 animate-spin" /> Publishing...
-          </>
-        ) : (
-          "Publish Test & Generate Code"
-        )}
-      </Button>
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <Button variant="outline" size="lg" onClick={onBack} disabled={publishing}>
+          <ArrowLeft className="size-4" /> Back to Review
+        </Button>
+        <Button size="lg" onClick={handlePublish} disabled={publishing || approvedCount === 0}>
+          {publishing ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" /> Publishing...
+            </>
+          ) : (
+            "Publish Test & Generate Code"
+          )}
+        </Button>
+      </div>
     </Panel>
   );
 }

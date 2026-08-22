@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Bell, Check, Loader2 } from "lucide-react";
 import { fetchNotifications, markAsRead, markAllAsRead } from "@/lib/notifications.functions";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function NotificationsMenu() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
@@ -79,7 +80,7 @@ export function NotificationsMenu() {
                 onClick={() => {
                   if (!n.is_read) markRead.mutate(n.id);
                   if (n.link) {
-                    window.location.href = n.link;
+                    navigate({ to: n.link, reloadDocument: false } as never);
                   }
                 }}
               >

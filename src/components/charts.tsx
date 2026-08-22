@@ -11,6 +11,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  LabelList,
 } from "recharts";
 import { AXIS_KEYS, AXIS_SHORT } from "@/lib/mock-data";
 
@@ -129,7 +130,7 @@ export function ScoreBars({
         <BarChart
           data={data}
           layout={layout === "vertical" ? "vertical" : "horizontal"}
-          margin={{ top: 8, right: 16, bottom: 0, left: layout === "vertical" ? 24 : -18 }}
+          margin={{ top: 20, right: 40, bottom: 4, left: layout === "vertical" ? 8 : 4 }}
         >
           <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
           {layout === "vertical" ? (
@@ -143,19 +144,39 @@ export function ScoreBars({
               <YAxis
                 type="category"
                 dataKey={xKey}
-                width={140}
-                tick={axisStyle.tick}
+                width={150}
+                tick={{ ...axisStyle.tick, fontSize: 11 }}
                 stroke={axisStyle.stroke}
+                tickFormatter={(v: string) =>
+                  typeof v === "string" && v.length > 24 ? `${v.slice(0, 23)}…` : v
+                }
               />
             </>
           ) : (
             <>
-              <XAxis dataKey={xKey} tick={axisStyle.tick} stroke={axisStyle.stroke} />
+              <XAxis
+                dataKey={xKey}
+                tick={{ ...axisStyle.tick, fontSize: 11 }}
+                stroke={axisStyle.stroke}
+                interval={0}
+                angle={-18}
+                textAnchor="end"
+                height={56}
+                tickFormatter={(v: string) =>
+                  typeof v === "string" && v.length > 18 ? `${v.slice(0, 17)}…` : v
+                }
+              />
               <YAxis domain={[0, 100]} tick={axisStyle.tick} stroke={axisStyle.stroke} />
             </>
           )}
           <Tooltip {...tooltipProps} cursor={{ fill: "var(--color-surface-2)", opacity: 0.4 }} />
-          <Bar dataKey="score" radius={4} animationDuration={800}>
+          <Bar dataKey="score" radius={4} animationDuration={800} maxBarSize={42}>
+            <LabelList
+              dataKey="score"
+              position={layout === "vertical" ? "right" : "top"}
+              formatter={(v: number) => (v === 0 || v ? `${v}%` : "")}
+              style={{ fill: "var(--color-muted-foreground)", fontSize: 11, fontWeight: 600 }}
+            />
             {data.map((d, i) => (
               <Cell key={i} fill={barColor(Number(d["score"]))} />
             ))}

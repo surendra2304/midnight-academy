@@ -26,7 +26,6 @@ const adminNav: NavItem[] = [
   { label: "Dashboard", to: "/admin" },
   { label: "Tests", to: "/admin/tests" },
   { label: "Create Test", to: "/admin/create" },
-  { label: "Question Bank", to: "/admin/question-bank" },
   { label: "Students", to: "/admin/students" },
   { label: "Analytics", to: "/admin/analytics" },
   { label: "Review Queue", to: "/admin/review" },

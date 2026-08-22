@@ -98,7 +98,9 @@ function Students() {
               </span>
               <span className="text-sm text-muted-foreground">{s.attempts} attempts</span>
               <span className={`text-sm font-bold ${scoreTextClass(s.average)}`}>{s.average}%</span>
-              <Tag tone="warning">Weak: {AXIS_LABELS[s.weakest]}</Tag>
+              <Tag tone="warning">
+                {s.weakest ? `Weak: ${AXIS_LABELS[s.weakest]}` : "No evaluations yet"}
+              </Tag>
               <span className="text-right text-xs text-muted-foreground">{s.lastActive}</span>
             </Link>
           ))}

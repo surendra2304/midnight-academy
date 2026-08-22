@@ -20,7 +20,6 @@ import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminCreateRouteImport } from './routes/admin.create'
-import { Route as AdminQuestionBankRouteImport } from './routes/admin.question-bank'
 import { Route as AdminReviewRouteImport } from './routes/admin.review'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthErrorRouteImport } from './routes/auth.error'
@@ -87,11 +86,6 @@ const AdminCreateRoute = AdminCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminQuestionBankRoute = AdminQuestionBankRouteImport.update({
-  id: '/question-bank',
-  path: '/question-bank',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminReviewRoute = AdminReviewRouteImport.update({
   id: '/review',
   path: '/review',
@@ -154,7 +148,6 @@ export interface FileRoutesByFullPath {
   '/progress': typeof ProgressRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/create': typeof AdminCreateRoute
-  '/admin/question-bank': typeof AdminQuestionBankRoute
   '/admin/review': typeof AdminReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
@@ -177,7 +170,6 @@ export interface FileRoutesByTo {
   '/progress': typeof ProgressRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/create': typeof AdminCreateRoute
-  '/admin/question-bank': typeof AdminQuestionBankRoute
   '/admin/review': typeof AdminReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
@@ -202,7 +194,6 @@ export interface FileRoutesById {
   '/progress': typeof ProgressRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/create': typeof AdminCreateRoute
-  '/admin/question-bank': typeof AdminQuestionBankRoute
   '/admin/review': typeof AdminReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
@@ -228,7 +219,6 @@ export interface FileRouteTypes {
     | '/progress'
     | '/admin/analytics'
     | '/admin/create'
-    | '/admin/question-bank'
     | '/admin/review'
     | '/auth/callback'
     | '/auth/error'
@@ -251,7 +241,6 @@ export interface FileRouteTypes {
     | '/progress'
     | '/admin/analytics'
     | '/admin/create'
-    | '/admin/question-bank'
     | '/admin/review'
     | '/auth/callback'
     | '/auth/error'
@@ -275,7 +264,6 @@ export interface FileRouteTypes {
     | '/progress'
     | '/admin/analytics'
     | '/admin/create'
-    | '/admin/question-bank'
     | '/admin/review'
     | '/auth/callback'
     | '/auth/error'
@@ -382,13 +370,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCreateRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/question-bank': {
-      id: '/admin/question-bank'
-      path: '/question-bank'
-      fullPath: '/admin/question-bank'
-      preLoaderRoute: typeof AdminQuestionBankRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/review': {
       id: '/admin/review'
       path: '/review'
@@ -465,7 +446,6 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCreateRoute: typeof AdminCreateRoute
-  AdminQuestionBankRoute: typeof AdminQuestionBankRoute
   AdminReviewRoute: typeof AdminReviewRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminStudentsStudentIdRoute: typeof AdminStudentsStudentIdRoute
@@ -477,7 +457,6 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCreateRoute: AdminCreateRoute,
-  AdminQuestionBankRoute: AdminQuestionBankRoute,
   AdminReviewRoute: AdminReviewRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminStudentsStudentIdRoute: AdminStudentsStudentIdRoute,

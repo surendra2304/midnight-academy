@@ -120,7 +120,10 @@ function StudentDetail() {
           label="Average"
           value={<span className={scoreTextClass(student.average)}>{student.average}%</span>}
         />
-        <StatCard label="Weakest Axis" value={AXIS_LABELS[student.weakest]} />
+        <StatCard
+          label="Weakest Axis"
+          value={student.weakest ? AXIS_LABELS[student.weakest] : "No evaluations yet"}
+        />
         <StatCard
           label="Last Active"
           value={

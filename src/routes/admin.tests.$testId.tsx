@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Archive, Copy, Loader2, Pause, Play } from "lucide-react";
+import { Archive, Copy, Loader2, Pause, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ScoreBars } from "@/components/charts";
 import {
@@ -14,7 +14,7 @@ import {
 } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { formatDate, scoreTextClass } from "@/lib/mock-data";
-import { getAdminTest, setTestStatus } from "@/lib/admin.functions";
+import { deleteQuestion, deleteTest, getAdminTest, setTestStatus } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/tests/$testId")({
   head: () => ({
@@ -83,6 +83,46 @@ function TestDetail() {
   const { testId } = useParams({ from: "/admin/tests/$testId" });
   const [data, setData] = useState<TestDetailData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const handleDeleteQuestion = async (questionId: string) => {
+    setDeletingQuestionId(questionId);
+    try {
+      await deleteQuestion({ data: { questionId } });
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              questions: prev.questions.filter((q) => q.id !== questionId),
+              test: { ...prev.test, questions: prev.test.questions - 1 },
+            }
+          : prev,
+      );
+      toast.success("Question deleted");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not delete the question");
+    } finally {
+      setDeletingQuestionId(null);
+    }
+  };
+
+  const handleDeleteTest = async () => {
+    if (
+      !window.confirm(
+        "Delete this test permanently? All its questions and student attempts will be removed. This cannot be undone.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await deleteTest({ data: { testId } });
+      toast.success("Test deleted");
+      navigate({ to: "/admin/tests" });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not delete the test");
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -203,6 +243,14 @@ function TestDetail() {
           >
             <Archive className="size-4" /> Archive
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={handleDeleteTest}
+          >
+            <Trash2 className="size-4" /> Delete Test
+          </Button>
         </div>
       </div>
 
@@ -223,6 +271,54 @@ function TestDetail() {
         />
         <StatCard label="Created" value={formatDate(test.created)} />
       </div>
+
+      <Panel className="mt-6">
+        <SectionHeading title="Questions" subtitle="All passages in this test." />
+        {data.questions.length === 0 ? (
+          <p className="p-8 text-center text-sm text-muted-foreground">
+            No questions left in this test.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {data.questions.map((q, i) => (
+              <li key={q.id} className="flex items-start justify-between gap-4 py-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Question {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <Tag>{q.topic || "General"}</Tag>
+                    <DifficultyTag difficulty={q.difficulty as "Easy" | "Medium" | "Hard"} />
+                    {q.approved ? null : <Tag tone="warning">Not approved</Tag>}
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-foreground">
+                    {q.text}
+                  </p>
+                  {(q.concepts?.length ?? 0) > 0 && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Concepts: {q.concepts.join(" · ")}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 text-destructive hover:text-destructive"
+                  disabled={deletingQuestionId === q.id}
+                  onClick={() => handleDeleteQuestion(q.id)}
+                >
+                  {deletingQuestionId === q.id ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-4" />
+                  )}
+                  Delete
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Panel>

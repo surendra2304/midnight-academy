@@ -40,7 +40,7 @@ export function average(values: number[]): number {
 const AXIS_KEYS = ["objective", "constraint", "io", "concept", "interpretation"] as const;
 
 /** Computes the student's weakest comprehension axis across attempts (0-100 axes). */
-export function weakestAxis(attempts: Array<{ axes: unknown }>): (typeof AXIS_KEYS)[number] {
+export function weakestAxis(attempts: Array<{ axes: unknown }>): (typeof AXIS_KEYS)[number] | null {
   const sums = new Map<string, { total: number; count: number }>();
   for (const attempt of attempts) {
     const axes = attempt.axes as Record<string, number> | null;
@@ -55,7 +55,10 @@ export function weakestAxis(attempts: Array<{ axes: unknown }>): (typeof AXIS_KE
       }
     }
   }
-  let weakest: (typeof AXIS_KEYS)[number] = "constraint";
+  // No evaluated attempts -> no weakest axis (do not fall back to a fake one)
+  if (sums.size === 0) return null;
+
+  let weakest: (typeof AXIS_KEYS)[number] | null = null;
   let lowest = Infinity;
   for (const key of AXIS_KEYS) {
     const entry = sums.get(key);
