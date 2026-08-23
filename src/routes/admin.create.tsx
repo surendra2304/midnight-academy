@@ -224,14 +224,17 @@ function Details({
           <Input
             id="qtime"
             type="number"
-            value={time}
-            onChange={(e) => setTime(Number(e.target.value))}
+            value={time || ""}
+            onChange={(e) => {
+              const val = e.target.value === "" ? 0 : Number(e.target.value);
+              setTime(val);
+            }}
             min={15}
             max={300}
           />
         </div>
         <div className="sm:col-span-2">
-          <Button type="submit" size="lg" disabled={!name.trim()}>
+          <Button type="submit" size="lg" disabled={!name.trim() || time < 15}>
             Next
           </Button>
         </div>

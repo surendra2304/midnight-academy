@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CATEGORIES, formatDate, scoreTextClass } from "@/lib/mock-data";
+import { CATEGORIES, scoreTextClass } from "@/lib/mock-data";
+import { formatToIST } from "@/lib/format";
 import { getStudentDashboardData, type StudentAnalytics } from "@/lib/student.functions";
 
 export const Route = createFileRoute("/history")({
@@ -216,7 +217,7 @@ function HistoryPage() {
                     {a.score !== null ? `${a.score}%` : "In Progress"}
                   </span>
                   <span className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-                    {formatDate(a.date)}{" "}
+                    {formatToIST(a.date)}{" "}
                     <StatusTag status={a.status as "in_progress" | "evaluated"} />
                   </span>
                 </Link>
