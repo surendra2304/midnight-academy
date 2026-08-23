@@ -75,7 +75,7 @@ function AuthPage() {
   useEffect(() => {
     if (search.flow === "google-new") {
       setIsLogin(false);
-      setSignupStep("password");
+      setSignupStep("role");
     } else if (search.tab === "signup") {
       setIsLogin(false);
       setSignupStep("email");
@@ -85,7 +85,7 @@ function AuthPage() {
   }, [search.flow, search.tab]);
 
   // Signup multi-step states
-  const [signupStep, setSignupStep] = useState<SignupStep>(googleFlow ? "password" : "email");
+  const [signupStep, setSignupStep] = useState<SignupStep>(googleFlow ? "role" : "email");
   const [signupEmail, setSignupEmail] = useState(search.email ?? "");
   const [signupOtp, setSignupOtp] = useState("");
   const [verificationToken, setVerificationToken] = useState("");
