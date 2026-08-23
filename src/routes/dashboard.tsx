@@ -15,7 +15,8 @@ import {
 } from "@/components/kit";
 import { ScoreTrend } from "@/components/charts";
 import { Button } from "@/components/ui/button";
-import { formatDate, practiceSets, scoreTextClass } from "@/lib/mock-data";
+import { practiceSets, scoreTextClass } from "@/lib/mock-data";
+import { formatToIST } from "@/lib/format";
 import { getStudentDashboardData, type StudentAnalytics } from "@/lib/student.functions";
 
 export const Route = createFileRoute("/dashboard")({
@@ -215,7 +216,7 @@ function Dashboard() {
                       {a.score !== null ? `${a.score}%` : "In Progress"}
                     </span>
                     <span className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-                      {formatDate(a.date)}{" "}
+                      {formatToIST(a.date)}{" "}
                       <StatusTag status={a.status as "in_progress" | "evaluated"} />
                     </span>
                   </Link>

@@ -2,7 +2,8 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { PageShell, Panel, SectionHeading, StatCard, StatusTag, Tag } from "@/components/kit";
-import { AXIS_LABELS, type AxisKey, formatDate, scoreTextClass } from "@/lib/mock-data";
+import { AXIS_LABELS, type AxisKey, scoreTextClass } from "@/lib/mock-data";
+import { formatToIST } from "@/lib/format";
 import { getAdminStudent } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/students/$studentId")({
@@ -127,7 +128,7 @@ function StudentDetail() {
         <StatCard
           label="Last Active"
           value={
-            student.lastActive.includes("T") ? formatDate(student.lastActive) : student.lastActive
+            student.lastActive.includes("T") ? formatToIST(student.lastActive) : student.lastActive
           }
         />
       </div>
@@ -155,7 +156,7 @@ function StudentDetail() {
                     <span className={`ml-auto text-sm font-bold ${scoreTextClass(a.score)}`}>
                       {a.score}%
                     </span>
-                    <span className="text-xs text-muted-foreground">{formatDate(a.date)}</span>
+                    <span className="text-xs text-muted-foreground">{formatToIST(a.date)}</span>
                     <StatusTag status={a.status as "in_progress" | "evaluated"} />
                   </Link>
                 </li>
