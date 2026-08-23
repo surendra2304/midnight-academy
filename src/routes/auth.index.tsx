@@ -256,8 +256,19 @@ function AuthPage() {
         // The Google session already exists — resync the store and route by role
         const { authStore } = await import("@/lib/auth-store");
         await authStore.restoreSession();
+        if (!authStore.getUser()) {
+          await authStore.restoreSession();
+        }
+        const restoredUser = authStore.getUser();
         toast.success("Account created successfully!");
-        navigate({ to: signupRole === "admin" ? "/admin" : "/dashboard" });
+        if (restoredUser) {
+          navigate({ to: restoredUser.role === "ADMIN" ? "/admin" : "/dashboard" });
+        } else {
+          // Session refresh failed after account creation — send to sign-in
+          // rather than a guarded page that would bounce back here.
+          toast.error("Account created, but we couldn't refresh your session. Please sign in.");
+          navigate({ to: "/auth", search: { tab: "login" } });
+        }
       } else {
         await completeRegistrationWithPassword({
           data: {

@@ -147,6 +147,25 @@ export const authStore = {
     return restorePromise;
   },
 
+  /**
+   * Resolves once no auth resolution is in flight. Unlike getRestorePromise,
+   * this also waits for newer onAuthStateChange resolutions that started after
+   * the initial restore, so guards never act on a momentary null user.
+   */
+  whenSettled(timeoutMs = 8000): Promise<void> {
+    // Server snapshots are static (no auth events fire during SSR)
+    if (!state.loading || typeof window === "undefined") return Promise.resolve();
+    return new Promise((resolve) => {
+      const startedAt = Date.now();
+      const timer = setInterval(() => {
+        if (!state.loading || Date.now() - startedAt >= timeoutMs) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 100);
+    });
+  },
+
   async restoreSession(): Promise<void> {
     restorePromise = doRestoreSession();
     return restorePromise;

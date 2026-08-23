@@ -86,9 +86,25 @@ function AuthCallbackPage() {
 
         // Synchronize auth-store with authoritative server role
         await authStore.restoreSession();
+        if (authStore.isLoading()) await authStore.whenSettled();
         const storedUser = authStore.getUser();
 
-        if (storedUser?.role === "ADMIN") {
+        // The identity has roles server-side but the client could not resolve
+        // them. Never dump this user on a guarded page (that bounces to the
+        // login form); send them back into the signup continuation instead.
+        if (!storedUser) {
+          navigate({
+            to: "/auth",
+            search: {
+              flow: "google-new",
+              email: googleEmail ?? undefined,
+              name: googleName ?? undefined,
+            },
+          });
+          return;
+        }
+
+        if (storedUser.role === "ADMIN") {
           navigate({ to: "/admin" });
         } else {
           navigate({ to: "/dashboard" });

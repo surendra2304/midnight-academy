@@ -3,6 +3,7 @@ import { authStore, type AppRole } from "./auth-store";
 
 export async function requireAuth(args: { role?: AppRole; location: { pathname: string } }) {
   await authStore.getRestorePromise();
+  await authStore.whenSettled();
   const user = authStore.getUser();
 
   // Rule: Unauthenticated users are redirected to /auth
@@ -25,6 +26,7 @@ export async function requireAuth(args: { role?: AppRole; location: { pathname: 
 
 export async function requireUnauth(_args?: { location?: { pathname: string } }) {
   await authStore.getRestorePromise();
+  await authStore.whenSettled();
 
   // Rule: never act while auth state is still resolving — a momentary null
   // user mid-login must not bounce anyone off /auth, and a momentary session
