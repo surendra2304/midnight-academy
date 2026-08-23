@@ -205,7 +205,7 @@ function ResultPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <AppNav />
+        <AppNav admin={isInstructor} />
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
             <Loader2 className="size-8 animate-spin text-primary" />
@@ -219,7 +219,7 @@ function ResultPage() {
   if (studentAttemptData && studentAttemptData.status !== "evaluated" && !loading) {
     return (
       <div className="min-h-screen">
-        <AppNav />
+        <AppNav admin={isInstructor} />
         <PageShell>
           <div className="panel my-12 p-10 text-center">
             <Loader2 className="mx-auto size-10 animate-spin text-primary" />
@@ -237,7 +237,7 @@ function ResultPage() {
   if (error || !studentAttemptData) {
     return (
       <div className="min-h-screen">
-        <AppNav />
+        <AppNav admin={isInstructor} />
         <PageShell>
           <div className="panel my-12 p-8 text-center">
             <AlertCircle className="mx-auto size-8 text-destructive" />
@@ -247,7 +247,7 @@ function ResultPage() {
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <Button asChild>
-                <Link to="/dashboard">
+                <Link to={isInstructor ? "/admin" : "/dashboard"}>
                   <LayoutDashboard className="size-4" /> Go to Dashboard
                 </Link>
               </Button>
@@ -280,7 +280,7 @@ function ResultPage() {
 
   return (
     <div className="min-h-screen">
-      <AppNav />
+      <AppNav admin={isInstructor} />
       <PageShell>
         <section className="panel grid-backdrop p-7 text-center lg:p-12">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">

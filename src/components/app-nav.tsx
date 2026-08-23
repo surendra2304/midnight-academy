@@ -58,8 +58,9 @@ function NavLinks({ items }: { items: NavItem[] }) {
 function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = admin ?? user?.role === "ADMIN";
 
-  const displayName = user?.fullName || (admin ? "Instructor" : "Student");
+  const displayName = user?.fullName || (isAdmin ? "Instructor" : "Student");
   const email = user?.email || "";
   const initials =
     displayName
@@ -67,7 +68,7 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
       .map((n) => n[0])
       .join("")
       .slice(0, 2)
-      .toUpperCase() || (admin ? "IN" : "ST");
+      .toUpperCase() || (isAdmin ? "IN" : "ST");
 
   return (
     <DropdownMenu>
@@ -85,7 +86,7 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
           {email}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {admin ? null : (
+        {isAdmin ? null : (
           <>
             <DropdownMenuItem asChild>
               <Link to="/profile">
@@ -113,24 +114,27 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
 }
 
 export function AppNav({ admin }: { admin?: boolean | undefined }) {
+  const { user } = useAuth();
+  const isAdmin = admin ?? user?.role === "ADMIN";
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-5 py-3 lg:px-8">
-        <Link to={admin ? "/admin" : "/dashboard"} className="shrink-0">
-          <Wordmark suffix={admin ? "Admin" : undefined} />
+        <Link to={isAdmin ? "/admin" : "/dashboard"} className="shrink-0">
+          <Wordmark suffix={isAdmin ? "Admin" : undefined} />
         </Link>
         <div className="mx-auto hidden lg:block">
-          <NavLinks items={admin ? adminNav : studentNav} />
+          <NavLinks items={isAdmin ? adminNav : studentNav} />
         </div>
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
           <div className="hidden sm:block">
             <NotificationsMenu />
           </div>
-          <ProfileMenu admin={admin} />
+          <ProfileMenu admin={isAdmin} />
         </div>
       </div>
       <div className="border-t border-border px-3 py-2 lg:hidden">
-        <NavLinks items={admin ? adminNav : studentNav} />
+        <NavLinks items={isAdmin ? adminNav : studentNav} />
       </div>
     </header>
   );
