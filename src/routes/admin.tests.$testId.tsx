@@ -13,7 +13,7 @@ import {
   Tag,
 } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { formatDate, scoreTextClass } from "@/lib/mock-data";
+import { scoreTextClass } from "@/lib/mock-data";
 import { formatToIST } from "@/lib/format";
 import { deleteQuestion, deleteTest, getAdminTest, setTestStatus } from "@/lib/admin.functions";
 
@@ -278,7 +278,7 @@ function TestDetail() {
             </span>
           }
         />
-        <StatCard label="Created" value={formatDate(test.created)} />
+        <StatCard label="Created" value={formatToIST(test.created)} />
       </div>
 
       <Panel className="mt-6">
@@ -379,7 +379,7 @@ function TestDetail() {
                       </span>
                       {s.completedAt ? (
                         <span className="block truncate text-[10px] text-muted-foreground/70">
-                          {formatToIST(s.completedAt)} IST
+                          {formatToIST(s.completedAt)}
                         </span>
                       ) : null}
                     </div>
@@ -387,10 +387,10 @@ function TestDetail() {
                   <div className="flex items-center gap-3">
                     <span
                       className={`text-sm font-bold ${
-                        s.score ? scoreTextClass(s.score) : "text-muted-foreground"
+                        s.score !== null ? scoreTextClass(s.score) : "text-muted-foreground"
                       }`}
                     >
-                      {s.score ? `${s.score}%` : "In Progress"}
+                      {s.score !== null ? `${s.score}%` : "In Progress"}
                     </span>
                     {s.attemptId ? (
                       <Button asChild variant="outline" size="sm">

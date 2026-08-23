@@ -117,7 +117,7 @@ function AdminTests() {
               <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground">
                 <span>{t.participants} participants</span>
                 <span className={`font-bold ${scoreTextClass(t.average)}`}>
-                  {t.average ? `${t.average}% avg` : "No attempts"}
+                  {t.participants > 0 ? `${t.average}% avg` : "No attempts"}
                 </span>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">Created {formatToIST(t.created)}</p>

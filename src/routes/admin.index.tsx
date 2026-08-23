@@ -236,7 +236,7 @@ function AdminDashboard() {
                 <span className="text-sm text-muted-foreground">{t.questions} questions</span>
                 <span className="text-sm text-muted-foreground">{t.participants} students</span>
                 <span className={`text-sm font-bold ${scoreTextClass(t.average)}`}>
-                  {t.average ? `${t.average}%` : "—"}
+                  {t.participants > 0 ? `${t.average}%` : "—"}
                 </span>
                 <span className="flex items-center justify-between gap-3">
                   <StatusTag status={t.status as "draft" | "active" | "completed"} />
