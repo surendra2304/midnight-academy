@@ -25,10 +25,16 @@ export const listPracticeTests = createServerFn({ method: "GET" })
 
     if (error) throw new Error("Could not load the practice library. Please try again.");
 
+    const normalizeCategory = (cat: string) => {
+      if (cat === "OS") return "Operating Systems";
+      if (cat === "Networks") return "Computer Networks";
+      return cat;
+    };
+
     return (tests ?? []).map((t) => ({
       id: t.id,
       name: t.name,
-      category: t.category,
+      category: normalizeCategory(t.category),
       difficulty: t.difficulty,
       questions: t.question_count,
       secondsPerQuestion: t.seconds_per_question,
