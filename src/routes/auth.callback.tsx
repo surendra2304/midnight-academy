@@ -41,22 +41,33 @@ function AuthCallbackPage() {
           return;
         }
 
-        // Decide server-side (service role) whether this Google identity
-        // already has an account. Existing users sign straight in; first-time
-        // identities are NEVER auto-registered — they continue signup with
-        // password + role + details on the auth page.
+        // Decide whether this Google identity already has an account.
+        // If they have a role in user_roles, they are an existing user and sign straight in.
+        // If they have NO role, they are a first-time user and must complete registration.
         let hasAccount = false;
-        let googleEmail: string | null = null;
-        let googleName: string | null = null;
+        let googleEmail: string | null = activeUser.email ?? null;
+        let googleName: string | null =
+          typeof activeUser.user_metadata?.["full_name"] === "string"
+            ? activeUser.user_metadata["full_name"]
+            : null;
+
         try {
           const { getOAuthAccountStatus } = await import("@/lib/auth.functions");
           const status = await getOAuthAccountStatus();
           hasAccount = status.hasAccount;
-          googleEmail = status.email;
-          googleName = status.fullName;
-        } catch {
-          // Fall through: without a definitive answer, treat as sign-in attempt
-          hasAccount = true;
+          if (status.email) googleEmail = status.email;
+          if (status.fullName) googleName = status.fullName;
+        } catch (fnErr) {
+          console.warn(
+            "[AuthCallback] serverFn getOAuthAccountStatus failed, checking client Supabase:",
+            fnErr,
+          );
+          // Direct client fallback to check user_roles
+          const { data: roleRows } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", activeUser.id);
+          hasAccount = (roleRows && roleRows.length > 0) ?? false;
         }
 
         if (!active) return;

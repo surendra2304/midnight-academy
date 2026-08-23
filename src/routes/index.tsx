@@ -92,10 +92,14 @@ function TopNav() {
         </nav>
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">
-            <Link to="/auth">Login</Link>
+            <Link to="/auth" search={{ tab: "login" }}>
+              Login
+            </Link>
           </Button>
           <Button asChild size="sm">
-            <Link to="/auth">Get Started</Link>
+            <Link to="/auth" search={{ tab: "signup" }}>
+              Get Started
+            </Link>
           </Button>
         </div>
       </div>
@@ -131,7 +135,7 @@ function Landing() {
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link to="/auth">
+                <Link to="/auth" search={{ tab: "signup" }}>
                   Start Learning <ArrowRight className="size-4" />
                 </Link>
               </Button>

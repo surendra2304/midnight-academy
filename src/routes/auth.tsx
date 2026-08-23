@@ -32,11 +32,13 @@ export const Route = createFileRoute("/auth")({
     email?: string | undefined;
     name?: string | undefined;
     redirect?: string | undefined;
+    tab?: "login" | "signup" | undefined;
   } => ({
     flow: typeof search["flow"] === "string" ? search["flow"] : undefined,
     email: typeof search["email"] === "string" ? search["email"] : undefined,
     name: typeof search["name"] === "string" ? search["name"] : undefined,
     redirect: typeof search["redirect"] === "string" ? search["redirect"] : undefined,
+    tab: search["tab"] === "signup" || search["tab"] === "login" ? search["tab"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -64,8 +66,23 @@ function AuthPage() {
   // at the password step and completes via completeGoogleRegistration.
   const googleFlow = search.flow === "google-new";
 
-  const [isLogin, setIsLogin] = useState(!googleFlow);
+  const [isLogin, setIsLogin] = useState(
+    search.tab === "signup" ? false : search.tab === "login" ? true : !googleFlow,
+  );
   const [loading, setLoading] = useState(false);
+
+  // Sync isLogin if search.tab or search.flow changes
+  useEffect(() => {
+    if (search.flow === "google-new") {
+      setIsLogin(false);
+      setSignupStep("password");
+    } else if (search.tab === "signup") {
+      setIsLogin(false);
+      setSignupStep("email");
+    } else if (search.tab === "login") {
+      setIsLogin(true);
+    }
+  }, [search.flow, search.tab]);
 
   // Signup multi-step states
   const [signupStep, setSignupStep] = useState<SignupStep>(googleFlow ? "password" : "email");
@@ -82,6 +99,12 @@ function AuthPage() {
   const [institution, setInstitution] = useState("");
   const [subject, setSubject] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Sync email/name if search changes
+  useEffect(() => {
+    if (search.email) setSignupEmail(search.email);
+    if (search.name) setFullName(search.name);
+  }, [search.email, search.name]);
 
   const navigate = useNavigate();
   const { login, signInWithGoogle } = useAuth();
