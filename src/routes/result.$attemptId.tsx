@@ -53,6 +53,7 @@ type ResultData = {
   blurCount: number;
   completedAt: string | null;
   test: {
+    id?: string;
     name: string;
     category: string;
     difficulty: string;
@@ -516,12 +517,21 @@ function ResultPage() {
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <Button asChild size="lg" variant={isInstructor ? "default" : "outline"}>
-            <Link to={isInstructor ? "/admin/tests" : "/dashboard"}>
-              <LayoutDashboard className="size-4" />
-              {isInstructor ? "Back to Tests" : "Back to Dashboard"}
-            </Link>
-          </Button>
+          {isInstructor && data.test?.id ? (
+            <Button asChild size="lg">
+              <Link to="/admin/tests/$testId" params={{ testId: data.test.id }}>
+                <LayoutDashboard className="size-4" />
+                Back to Test Overview
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild size="lg" variant={isInstructor ? "default" : "outline"}>
+              <Link to={isInstructor ? "/admin/tests" : "/dashboard"}>
+                <LayoutDashboard className="size-4" />
+                {isInstructor ? "Back to Tests" : "Back to Dashboard"}
+              </Link>
+            </Button>
+          )}
         </div>
       </PageShell>
     </div>

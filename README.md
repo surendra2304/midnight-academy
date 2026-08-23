@@ -39,10 +39,12 @@
 ## 💻 Local Development
 
 ### 1. Prerequisites
+
 - Node.js (v20+)
 - Supabase CLI (optional for database migrations)
 
 ### 2. Setup
+
 ```bash
 # Clone the repository
 git clone https://github.com/surendra2304/midnight-academy.git
@@ -56,6 +58,7 @@ cp .env.example .env
 ```
 
 ### 3. Running & Testing
+
 ```bash
 # Start development server
 npm run dev

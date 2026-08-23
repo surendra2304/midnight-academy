@@ -144,14 +144,20 @@ function StudentDetail() {
           ) : (
             <ul className="divide-y divide-border">
               {attempts.map((a) => (
-                <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
-                  <span className="text-sm text-foreground">{a.name}</span>
-                  <Tag>{a.category}</Tag>
-                  <span className={`ml-auto text-sm font-bold ${scoreTextClass(a.score)}`}>
-                    {a.score}%
-                  </span>
-                  <span className="text-xs text-muted-foreground">{formatDate(a.date)}</span>
-                  <StatusTag status={a.status as "in_progress" | "evaluated"} />
+                <li key={a.id}>
+                  <Link
+                    to="/result/$attemptId"
+                    params={{ attemptId: a.id }}
+                    className="flex flex-wrap items-center gap-3 px-5 py-3.5 transition-colors hover:bg-surface-2/60"
+                  >
+                    <span className="text-sm font-semibold text-foreground">{a.name}</span>
+                    <Tag>{a.category}</Tag>
+                    <span className={`ml-auto text-sm font-bold ${scoreTextClass(a.score)}`}>
+                      {a.score}%
+                    </span>
+                    <span className="text-xs text-muted-foreground">{formatDate(a.date)}</span>
+                    <StatusTag status={a.status as "in_progress" | "evaluated"} />
+                  </Link>
                 </li>
               ))}
             </ul>

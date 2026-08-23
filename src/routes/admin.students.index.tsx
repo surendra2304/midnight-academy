@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { AXIS_LABELS, type AxisKey, scoreTextClass } from "@/lib/mock-data";
 import { PageShell, SectionHeading, Tag } from "@/components/kit";
+import { formatToIST } from "@/lib/format";
 import { listAdminStudents } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/students/")({
@@ -101,7 +102,9 @@ function Students() {
               <Tag tone="warning">
                 {s.weakest ? `Weak: ${AXIS_LABELS[s.weakest]}` : "No evaluations yet"}
               </Tag>
-              <span className="text-right text-xs text-muted-foreground">{s.lastActive}</span>
+              <span className="text-right text-xs text-muted-foreground">
+                {s.lastActive.includes("T") ? formatToIST(s.lastActive) : s.lastActive}
+              </span>
             </Link>
           ))}
         </div>

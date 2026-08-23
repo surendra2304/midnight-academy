@@ -5,6 +5,8 @@ import { AxisTrend, ScoreBars } from "@/components/charts";
 import { ComprehensionBreakdown } from "@/components/comprehension";
 import { PageShell, Panel, SectionHeading, StatCard } from "@/components/kit";
 import { getCohortAnalytics } from "@/lib/admin.functions";
+import { AXIS_SHORT, type AxisScores } from "@/lib/mock-data";
+import { weakestAxis, strongestAxis } from "@/lib/axes";
 
 export const Route = createFileRoute("/admin/analytics")({
   head: () => ({
@@ -82,6 +84,18 @@ function Analytics() {
     perQuestionDifficulty = [],
   } = data || {};
 
+  const hasEvaluations = attempts > 0;
+  const currentAxes: AxisScores = {
+    objective: axes["objective"] ?? 0,
+    constraint: axes["constraint"] ?? 0,
+    io: axes["io"] ?? 0,
+    concept: axes["concept"] ?? 0,
+    interpretation: axes["interpretation"] ?? 0,
+  };
+
+  const worst = hasEvaluations ? weakestAxis(currentAxes) : null;
+  const best = hasEvaluations ? strongestAxis(currentAxes) : null;
+
   return (
     <PageShell>
       <SectionHeading
@@ -96,13 +110,13 @@ function Analytics() {
         />
         <StatCard
           label="Weakest Axis"
-          value="Constraints"
-          hint={`${axes["constraint"] ?? 0}% cohort average`}
+          value={worst ? AXIS_SHORT[worst] : "—"}
+          hint={worst ? `${currentAxes[worst]}% cohort average` : "No evaluations yet"}
         />
         <StatCard
           label="Strongest Axis"
-          value="Objective"
-          hint={`${axes["objective"] ?? 0}% cohort average`}
+          value={best ? AXIS_SHORT[best] : "—"}
+          hint={best ? `${currentAxes[best]}% cohort average` : "No evaluations yet"}
         />
         <StatCard label="Total Attempts" value={attempts} />
       </div>
@@ -110,16 +124,7 @@ function Analytics() {
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <Panel>
           <SectionHeading title="Cohort Comprehension Profile" />
-          <ComprehensionBreakdown
-            axes={{
-              objective: axes["objective"] ?? 0,
-              constraint: axes["constraint"] ?? 0,
-              io: axes["io"] ?? 0,
-              concept: axes["concept"] ?? 0,
-              interpretation: axes["interpretation"] ?? 0,
-            }}
-            highlight="constraint"
-          />
+          <ComprehensionBreakdown axes={currentAxes} highlight={worst ?? undefined} />
         </Panel>
         <Panel>
           <SectionHeading title="Category Performance" subtitle="Comprehension score by subject." />

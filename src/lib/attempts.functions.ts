@@ -516,7 +516,7 @@ export const getResult = createServerFn({ method: "GET" })
       axes: attempt.axes as Record<string, number> | null,
       blurCount: attempt.blur_count,
       completedAt: attempt.completed_at,
-      test: attempt.tests,
+      test: attempt.tests ? { ...attempt.tests, id: attempt.test_id } : null,
       answers: (answers ?? []).map((a) => ({
         id: a.id,
         position: a.position,

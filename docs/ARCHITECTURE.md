@@ -55,6 +55,7 @@ This document maps the architectural topology, communication protocols, and runt
 ## 2. Core Data Flow Workflows
 
 ### A. Test Execution & AI Evaluation Lifecycle
+
 ```
 1. Student enters test code (DSA-X7K29) on /test
 2. Student views Onboarding Instructions -> Clicks Start
@@ -71,6 +72,7 @@ This document maps the architectural topology, communication protocols, and runt
 ```
 
 ### B. Custom Email OTP Registration Flow
+
 ```
 1. User enters email at /auth -> Calls requestRegistrationOtp
 2. Server validates email is not already registered in auth.users

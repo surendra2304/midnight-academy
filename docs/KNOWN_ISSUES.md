@@ -5,11 +5,12 @@
 ---
 
 ### Issue: `AUTH-OTP-PROD-001`
+
 - **Title**: Production OTP Email Delivery Failure
 - **Status**: `OPEN`
 - **Severity**: `CRITICAL`
 - **Symptom**: On the live production site (`https://midnight-academy-one.vercel.app/auth`), entering an email and clicking "Send Verification Code" results in an error toast:
-  > *"Unable to send the verification email right now. Please try again."*
+  > _"Unable to send the verification email right now. Please try again."_
 - **Expected Behavior**: The serverless function successfully dispatches a 6-digit OTP email via Gmail SMTP, returns a 200 response with `{ success: true, resendInSeconds: 60 }`, and transitions the UI to Step 2 (OTP code input).
 - **Actual Behavior**: The request returns `{ error: "delivery_failed", message: "Unable to send the verification email right now. Please try again." }`.
 - **Likely Area**: Vercel Serverless environment variable provisioning, or outgoing SMTP connection handling from Vercel's runtime environment.
@@ -19,10 +20,10 @@
   - `src/lib/otp.server.ts`
   - `src/routes/auth.tsx`
 - **What Has Already Been Tried**:
-  1. *Local SMTP Testing*: Authenticating with the Gmail App Password and dispatching emails directly from local Node environments works without error.
-  2. *Password Sanitization*: Fixed a bug where `.replace(/[\s\"']/g, "")` stripped whitespace and altered the password string. Replaced with safe `.trim()`.
-  3. *Transactional Order*: Ensured `sendEmail()` is called *before* `saveOtpRecord()`, preventing users from being locked into cooldowns if delivery fails.
-  4. *Environment Variable Verification*: Confirmed `SMTP_USER` and `SMTP_APP_PASSWORD` are present in Vercel project settings.
+  1. _Local SMTP Testing_: Authenticating with the Gmail App Password and dispatching emails directly from local Node environments works without error.
+  2. _Password Sanitization_: Fixed a bug where `.replace(/[\s\"']/g, "")` stripped whitespace and altered the password string. Replaced with safe `.trim()`.
+  3. _Transactional Order_: Ensured `sendEmail()` is called _before_ `saveOtpRecord()`, preventing users from being locked into cooldowns if delivery fails.
+  4. _Environment Variable Verification_: Confirmed `SMTP_USER` and `SMTP_APP_PASSWORD` are present in Vercel project settings.
 - **Next Recommended Investigation**:
   1. Verify how Vercel function instances decrypt and present `SMTP_APP_PASSWORD` to `process.env`.
   2. Confirm whether Vercel serverless functions in the `sfo1` / `iad1` regions encounter firewall blocks on outbound port 465 (SSL) to `smtp.gmail.com`.
@@ -40,6 +41,7 @@
 ---
 
 ### Issue: `AI-FALLBACK-MONITOR-002`
+
 - **Title**: Gemini 429 Quota Rate Limiting on Primary Key
 - **Status**: `MITIGATED`
 - **Severity**: `MEDIUM`
@@ -50,6 +52,7 @@
 ---
 
 ### Issue: `RLS-RECURSION-PREVENTION-003`
+
 - **Title**: User Profile & Role Query Circular Recursion
 - **Status**: `RESOLVED & VERIFIED`
 - **Severity**: `LOW`
