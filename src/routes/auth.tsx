@@ -107,7 +107,15 @@ function AuthPage() {
     try {
       const res = await login({ email, password });
       const returnedRole = res?.user?.role;
-      if (returnedRole === "ADMIN") {
+      if (search.redirect && search.redirect.startsWith("/")) {
+        if (returnedRole === "ADMIN" && !search.redirect.startsWith("/admin")) {
+          navigate({ to: "/admin" });
+        } else if (returnedRole !== "ADMIN" && search.redirect.startsWith("/admin")) {
+          navigate({ to: "/dashboard" });
+        } else {
+          navigate({ to: search.redirect });
+        }
+      } else if (returnedRole === "ADMIN") {
         navigate({ to: "/admin" });
       } else {
         navigate({ to: "/dashboard" });
@@ -237,6 +245,7 @@ function AuthPage() {
             role: signupRole,
             year: studyYear || undefined,
             branch: branch || undefined,
+            regdNumber: regdNumber || undefined,
             institution: institution || undefined,
             subject: subject || undefined,
           },

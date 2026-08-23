@@ -238,8 +238,16 @@ function TestDetail() {
             variant="ghost"
             size="sm"
             onClick={async () => {
-              await setTestStatus({ data: { testId: test.id, status: "completed" } });
-              toast.success("Test archived");
+              try {
+                await setTestStatus({ data: { testId: test.id, status: "completed" } });
+                setData((prev) =>
+                  prev ? { ...prev, test: { ...prev.test, status: "completed" } } : prev,
+                );
+                toast.success("Test archived");
+              } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : "Failed to archive test";
+                toast.error(message);
+              }
             }}
           >
             <Archive className="size-4" /> Archive
