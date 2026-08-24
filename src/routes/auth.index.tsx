@@ -18,7 +18,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { requireUnauth } from "@/lib/auth-guard";
 import {
+  completePasswordReset,
   completeRegistrationWithPassword,
+  requestPasswordResetOtp,
   requestRegistrationOtp,
   verifyRegistrationOtp,
 } from "@/lib/auth.functions";
@@ -32,13 +34,16 @@ export const Route = createFileRoute("/auth/")({
     email?: string | undefined;
     name?: string | undefined;
     redirect?: string | undefined;
-    tab?: "login" | "signup" | undefined;
+    tab?: "login" | "signup" | "reset" | undefined;
   } => ({
     flow: typeof search["flow"] === "string" ? search["flow"] : undefined,
     email: typeof search["email"] === "string" ? search["email"] : undefined,
     name: typeof search["name"] === "string" ? search["name"] : undefined,
     redirect: typeof search["redirect"] === "string" ? search["redirect"] : undefined,
-    tab: search["tab"] === "signup" || search["tab"] === "login" ? search["tab"] : undefined,
+    tab:
+      search["tab"] === "signup" || search["tab"] === "login" || search["tab"] === "reset"
+        ? search["tab"]
+        : undefined,
   }),
   head: () => ({
     meta: [
@@ -57,17 +62,20 @@ export const Route = createFileRoute("/auth/")({
   component: AuthPage,
 });
 
+type AuthMode = "login" | "signup" | "reset";
 type SignupStep = "email" | "otp" | "password" | "role" | "details" | "done";
+type ResetStep = "email" | "otp" | "password" | "done";
 
 function AuthPage() {
   const search = Route.useSearch();
   const isGoogleNew = search.flow === "google-new";
 
-  // Tab state: "login" or "signup"
-  const [isLogin, setIsLogin] = useState<boolean>(() => {
-    if (isGoogleNew) return false;
-    if (search.tab === "signup") return false;
-    return true; // Default to Sign in view
+  // Auth Mode: "login" | "signup" | "reset"
+  const [authMode, setAuthMode] = useState<AuthMode>(() => {
+    if (isGoogleNew) return "signup";
+    if (search.tab === "signup") return "signup";
+    if (search.tab === "reset") return "reset";
+    return "login";
   });
 
   const [loading, setLoading] = useState(false);
@@ -77,16 +85,27 @@ function AuthPage() {
     return isGoogleNew ? "role" : "email";
   });
 
+  // Password reset states
+  const [resetStep, setResetStep] = useState<ResetStep>("email");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetOtp, setResetOtp] = useState("");
+  const [resetVerificationToken, setResetVerificationToken] = useState("");
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetNewPasswordConfirm, setResetNewPasswordConfirm] = useState("");
+
   // Sync state whenever search parameters change
   useEffect(() => {
     if (search.flow === "google-new") {
-      setIsLogin(false);
+      setAuthMode("signup");
       setSignupStep("role");
     } else if (search.tab === "signup") {
-      setIsLogin(false);
+      setAuthMode("signup");
       setSignupStep("email");
+    } else if (search.tab === "reset") {
+      setAuthMode("reset");
+      setResetStep("email");
     } else if (search.tab === "login") {
-      setIsLogin(true);
+      setAuthMode("login");
       setSignupStep("email");
     }
   }, [search.flow, search.tab]);
@@ -230,6 +249,106 @@ function AuthPage() {
     setSignupStep("role");
   };
 
+  // Password Reset Step 1: Send Reset OTP
+  const handleSendResetOtp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) return;
+
+    setLoading(true);
+    try {
+      const res = await requestPasswordResetOtp({ data: { email: resetEmail.trim() } });
+
+      if ("error" in res) {
+        toast.error(res.message);
+        return;
+      }
+
+      toast.success("Password reset code sent! Check your inbox.");
+      setResetStep("otp");
+      setResendCooldown(res.resendInSeconds || 60);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send reset code";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Password Reset Step 2: Verify Reset OTP
+  const handleVerifyResetOtp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (resetOtp.trim().length !== 6) {
+      toast.error("Please enter a valid 6-digit code.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await verifyRegistrationOtp({
+        data: {
+          email: resetEmail.trim(),
+          otp: resetOtp.trim(),
+        },
+      });
+
+      if ("error" in res) {
+        toast.error(res.message);
+        return;
+      }
+
+      setResetVerificationToken(res.verificationToken);
+      setResetStep("password");
+      toast.success("Code verified! Enter your new password.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Verification failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Password Reset Step 3: Complete Password Reset
+  const handleCompleteReset = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (resetNewPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (resetNewPassword !== resetNewPasswordConfirm) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await completePasswordReset({
+        data: {
+          email: resetEmail.trim(),
+          verificationToken: resetVerificationToken,
+          newPassword: resetNewPassword,
+        },
+      });
+
+      toast.success("Password updated successfully! You can now sign in.");
+      setAuthMode("login");
+      setResetStep("email");
+      setResetOtp("");
+      setResetNewPassword("");
+      setResetNewPasswordConfirm("");
+      navigate({
+        to: "/auth",
+        search: { tab: "login", redirect: search.redirect },
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to update password";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Step 5: Details & Create Account (regular email flow)
   const handleCompleteDetails = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -319,23 +438,167 @@ function AuthPage() {
         </div>
 
         <div className="panel mt-8 p-6 lg:p-8">
-          <h1 className="text-xl font-bold text-foreground">Welcome to Midnight Academy</h1>
+          <h1 className="text-xl font-bold text-foreground">
+            {authMode === "reset" ? "Reset Your Password" : "Welcome to Midnight Academy"}
+          </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            {isLogin
-              ? "Sign in to access your technical training."
-              : signupStep === "email"
-                ? "Create a new verified account."
-                : signupStep === "otp"
-                  ? "Enter the verification code sent to your email."
-                  : signupStep === "role"
-                    ? "Choose how you will use Midnight Academy."
-                    : signupStep === "details"
-                      ? "Almost done — a few details about you."
-                      : "Create a secure password."}
+            {authMode === "reset"
+              ? resetStep === "email"
+                ? "Enter your email to receive a password reset code."
+                : resetStep === "otp"
+                  ? "Enter the 6-digit code sent to your email."
+                  : "Enter your new password below."
+              : authMode === "login"
+                ? "Sign in to access your technical training."
+                : signupStep === "email"
+                  ? "Create a new verified account."
+                  : signupStep === "otp"
+                    ? "Enter the verification code sent to your email."
+                    : signupStep === "role"
+                      ? "Choose how you will use Midnight Academy."
+                      : signupStep === "details"
+                        ? "Almost done — a few details about you."
+                        : "Create a secure password."}
           </p>
 
-          {/* 1. Login View */}
-          {isLogin ? (
+          {/* 1. Reset Password Flow */}
+          {authMode === "reset" ? (
+            <div className="mt-6">
+              {resetStep === "email" && (
+                <form onSubmit={handleSendResetOtp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Your Account Email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="you@university.edu"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                    {loading ? "Sending Code..." : "Send Reset Code"}
+                  </Button>
+                </form>
+              )}
+
+              {resetStep === "otp" && (
+                <form onSubmit={handleVerifyResetOtp} className="space-y-4">
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+                    Code sent to <span className="font-medium text-foreground">{resetEmail}</span>.
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-otp">6-Digit Verification Code</Label>
+                    <Input
+                      id="reset-otp"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      placeholder="123456"
+                      value={resetOtp}
+                      onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ""))}
+                      className="text-center font-mono text-lg tracking-widest"
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={loading || resetOtp.length !== 6}
+                  >
+                    {loading ? "Verifying..." : "Verify Code"}
+                  </Button>
+
+                  <div className="flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setResetStep("email")}
+                      className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                    >
+                      <ArrowLeft className="size-3" /> Change email
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0 || loading}
+                      onClick={async () => {
+                        if (resendCooldown > 0) return;
+                        setLoading(true);
+                        try {
+                          const res = await requestPasswordResetOtp({
+                            data: { email: resetEmail.trim() },
+                          });
+                          if ("error" in res) {
+                            toast.error(res.message);
+                            return;
+                          }
+                          toast.success("New code sent!");
+                          setResendCooldown(res.resendInSeconds || 60);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className="flex items-center gap-1 text-primary hover:underline disabled:opacity-50"
+                    >
+                      <RefreshCw className={cn("size-3", loading && "animate-spin")} />
+                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {resetStep === "password" && (
+                <form onSubmit={handleCompleteReset} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-new-password">New Password</Label>
+                    <Input
+                      id="reset-new-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={resetNewPassword}
+                      onChange={(e) => setResetNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-new-password-confirm">Confirm New Password</Label>
+                    <Input
+                      id="reset-new-password-confirm"
+                      type="password"
+                      placeholder="••••••••"
+                      value={resetNewPasswordConfirm}
+                      onChange={(e) => setResetNewPasswordConfirm(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={
+                      loading ||
+                      resetNewPassword.length < 6 ||
+                      resetNewPassword !== resetNewPasswordConfirm
+                    }
+                  >
+                    {loading ? "Updating Password..." : "Update Password"}
+                  </Button>
+                </form>
+              )}
+            </div>
+          ) : authMode === "login" ? (
+            /* 2. Login View */
             <form className="mt-6 space-y-4" onSubmit={handleLogin}>
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
@@ -361,9 +624,20 @@ function AuthPage() {
                 <label className="flex items-center gap-2 text-muted-foreground">
                   <Checkbox id="remember" defaultChecked /> Remember me
                 </label>
-                <a href="#reset" className="text-primary hover:underline">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("reset");
+                    setResetStep("email");
+                    navigate({
+                      to: "/auth",
+                      search: { tab: "reset", redirect: search.redirect },
+                    });
+                  }}
+                  className="text-primary hover:underline font-medium text-xs sm:text-sm"
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading ? "Signing in..." : "Continue"}
@@ -747,28 +1021,46 @@ function AuthPage() {
           )}
 
           <div className="mt-6 text-center text-sm">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button
-              type="button"
-              onClick={() => {
-                const nextIsLogin = !isLogin;
-                setIsLogin(nextIsLogin);
-                setSignupStep("email");
-                setSignupOtp("");
-                setSignupPassword("");
-                setSignupPasswordConfirm("");
-                navigate({
-                  to: "/auth",
-                  search: {
-                    tab: nextIsLogin ? "login" : "signup",
-                    redirect: search.redirect,
-                  },
-                });
-              }}
-              className="text-primary hover:underline font-medium"
-            >
-              {isLogin ? "Sign up" : "Sign in"}
-            </button>
+            {authMode === "reset" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("login");
+                  navigate({
+                    to: "/auth",
+                    search: { tab: "login", redirect: search.redirect },
+                  });
+                }}
+                className="text-primary hover:underline font-medium flex items-center gap-1.5 mx-auto"
+              >
+                <ArrowLeft className="size-3.5" /> Back to Sign in
+              </button>
+            ) : (
+              <>
+                {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextMode = authMode === "login" ? "signup" : "login";
+                    setAuthMode(nextMode);
+                    setSignupStep("email");
+                    setSignupOtp("");
+                    setSignupPassword("");
+                    setSignupPasswordConfirm("");
+                    navigate({
+                      to: "/auth",
+                      search: {
+                        tab: nextMode,
+                        redirect: search.redirect,
+                      },
+                    });
+                  }}
+                  className="text-primary hover:underline font-medium"
+                >
+                  {authMode === "login" ? "Sign up" : "Sign in"}
+                </button>
+              </>
+            )}
           </div>
         </div>
 

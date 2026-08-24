@@ -434,3 +434,165 @@ export const completeGoogleRegistration = createServerFn({ method: "POST" })
       role: data.role,
     };
   });
+
+/**
+ * 6. Request Password Reset OTP Code
+ */
+export const requestPasswordResetOtp = createServerFn({ method: "POST" })
+  .validator((data) =>
+    z
+      .object({
+        email: z.string().email(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { normalizeEmail, generateOtp, hashOtp, getLatestOtpRecord, saveOtpRecord } =
+      await import("./otp.server");
+    const { sendEmail, renderPasswordResetEmail } = await import("./email.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const email = normalizeEmail(data.email);
+
+    // Check if email actually exists in Supabase auth
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = (existingUsers?.users ?? []).find((u) => u.email?.toLowerCase() === email);
+
+    if (!existingUser) {
+      return {
+        error: "not_found" as const,
+        message: "No account found with this email. Please check your email or sign up.",
+      };
+    }
+
+    // Check resend rate limits
+    const existingRecord = await getLatestOtpRecord(email);
+    const now = new Date();
+
+    if (existingRecord && existingRecord.resendAvailableAt > now) {
+      const waitSeconds = Math.ceil(
+        (existingRecord.resendAvailableAt.getTime() - now.getTime()) / 1000,
+      );
+      return {
+        error: "rate_limited" as const,
+        message: `Please wait ${waitSeconds} seconds before requesting another code.`,
+        waitSeconds,
+      };
+    }
+
+    const otp = generateOtp();
+    const otpHash = hashOtp(otp);
+    const id = crypto.randomUUID();
+
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const resendAvailableAt = new Date(Date.now() + 60 * 1000); // 60s cooldown
+
+    const emailHtml = renderPasswordResetEmail({ otp, expiresInMinutes: 10 });
+    const emailResult = await sendEmail({
+      to: email,
+      subject: "Reset Your Midnight Academy Password",
+      html: emailHtml,
+    });
+
+    if (!emailResult.success) {
+      console.error(
+        "[requestPasswordResetOtp] Failed to deliver reset code:",
+        emailResult.error,
+      );
+      return {
+        error: "delivery_failed" as const,
+        message: "Unable to send password reset email right now. Please try again.",
+      };
+    }
+
+    await saveOtpRecord({
+      id,
+      email,
+      otpHash,
+      verificationTokenHash: null,
+      attemptsCount: 0,
+      maxAttempts: 5,
+      verified: false,
+      verifiedAt: null,
+      used: false,
+      usedAt: null,
+      expiresAt,
+      resendAvailableAt,
+      createdAt: now,
+    });
+
+    return {
+      success: true,
+      email,
+      expiresInSeconds: 600,
+      resendInSeconds: 60,
+    };
+  });
+
+/**
+ * 7. Complete Password Reset using verified token
+ */
+export const completePasswordReset = createServerFn({ method: "POST" })
+  .validator((data) =>
+    z
+      .object({
+        email: z.string().email(),
+        verificationToken: z.string().min(32),
+        newPassword: z.string().min(6).max(72),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const {
+      normalizeEmail,
+      hashVerificationToken,
+      secureCompare,
+      getLatestOtpRecord,
+      updateOtpRecord,
+    } = await import("./otp.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const email = normalizeEmail(data.email);
+    const record = await getLatestOtpRecord(email);
+
+    if (!record || !record.verified || !record.verificationTokenHash) {
+      throw new Error("Email verification is required before resetting password.");
+    }
+
+    if (record.used) {
+      throw new Error("This verification token has already been used.");
+    }
+
+    const submittedTokenHash = hashVerificationToken(data.verificationToken);
+    const isTokenValid = secureCompare(submittedTokenHash, record.verificationTokenHash);
+
+    if (!isTokenValid) {
+      throw new Error("Invalid or expired reset token.");
+    }
+
+    // Mark as used
+    record.used = true;
+    record.usedAt = new Date();
+    await updateOtpRecord(record);
+
+    // Find user in auth.users
+    const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
+    const user = (userList?.users ?? []).find((u) => u.email?.toLowerCase() === email);
+
+    if (!user) {
+      throw new Error("User account not found.");
+    }
+
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      password: data.newPassword,
+    });
+
+    if (updateError) {
+      throw new Error(updateError.message || "Failed to update password.");
+    }
+
+    return {
+      success: true,
+      email,
+    };
+  });
