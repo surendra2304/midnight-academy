@@ -28,6 +28,10 @@ export type AnswerRow = {
   question_id: string;
   position: number;
   response: string;
+  score?: number | null;
+  feedback?: string | null;
+  missed_concepts?: string[] | null;
+  missed_constraints?: string[] | null;
 };
 
 export type QuestionRow = {
@@ -44,25 +48,59 @@ export type ScoredAnswer = {
   feedback: string;
   missedConcepts: string[];
   missedConstraints: string[];
+  axisScores?: Partial<Record<import("./mock-data").AxisKey, number>>;
 };
 
-/** Evaluates every answer in an attempt and rolls the results into the five axes. */
+/** Evaluates every answer in an attempt (reusing already evaluated answers) and rolls the results into the five axes. */
 export async function evaluateAttempt(
   answers: AnswerRow[],
   questions: Map<string, QuestionRow>,
 ): Promise<{ scored: ScoredAnswer[]; axes: AxisScores; overall: number }> {
-  // Evaluate with limited concurrency so multi-question attempts finish well
-  // inside the serverless function window instead of running sequentially.
-  const EVAL_CONCURRENCY = 4;
   const queue = answers.filter((answer) => questions.has(answer.question_id));
   const results: Array<{
     answer: AnswerRow;
     question: QuestionRow;
-    evaluation: Awaited<ReturnType<typeof evaluateAnswer>>;
+    evaluation: {
+      score: number;
+      feedback: string;
+      missedConcepts: string[];
+      missedConstraints: string[];
+      axisScores: Partial<Record<import("./mock-data").AxisKey, number>>;
+    };
   }> = [];
 
-  for (let i = 0; i < queue.length; i += EVAL_CONCURRENCY) {
-    const batch = queue.slice(i, i + EVAL_CONCURRENCY);
+  const unScored: AnswerRow[] = [];
+
+  for (const answer of queue) {
+    const question = questions.get(answer.question_id)!;
+    if (typeof answer.score === "number") {
+      // Re-use already evaluated answer from submit-time
+      results.push({
+        answer,
+        question,
+        evaluation: {
+          score: answer.score,
+          feedback: answer.feedback || "",
+          missedConcepts: answer.missed_concepts || [],
+          missedConstraints: answer.missed_constraints || [],
+          axisScores: {
+            objective: answer.score,
+            constraint: answer.score,
+            io: answer.score,
+            concept: answer.score,
+            interpretation: answer.score,
+          },
+        },
+      });
+    } else {
+      unScored.push(answer);
+    }
+  }
+
+  // Only evaluate answers that were not yet scored
+  const EVAL_CONCURRENCY = 3;
+  for (let i = 0; i < unScored.length; i += EVAL_CONCURRENCY) {
+    const batch = unScored.slice(i, i + EVAL_CONCURRENCY);
     const evaluated = await Promise.all(
       batch.map(async (answer) => {
         const question = questions.get(answer.question_id)!;

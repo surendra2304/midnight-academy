@@ -258,8 +258,6 @@ export const submitAnswer = createServerFn({ method: "POST" })
     if (!attempt || attempt.student_id !== context.userId) {
       throw new Error("Attempt not found or unauthorized.");
     }
-    if (attempt.status !== "in_progress") return { ok: true };
-
     const { error } = await supabaseAdmin
       .from("attempt_answers")
       .update({ response: data.response, submitted_at: new Date().toISOString() })
@@ -268,6 +266,50 @@ export const submitAnswer = createServerFn({ method: "POST" })
       .is("submitted_at", null);
 
     if (error) throw new Error("Could not save your response.");
+
+    // Evaluate this individual answer immediately upon submission in the background
+    // to distribute Gemini API usage over time and avoid bursting all questions at the end
+    try {
+      const { data: answerRow } = await supabaseAdmin
+        .from("attempt_answers")
+        .select("id, question_id, response")
+        .eq("attempt_id", attempt.id)
+        .eq("position", data.position)
+        .maybeSingle();
+
+      if (answerRow?.question_id) {
+        const { data: question } = await supabaseAdmin
+          .from("questions")
+          .select("text, concepts, constraints, reference_answer")
+          .eq("id", answerRow.question_id)
+          .maybeSingle();
+
+        if (question) {
+          const { evaluateAnswer } = await import("./evaluate.server");
+          const evaluation = await evaluateAnswer({
+            questionText: question.text,
+            referenceAnswer: question.reference_answer,
+            concepts: question.concepts || [],
+            constraints: question.constraints || [],
+            response: data.response,
+          });
+
+          await supabaseAdmin
+            .from("attempt_answers")
+            .update({
+              score: evaluation.score,
+              feedback: evaluation.feedback,
+              missed_concepts: evaluation.missedConcepts,
+              missed_constraints: evaluation.missedConstraints,
+            })
+            .eq("id", answerRow.id);
+        }
+      }
+    } catch (evalErr) {
+      // If individual eval fails (transient error), final processAttemptEvaluation will evaluate it as fallback
+      console.warn("[submitAnswer] Immediate per-question evaluation error:", evalErr);
+    }
+
     return { ok: true };
   });
 
@@ -345,7 +387,7 @@ export const processAttemptEvaluation = createServerFn({ method: "POST" })
 
     const { data: answers } = await supabaseAdmin
       .from("attempt_answers")
-      .select("id, question_id, position, response")
+      .select("id, question_id, position, response, score, feedback, missed_concepts, missed_constraints")
       .eq("attempt_id", attempt.id)
       .order("position", { ascending: true });
 
