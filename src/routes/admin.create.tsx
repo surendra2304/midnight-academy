@@ -567,8 +567,11 @@ function Source({
             variant="ghost"
             size="lg"
             onClick={() => {
-              const sample =
-                "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.\n\nGiven the head of a singly linked list, reverse the list, and return the reversed list.";
+              const sample = `1. You are designing an in-memory cache eviction policy for high-throughput web servers. The cache has a fixed maximum capacity of N key-value items. When capacity is exceeded, the least recently used (LRU) item must be evicted before inserting the new entry. All get and put operations must execute strictly in O(1) average time complexity. Explain the primary objective, the required underlying data structures to achieve constant time lookups and updates, and the constraints regarding capacity and eviction order.
+
+2. Given a financial transaction ledger represented as an array of daily profit/loss integers where values can be positive or negative, identify the contiguous sequence of days that yields the maximum cumulative net profit. The sequence must contain at least one day, and the array may consist entirely of negative numbers. Describe the core algorithmic objective, the condition under which the running window resets, and the expected time complexity.
+
+3. In a distributed message-processing cluster, worker tasks are organized as a directed graph where directed edges denote strict prerequisite dependencies (e.g., Task A must finish before Task B can begin). You must determine whether all scheduled tasks can be executed without circular deadlocks. Detail the underlying graph concept, the specific condition that signals impossible execution, and how the traversal algorithm detects invalid cycles.`;
               setSourceText(sample);
             }}
           >

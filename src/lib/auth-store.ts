@@ -103,7 +103,6 @@ if (typeof window !== "undefined" && !isInitialized) {
     if (event === "SIGNED_OUT" || !session?.user) {
       updateState({ user: null, loading: false, pendingOAuth: null });
     } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
-      updateState({ loading: true });
       try {
         const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
         updateState({ user, loading: false, pendingOAuth: null });
@@ -129,6 +128,9 @@ if (typeof window !== "undefined" && !isInitialized) {
               fullName: typeof meta["full_name"] === "string" ? meta["full_name"] : null,
             },
           });
+        } else if (currentState.user) {
+          // If we already had an active valid user (e.g. during a test), do NOT wipe them out on background token refresh jitter
+          updateState({ loading: false });
         } else {
           updateState({ user: null, loading: false });
         }

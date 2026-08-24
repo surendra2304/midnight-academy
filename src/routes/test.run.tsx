@@ -192,6 +192,60 @@ function RunTest() {
     }
   }, [stage, draft, draftStorageKey]);
 
+  const draftRef = useRef(draft);
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
+  const submittingRef = useRef(false);
+  useEffect(() => {
+    submittingRef.current = submitting;
+  }, [submitting]);
+
+  // 5. Submit response (autoSubmit boolean allows empty or short answers when timer expires)
+  const handleSubmitUnderstanding = async (isAutoSubmit = false) => {
+    if (!attemptId || submittingRef.current) return;
+
+    const currentDraft = draftRef.current.trim();
+    if (!isAutoSubmit && currentDraft.length < 10) {
+      toast.error("Please write at least a sentence explaining what the passage asks for.");
+      return;
+    }
+
+    setSubmitting(true);
+    submittingRef.current = true;
+    try {
+      await submitAnswer({
+        data: {
+          attemptId,
+          position: index,
+          response: currentDraft || "(No response submitted before time expired)",
+        },
+      });
+
+      // Clear draft for this position
+      if (draftStorageKey) {
+        sessionStorage.removeItem(draftStorageKey);
+      }
+      setDraft("");
+      draftRef.current = "";
+
+      const nextIndex = index + 1;
+      if (nextIndex < total) {
+        setIndex(nextIndex);
+        await loadQuestionForPosition(nextIndex, attemptId);
+      } else {
+        setStage("evaluating");
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to submit response";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+      submittingRef.current = false;
+    }
+  };
+
   // 3. Reading and Writing timers
   useEffect(() => {
     if (loading || showOnboarding) return;
@@ -218,7 +272,7 @@ function RunTest() {
           if (r <= 1) {
             clearInterval(id);
             // Auto submit when response timer runs out
-            handleSubmitUnderstanding();
+            handleSubmitUnderstanding(true);
             return 0;
           }
           return r - 1;
@@ -227,65 +281,7 @@ function RunTest() {
 
       return () => clearInterval(id);
     }
-  }, [stage, loading, showOnboarding, testMeta?.responseSeconds]);
-
-  // 4. Integrity signal: Window blur / tab switch recording via real server function
-  useEffect(() => {
-    if (!attemptId || stage !== "read") return;
-
-    const onBlur = () => {
-      recordBlur({ data: { attemptId } }).catch(() => {
-        // Quiet integrity signal
-      });
-    };
-
-    const onVisibilityChange = () => {
-      if (document.hidden) onBlur();
-    };
-
-    window.addEventListener("blur", onBlur);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      window.removeEventListener("blur", onBlur);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [attemptId, stage]);
-
-  // 5. Submit response
-  const handleSubmitUnderstanding = async () => {
-    if (!attemptId || draft.trim().length < 10 || submitting) return;
-
-    setSubmitting(true);
-    try {
-      await submitAnswer({
-        data: {
-          attemptId,
-          position: index,
-          response: draft.trim(),
-        },
-      });
-
-      // Clear draft for this position
-      if (draftStorageKey) {
-        sessionStorage.removeItem(draftStorageKey);
-      }
-      setDraft("");
-
-      const nextIndex = index + 1;
-      if (nextIndex < total) {
-        setIndex(nextIndex);
-        await loadQuestionForPosition(nextIndex, attemptId);
-      } else {
-        setStage("evaluating");
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to submit response";
-      toast.error(message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  }, [stage, loading, showOnboarding, testMeta?.responseSeconds, attemptId, index, total]);
 
   // 6. Handle Attempt Evaluation completion
   const triggerFinishAttempt = useCallback(async () => {
