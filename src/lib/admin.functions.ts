@@ -32,6 +32,9 @@ export const listAdminTests = createServerFn({ method: "GET" })
       const scores = (test.attempts ?? [])
         .map((a) => a.score)
         .filter((s): s is number => typeof s === "number");
+      const activeParticipants = (test.attempts ?? []).filter(
+        (a) => a.status === "in_progress",
+      ).length;
       return {
         id: test.id,
         name: test.name,
@@ -43,6 +46,7 @@ export const listAdminTests = createServerFn({ method: "GET" })
         secondsPerQuestion: test.seconds_per_question,
         created: test.created_at,
         participants: test.attempts?.length ?? 0,
+        activeParticipants,
         average: average(scores),
       };
     });
@@ -108,6 +112,10 @@ export const getAdminTest = createServerFn({ method: "GET" })
       return 0;
     });
 
+    const activeParticipants = (attempts ?? []).filter(
+      (a) => a.status === "in_progress",
+    ).length;
+
     return {
       test: {
         id: test.id,
@@ -121,6 +129,7 @@ export const getAdminTest = createServerFn({ method: "GET" })
         responseSeconds: test.response_seconds,
         created: test.created_at,
         participants: attempts?.length ?? 0,
+        activeParticipants,
         average: average(
           (attempts ?? []).map((a) => a.score).filter((s): s is number => typeof s === "number"),
         ),
@@ -426,6 +435,9 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         const tScores = (t.attempts ?? [])
           .map((a) => a.score)
           .filter((s): s is number => typeof s === "number");
+        const activeParticipants = (t.attempts ?? []).filter(
+          (a) => a.status === "in_progress",
+        ).length;
         return {
           id: t.id,
           name: t.name,
@@ -434,6 +446,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
           code: t.code,
           questions: t.question_count,
           participants: t.attempts?.length ?? 0,
+          activeParticipants,
           average: average(tScores),
         };
       }),

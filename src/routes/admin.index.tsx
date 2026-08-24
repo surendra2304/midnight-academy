@@ -49,6 +49,7 @@ type OverviewData = {
     code: string | null;
     questions: number;
     participants: number;
+    activeParticipants: number;
     average: number;
   }>;
   recentSubmissions: Array<{
@@ -229,9 +230,18 @@ function AdminDashboard() {
                 params={{ testId: t.id }}
                 className="grid grid-cols-2 items-center gap-3 px-5 py-4 transition-colors hover:bg-surface-2/60 lg:grid-cols-[minmax(0,2.2fr)_repeat(5,minmax(0,1fr))]"
               >
-                <span className="col-span-2 text-sm font-semibold text-foreground lg:col-span-1">
-                  {t.name}
-                </span>
+                <div className="col-span-2 flex flex-wrap items-center gap-2 lg:col-span-1">
+                  <span className="text-sm font-semibold text-foreground">{t.name}</span>
+                  {t.activeParticipants > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="relative flex size-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
+                      </span>
+                      {t.activeParticipants} writing
+                    </span>
+                  ) : null}
+                </div>
                 <Tag>{t.category}</Tag>
                 <span className="text-sm text-muted-foreground">{t.questions} questions</span>
                 <span className="text-sm text-muted-foreground">{t.participants} students</span>
