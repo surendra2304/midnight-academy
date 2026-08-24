@@ -567,11 +567,11 @@ function Source({
             variant="ghost"
             size="lg"
             onClick={() => {
-              const sample = `1. You are designing an in-memory cache eviction policy for high-throughput web servers. The cache has a fixed maximum capacity of N key-value items. When capacity is exceeded, the least recently used (LRU) item must be evicted before inserting the new entry. All get and put operations must execute strictly in O(1) average time complexity. Explain the primary objective, the required underlying data structures to achieve constant time lookups and updates, and the constraints regarding capacity and eviction order.
+              const sample = `1. Given an array of numbers and a target sum, find the two numbers that add up to the target. Explain what inputs you receive and what indices you must return.
 
-2. Given a financial transaction ledger represented as an array of daily profit/loss integers where values can be positive or negative, identify the contiguous sequence of days that yields the maximum cumulative net profit. The sequence must contain at least one day, and the array may consist entirely of negative numbers. Describe the core algorithmic objective, the condition under which the running window resets, and the expected time complexity.
+2. Given a string containing brackets like '(', ')', '{', '}', determine if the brackets are closed in the correct order. Explain how a stack helps check valid pairs.
 
-3. In a distributed message-processing cluster, worker tasks are organized as a directed graph where directed edges denote strict prerequisite dependencies (e.g., Task A must finish before Task B can begin). You must determine whether all scheduled tasks can be executed without circular deadlocks. Detail the underlying graph concept, the specific condition that signals impossible execution, and how the traversal algorithm detects invalid cycles.`;
+3. Given an integer array with positive and negative values, find the contiguous subarray that gives the maximum sum. Describe how you keep track of the running sum.`;
               setSourceText(sample);
             }}
           >
