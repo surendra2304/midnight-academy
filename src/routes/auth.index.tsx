@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { requireUnauth } from "@/lib/auth-guard";
 import {
@@ -62,22 +61,23 @@ type SignupStep = "email" | "otp" | "password" | "role" | "details" | "done";
 
 function AuthPage() {
   const search = Route.useSearch();
-  // A first-time Google identity lands here from the OAuth callback with
-  // flow=google-new: email is already verified by Google, so signup continues
-  // at the password step and completes via completeGoogleRegistration.
-  const googleFlow = search.flow === "google-new";
-  // The flow param can be lost (e.g. Supabase redirecting to the configured
-  // Site URL instead of the redirectTo callback). A live Google session with
-  // no assigned role means signup is still in progress, so track it in state
-  // rather than trusting only the URL.
-  const [googleContinuation, setGoogleContinuation] = useState(googleFlow);
+  const isGoogleNew = search.flow === "google-new";
 
-  const [isLogin, setIsLogin] = useState(
-    search.tab === "signup" ? false : search.tab === "login" ? true : !googleFlow,
-  );
+  // Tab state: "login" or "signup"
+  const [isLogin, setIsLogin] = useState<boolean>(() => {
+    if (isGoogleNew) return false;
+    if (search.tab === "signup") return false;
+    return true; // Default to Sign in view
+  });
+
   const [loading, setLoading] = useState(false);
 
-  // Sync isLogin if search.tab or search.flow changes
+  // Multi-step signup states
+  const [signupStep, setSignupStep] = useState<SignupStep>(() => {
+    return isGoogleNew ? "role" : "email";
+  });
+
+  // Sync state whenever search parameters change
   useEffect(() => {
     if (search.flow === "google-new") {
       setIsLogin(false);
@@ -87,11 +87,9 @@ function AuthPage() {
       setSignupStep("email");
     } else if (search.tab === "login") {
       setIsLogin(true);
+      setSignupStep("email");
     }
   }, [search.flow, search.tab]);
-
-  // Signup multi-step states
-  const [signupStep, setSignupStep] = useState<SignupStep>(googleFlow ? "role" : "email");
   const [signupEmail, setSignupEmail] = useState(search.email ?? "");
   const [signupOtp, setSignupOtp] = useState("");
   const [verificationToken, setVerificationToken] = useState("");
@@ -111,42 +109,6 @@ function AuthPage() {
     if (search.email) setSignupEmail(search.email);
     if (search.name) setFullName(search.name);
   }, [search.email, search.name]);
-
-  // Recover a first-time Google signup that landed here without flow=google-new
-  // (the OAuth redirect went to /auth directly instead of /auth/callback).
-  // A live Google session with no role in user_roles means registration is
-  // unfinished — continue at the role/details steps instead of the login form.
-  useEffect(() => {
-    if (googleContinuation) return;
-    let active = true;
-    (async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const oauthUser = session?.user;
-        if (!active || !oauthUser) return;
-        const providers = (oauthUser.app_metadata?.["providers"] as string[] | undefined) ?? [];
-        if (!providers.includes("google")) return;
-        const { data: roleRows } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", oauthUser.id);
-        if (!active || (roleRows && roleRows.length > 0)) return;
-        if (oauthUser.email) setSignupEmail(oauthUser.email);
-        const metaName = oauthUser.user_metadata?.["full_name"];
-        if (typeof metaName === "string" && metaName) setFullName(metaName);
-        setGoogleContinuation(true);
-        setIsLogin(false);
-        setSignupStep("role");
-      } catch {
-        // No recoverable Google session — stay on the requested view
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [googleContinuation]);
 
   const navigate = useNavigate();
   const { login, signInWithGoogle } = useAuth();
@@ -279,7 +241,7 @@ function AuthPage() {
 
     setLoading(true);
     try {
-      if (googleContinuation) {
+      if (isGoogleNew) {
         const { completeGoogleRegistration } = await import("@/lib/auth.functions");
         await completeGoogleRegistration({
           data: {
@@ -787,14 +749,21 @@ function AuthPage() {
             <button
               type="button"
               onClick={() => {
-                if (googleContinuation) return;
-                setIsLogin(!isLogin);
+                const nextIsLogin = !isLogin;
+                setIsLogin(nextIsLogin);
                 setSignupStep("email");
                 setSignupOtp("");
                 setSignupPassword("");
                 setSignupPasswordConfirm("");
+                navigate({
+                  to: "/auth",
+                  search: {
+                    tab: nextIsLogin ? "login" : "signup",
+                    redirect: search.redirect,
+                  },
+                });
               }}
-              className="text-primary hover:underline"
+              className="text-primary hover:underline font-medium"
             >
               {isLogin ? "Sign up" : "Sign in"}
             </button>
