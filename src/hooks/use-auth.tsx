@@ -1,12 +1,16 @@
 import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { authStore, type AppRole, type User } from "@/lib/auth-store";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { authStore, type AppRole, type PendingOAuth, type User } from "@/lib/auth-store";
 
 export type AuthState = {
   session: { user: User } | null;
   user: User | null;
   role: AppRole | null;
   loading: boolean;
+  /** First-time Google identity that still needs to finish registration. */
+  pendingOAuth: PendingOAuth | null;
+  clearPendingOAuth: () => void;
   signOut: () => Promise<void>;
   login: (credentials: {
     email: string;
@@ -25,6 +29,8 @@ const AuthContext = createContext<AuthState>({
   user: null,
   role: null,
   loading: true,
+  pendingOAuth: null,
+  clearPendingOAuth: () => {},
   signOut: async () => {},
   login: async () => ({
     user: { id: "", email: "", fullName: null, role: "STUDENT" },
@@ -43,11 +49,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authStore.getSnapshot,
     authStore.getServerSnapshot,
   );
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     // Initiate session restoration as early as possible in React lifecycle
     authStore.getRestorePromise();
   }, []);
+
+  // When a brand-new Google identity signs in, steer them straight to the
+  // signup continuation details regardless of where Supabase landed the browser
+  useEffect(() => {
+    if (!storeState.pendingOAuth) return;
+    // Don't fight auth.callback while it's still running its own check
+    if (pathname === "/auth/callback") return;
+    navigate({
+      to: "/auth",
+      search: {
+        flow: "google-new",
+        email: storeState.pendingOAuth.email ?? undefined,
+        name: storeState.pendingOAuth.fullName ?? undefined,
+      },
+    });
+  }, [storeState.pendingOAuth, pathname, navigate]);
 
   const value = useMemo<AuthState>(
     () => ({
@@ -55,6 +79,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: storeState.user,
       role: storeState.user?.role ?? null,
       loading: storeState.loading,
+      pendingOAuth: storeState.pendingOAuth,
+      clearPendingOAuth: authStore.clearPendingOAuth,
       signOut: authStore.signOut,
       login: authStore.login,
       register: authStore.register,

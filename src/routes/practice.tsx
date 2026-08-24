@@ -204,7 +204,8 @@ function PracticeLibrary() {
                           <Clock className="size-3.5" /> ~{estimateMinutes(t)} min
                         </span>
                         <span className="flex items-center gap-1.5">
-                          <BookOpen className="size-3.5" /> {t.secondsPerQuestion}s read
+                          <BookOpen className="size-3.5" /> {t.secondsPerQuestion}s read ·{" "}
+                          {t.responseSeconds || 90}s write
                         </span>
                       </div>
 

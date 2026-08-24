@@ -267,7 +267,7 @@ function TestDetail() {
         <StatCard
           label="Questions"
           value={test.questions}
-          hint={`${test.secondsPerQuestion}s reading`}
+          hint={`${test.secondsPerQuestion}s read · ${test.responseSeconds || 90}s write`}
         />
         <StatCard label="Participants" value={participants.length} />
         <StatCard

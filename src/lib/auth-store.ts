@@ -9,15 +9,22 @@ export type User = {
   role: AppRole;
 };
 
+/** A Google identity that just signed in but has not finished registration. */
+export type PendingOAuth = {
+  email: string | null;
+  fullName: string | null;
+};
+
 type AuthState = {
   user: User | null;
   loading: boolean;
+  pendingOAuth: PendingOAuth | null;
 };
 
 // SSR-safe initial state: on the server there is never an active client session
-const SERVER_SNAPSHOT: AuthState = { user: null, loading: false };
+const SERVER_SNAPSHOT: AuthState = { user: null, loading: false, pendingOAuth: null };
 
-let state: AuthState = { user: null, loading: true };
+let state: AuthState = { user: null, loading: true, pendingOAuth: null };
 let listeners: (() => void)[] = [];
 let restorePromise: Promise<void> | null = null;
 let isInitialized = false;
@@ -83,7 +90,7 @@ async function doRestoreSession(): Promise<void> {
     }
 
     const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
-    updateState({ user, loading: false });
+    updateState({ user, loading: false, pendingOAuth: null });
   } catch {
     updateState({ user: null, loading: false });
   }
@@ -94,15 +101,37 @@ if (typeof window !== "undefined" && !isInitialized) {
   isInitialized = true;
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === "SIGNED_OUT" || !session?.user) {
-      updateState({ user: null, loading: false });
+      updateState({ user: null, loading: false, pendingOAuth: null });
     } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
       updateState({ loading: true });
       try {
         const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
-        updateState({ user, loading: false });
-      } catch {
-        // Role-less or unresolvable profile: treat as signed-out for guards
-        updateState({ user: null, loading: false });
+        updateState({ user, loading: false, pendingOAuth: null });
+      } catch (err) {
+        // A brand-new Google identity: the OAuth session exists but no role
+        // has been assigned yet, so registration is unfinished. Surface it
+        // (only on the live SIGNED_IN event — never on reloads/refreshes,
+        // so lingering sessions cannot hijack the normal auth page).
+        const isGoogleNoRole =
+          event === "SIGNED_IN" &&
+          err instanceof Error &&
+          /no authorized role/i.test(err.message) &&
+          ((session.user.app_metadata?.["providers"] as string[] | undefined) ?? []).includes(
+            "google",
+          );
+        if (isGoogleNoRole) {
+          const meta = (session.user.user_metadata ?? {}) as Record<string, unknown>;
+          updateState({
+            user: null,
+            loading: false,
+            pendingOAuth: {
+              email: session.user.email ?? null,
+              fullName: typeof meta["full_name"] === "string" ? meta["full_name"] : null,
+            },
+          });
+        } else {
+          updateState({ user: null, loading: false });
+        }
       }
     }
   });
@@ -137,6 +166,15 @@ export const authStore = {
 
   getRole() {
     return state.user?.role ?? null;
+  },
+
+  getPendingOAuth() {
+    return state.pendingOAuth;
+  },
+
+  /** Drop the unfinished-Google-signup continuation (user chose to leave it). */
+  clearPendingOAuth() {
+    updateState({ pendingOAuth: null });
   },
 
   getRestorePromise() {
@@ -189,7 +227,7 @@ export const authStore = {
     }
 
     const user = await fetchUserProfileAndRole(data.user.id, data.user.email ?? credentials.email);
-    updateState({ user, loading: false });
+    updateState({ user, loading: false, pendingOAuth: null });
     return { user, session: data.session };
   },
 
@@ -232,7 +270,7 @@ export const authStore = {
     }
 
     const user = await fetchUserProfileAndRole(data.user.id, data.user.email ?? params.email);
-    updateState({ user, loading: false });
+    updateState({ user, loading: false, pendingOAuth: null });
     return { user, session: data.session };
   },
 

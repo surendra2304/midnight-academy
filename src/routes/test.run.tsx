@@ -76,6 +76,7 @@ function RunTest() {
   const [total, setTotal] = useState(0);
   const [stage, setStage] = useState<Stage>("read");
   const [remaining, setRemaining] = useState(45);
+  const [responseRemaining, setResponseRemaining] = useState(90);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [question, setQuestion] = useState<QuestionPayload | null>(null);
   const [testMeta, setTestMeta] = useState<AttemptMeta | null>(null);
@@ -108,6 +109,7 @@ function RunTest() {
         if (res.state === "consumed") {
           setQuestion(res.meta ?? null);
           setStage("respond");
+          setResponseRemaining(testMeta?.responseSeconds || 90);
           const savedDraft =
             sessionStorage.getItem(`${DRAFT_KEY_PREFIX}${attId}-${currentPos}`) || "";
           setDraft(savedDraft);
@@ -117,6 +119,7 @@ function RunTest() {
         // Ready to read
         setQuestion(res.question);
         setRemaining(res.remainingSeconds || 45);
+        setResponseRemaining(testMeta?.responseSeconds || 90);
         setStage("read");
         break;
       }
@@ -127,7 +130,7 @@ function RunTest() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [testMeta?.responseSeconds]);
 
   useEffect(() => {
     if (!attemptId) {
@@ -189,23 +192,42 @@ function RunTest() {
     }
   }, [stage, draft, draftStorageKey]);
 
-  // 3. Reading timer
+  // 3. Reading and Writing timers
   useEffect(() => {
-    if (stage !== "read" || loading || showOnboarding) return;
+    if (loading || showOnboarding) return;
 
-    const id = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(id);
-          setStage("respond");
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
+    if (stage === "read") {
+      const id = setInterval(() => {
+        setRemaining((r) => {
+          if (r <= 1) {
+            clearInterval(id);
+            setStage("respond");
+            setResponseRemaining(testMeta?.responseSeconds || 90);
+            return 0;
+          }
+          return r - 1;
+        });
+      }, 1000);
 
-    return () => clearInterval(id);
-  }, [stage, loading, showOnboarding]);
+      return () => clearInterval(id);
+    }
+
+    if (stage === "respond") {
+      const id = setInterval(() => {
+        setResponseRemaining((r) => {
+          if (r <= 1) {
+            clearInterval(id);
+            // Auto submit when response timer runs out
+            handleSubmitUnderstanding();
+            return 0;
+          }
+          return r - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(id);
+    }
+  }, [stage, loading, showOnboarding, testMeta?.responseSeconds]);
 
   // 4. Integrity signal: Window blur / tab switch recording via real server function
   useEffect(() => {
@@ -354,13 +376,26 @@ function RunTest() {
             <span
               className={cn(
                 "flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-sm font-bold tabular-nums",
-                lowTime
+                remaining <= 10
                   ? "border-destructive/45 bg-destructive/10 text-destructive"
                   : "border-border bg-surface text-foreground",
               )}
             >
               <Timer className="size-3.5" />
-              00:{String(remaining).padStart(2, "0")}
+              Read: 00:{String(remaining).padStart(2, "0")}
+            </span>
+          ) : stage === "respond" ? (
+            <span
+              className={cn(
+                "flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-sm font-bold tabular-nums",
+                responseRemaining <= 15
+                  ? "border-destructive/45 bg-destructive/10 text-destructive"
+                  : "border-border bg-surface text-foreground",
+              )}
+            >
+              <Timer className="size-3.5" />
+              Write: {Math.floor(responseRemaining / 60)}:
+              {String(responseRemaining % 60).padStart(2, "0")}
             </span>
           ) : null}
         </div>

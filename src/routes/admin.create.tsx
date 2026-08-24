@@ -159,7 +159,8 @@ function Details({
   const [name, setName] = useState(initial.name);
   const [category, setCategory] = useState(initial.category);
   const [difficulty, setDifficulty] = useState(initial.difficulty);
-  const [time, setTime] = useState(initial.secondsPerQuestion);
+  const [readingTime, setReadingTime] = useState(initial.secondsPerQuestion);
+  const [responseTime, setResponseTime] = useState(initial.responseSeconds);
 
   return (
     <Panel>
@@ -172,7 +173,8 @@ function Details({
             name,
             category,
             difficulty,
-            secondsPerQuestion: time,
+            secondsPerQuestion: readingTime,
+            responseSeconds: responseTime,
           });
         }}
       >
@@ -224,17 +226,37 @@ function Details({
           <Input
             id="qtime"
             type="number"
-            value={time || ""}
+            value={readingTime || ""}
             onChange={(e) => {
               const val = e.target.value === "" ? 0 : Number(e.target.value);
-              setTime(val);
+              setReadingTime(val);
             }}
             min={15}
             max={300}
           />
+          <p className="text-xs text-muted-foreground">Time given to read the passage.</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="rtime">Writing time per answer (seconds)</Label>
+          <Input
+            id="rtime"
+            type="number"
+            value={responseTime || ""}
+            onChange={(e) => {
+              const val = e.target.value === "" ? 0 : Number(e.target.value);
+              setResponseTime(val);
+            }}
+            min={15}
+            max={600}
+          />
+          <p className="text-xs text-muted-foreground">Time given to write comprehension answer.</p>
         </div>
         <div className="sm:col-span-2">
-          <Button type="submit" size="lg" disabled={!name.trim() || time < 15}>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={!name.trim() || readingTime < 15 || responseTime < 15}
+          >
             Next
           </Button>
         </div>
