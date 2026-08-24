@@ -677,6 +677,8 @@ function AuthPage() {
                           <SelectContent>
                             {[
                               "CSE",
+                              "CSD",
+                              "CSIT",
                               "IT",
                               "ECE",
                               "EEE",

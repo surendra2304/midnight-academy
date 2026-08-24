@@ -61,7 +61,18 @@ function Row({
   );
 }
 
-const BRANCHES = ["CSE", "IT", "ECE", "EEE", "Mechanical", "Civil", "AI & ML", "Other"];
+const BRANCHES = [
+  "CSE",
+  "CSD",
+  "CSIT",
+  "IT",
+  "ECE",
+  "EEE",
+  "Mechanical",
+  "Civil",
+  "AI & ML",
+  "Other",
+];
 const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduated"];
 
 function ProfilePage() {
