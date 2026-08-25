@@ -4,7 +4,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const startAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => z.object({ code: z.string().min(1).max(24) }).parse(data))
+  .validator((data) =>
+    z
+      .object({
+        code: z.string().min(1).max(24),
+        allowRetake: z.boolean().optional(),
+      })
+      .parse(data),
+  )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { normalizeCode } = await import("./attempts.server");
@@ -13,7 +20,7 @@ export const startAttempt = createServerFn({ method: "POST" })
     const { data: test } = await supabaseAdmin
       .from("tests")
       .select(
-        "id, name, category, difficulty, status, expires_at, seconds_per_question, response_seconds",
+        "id, name, category, difficulty, status, expires_at, seconds_per_question, response_seconds, is_practice",
       )
       .eq("code", code)
       .maybeSingle();
@@ -41,11 +48,14 @@ export const startAttempt = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    if (existing && existing.status !== "in_progress") {
+    // Practice tests (or when allowRetake is true) can always be retaken fresh
+    const canRetake = test.is_practice || data.allowRetake;
+
+    if (existing && existing.status !== "in_progress" && !canRetake) {
       return { error: "completed" as const, attemptId: existing.id };
     }
 
-    let attemptId = existing?.id;
+    let attemptId = existing?.status === "in_progress" ? existing.id : undefined;
     if (!attemptId) {
       const { data: created, error } = await supabaseAdmin
         .from("attempts")
@@ -349,16 +359,58 @@ export const finishAttempt = createServerFn({ method: "POST" })
     }
     if (attempt.status === "evaluated") return { attemptId: attempt.id, status: "evaluated" };
 
-    // Mark for evaluation and return immediately — the heavy Gemini work runs
-    // in processAttemptEvaluation (called by the result page / instructor),
-    // so this request can never hit the serverless timeout.
-    const { error: flagError } = await supabaseAdmin
+    // Mark as evaluating
+    await supabaseAdmin
       .from("attempts")
       .update({ status: "evaluating", completed_at: new Date().toISOString() })
       .eq("id", attempt.id);
-    if (flagError) throw new Error("Could not submit the test. Please try again.");
 
-    return { attemptId: attempt.id, status: "evaluating" };
+    // Run the remaining evaluation immediately
+    try {
+      const { evaluateAttempt } = await import("./attempts.server");
+      const { data: answers } = await supabaseAdmin
+        .from("attempt_answers")
+        .select("id, question_id, position, response, score, feedback, missed_concepts, missed_constraints")
+        .eq("attempt_id", attempt.id)
+        .order("position", { ascending: true });
+
+      const { data: questions } = await supabaseAdmin
+        .from("questions")
+        .select("id, text, concepts, constraints, reference_answer")
+        .eq("test_id", attempt.test_id);
+
+      const questionMap = new Map((questions ?? []).map((q) => [q.id, q]));
+      const { scored, axes, overall } = await evaluateAttempt(answers ?? [], questionMap);
+
+      await Promise.all(
+        scored.map((item) =>
+          supabaseAdmin
+            .from("attempt_answers")
+            .update({
+              score: item.score,
+              feedback: item.feedback,
+              missed_concepts: item.missedConcepts,
+              missed_constraints: item.missedConstraints,
+            })
+            .eq("id", item.id),
+        ),
+      );
+
+      await supabaseAdmin
+        .from("attempts")
+        .update({
+          status: "evaluated",
+          score: overall,
+          axes,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", attempt.id);
+
+      return { attemptId: attempt.id, status: "evaluated" };
+    } catch (evalErr) {
+      console.warn("[finishAttempt] Immediate eval error, will fallback to result page:", evalErr);
+      return { attemptId: attempt.id, status: "evaluating" };
+    }
   });
 
 /**

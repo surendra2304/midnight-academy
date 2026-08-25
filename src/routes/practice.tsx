@@ -95,7 +95,7 @@ function PracticeLibrary() {
   const handleStart = async (code: string) => {
     setStartingCode(code);
     try {
-      const res = await startAttempt({ data: { code } });
+      const res = await startAttempt({ data: { code, allowRetake: true } });
       if ("error" in res) {
         if (res.error === "completed" && "attemptId" in res && typeof res.attemptId === "string") {
           navigate({ to: "/result/$attemptId", params: { attemptId: res.attemptId } });
