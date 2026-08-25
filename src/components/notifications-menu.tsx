@@ -31,7 +31,20 @@ export function NotificationsMenu() {
 
   const markAllRead = useMutation({
     mutationFn: () => markAllAsRead(),
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+      const previous = queryClient.getQueryData(["notifications"]);
+      queryClient.setQueryData(["notifications"], (old: Array<{ is_read: boolean }> | undefined) =>
+        old ? old.map((n) => ({ ...n, is_read: true })) : [],
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["notifications"], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
@@ -55,8 +68,15 @@ export function NotificationsMenu() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto px-2 py-1 text-xs text-muted-foreground"
-              onClick={() => markAllRead.mutate()}
+              className="h-auto px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                markAllRead.mutate();
+              }}
               disabled={markAllRead.isPending}
             >
               Mark all read

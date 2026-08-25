@@ -267,48 +267,49 @@ export const submitAnswer = createServerFn({ method: "POST" })
 
     if (error) throw new Error("Could not save your response.");
 
-    // Evaluate this individual answer immediately upon submission in the background
-    // to distribute Gemini API usage over time and avoid bursting all questions at the end
-    try {
-      const { data: answerRow } = await supabaseAdmin
-        .from("attempt_answers")
-        .select("id, question_id, response")
-        .eq("attempt_id", attempt.id)
-        .eq("position", data.position)
-        .maybeSingle();
-
-      if (answerRow?.question_id) {
-        const { data: question } = await supabaseAdmin
-          .from("questions")
-          .select("text, concepts, constraints, reference_answer")
-          .eq("id", answerRow.question_id)
+    // Fire per-question evaluation asynchronously in background without blocking
+    // the HTTP response so the UI immediately advances to the next question in milliseconds
+    (async () => {
+      try {
+        const { data: answerRow } = await supabaseAdmin
+          .from("attempt_answers")
+          .select("id, question_id, response")
+          .eq("attempt_id", attempt.id)
+          .eq("position", data.position)
           .maybeSingle();
 
-        if (question) {
-          const { evaluateAnswer } = await import("./evaluate.server");
-          const evaluation = await evaluateAnswer({
-            questionText: question.text,
-            referenceAnswer: question.reference_answer,
-            concepts: question.concepts || [],
-            constraints: question.constraints || [],
-            response: data.response,
-          });
+        if (answerRow?.question_id) {
+          const { data: question } = await supabaseAdmin
+            .from("questions")
+            .select("text, concepts, constraints, reference_answer")
+            .eq("id", answerRow.question_id)
+            .maybeSingle();
 
-          await supabaseAdmin
-            .from("attempt_answers")
-            .update({
-              score: evaluation.score,
-              feedback: evaluation.feedback,
-              missed_concepts: evaluation.missedConcepts,
-              missed_constraints: evaluation.missedConstraints,
-            })
-            .eq("id", answerRow.id);
+          if (question) {
+            const { evaluateAnswer } = await import("./evaluate.server");
+            const evaluation = await evaluateAnswer({
+              questionText: question.text,
+              referenceAnswer: question.reference_answer,
+              concepts: question.concepts || [],
+              constraints: question.constraints || [],
+              response: data.response,
+            });
+
+            await supabaseAdmin
+              .from("attempt_answers")
+              .update({
+                score: evaluation.score,
+                feedback: evaluation.feedback,
+                missed_concepts: evaluation.missedConcepts,
+                missed_constraints: evaluation.missedConstraints,
+              })
+              .eq("id", answerRow.id);
+          }
         }
+      } catch (evalErr) {
+        console.warn("[submitAnswer] Background evaluation warning:", evalErr);
       }
-    } catch (evalErr) {
-      // If individual eval fails (transient error), final processAttemptEvaluation will evaluate it as fallback
-      console.warn("[submitAnswer] Immediate per-question evaluation error:", evalErr);
-    }
+    })();
 
     return { ok: true };
   });

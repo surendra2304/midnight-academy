@@ -106,30 +106,39 @@ function ResultPage() {
       try {
         let res = (await getResult({ data: { attemptId } })) as ResultData;
 
-        // Kick the heavy AI evaluation here (off the submit request) and poll
-        // until it finishes. processAttemptEvaluation skips evaluated attempts,
-        // so repeated calls are safe.
+        if (res.status === "evaluated") {
+          setStudentAttemptData(res);
+          setLoading(false);
+          return;
+        }
+
+        // Kick evaluation immediately
+        try {
+          await processAttemptEvaluation({ data: { attemptId } });
+        } catch {
+          // transient failure — continue to poll
+        }
+
+        // Poll with short intervals so results load instantly as soon as ready
         let attempts = 0;
-        while (res.status !== "evaluated" && attempts < 12 && !cancelled) {
-          if (attempts === 0) {
-            setStudentAttemptData(res);
-            setLoading(false);
-          }
-          try {
-            await processAttemptEvaluation({ data: { attemptId } });
-          } catch {
-            // transient failure — keep polling
-          }
-          await new Promise((r) => setTimeout(r, 5000));
+        while (res.status !== "evaluated" && attempts < 15 && !cancelled) {
+          await new Promise((r) => setTimeout(r, attempts === 0 ? 1000 : 1500));
           res = (await getResult({ data: { attemptId } })) as ResultData;
-          if (res.status === "evaluated" && !cancelled) setStudentAttemptData(res);
+          if (res.status === "evaluated" && !cancelled) {
+            setStudentAttemptData(res);
+            break;
+          }
+          // If still evaluating, retry triggering process
+          if (attempts % 3 === 0) {
+            processAttemptEvaluation({ data: { attemptId } }).catch(() => {});
+          }
           attempts += 1;
         }
 
         if (cancelled) return;
         if (res.status !== "evaluated") {
           setError(
-            "Evaluation is still in progress. Refresh this page in a moment to see your results.",
+            "Evaluation is completing. Refresh this page in a moment to view full breakdown.",
           );
           setStudentAttemptData(res);
         } else {
