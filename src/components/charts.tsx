@@ -16,19 +16,22 @@ import {
 import { AXIS_KEYS, AXIS_SHORT } from "@/lib/mock-data";
 
 const axisStyle = {
-  tick: { fill: "var(--color-muted-foreground)", fontSize: 11 },
-  stroke: "var(--color-border)",
+  tick: { fill: "#94a3b8", fontSize: 11 },
+  stroke: "rgba(255,255,255,0.12)",
 };
 
 const tooltipProps = {
   contentStyle: {
-    background: "var(--color-popover)",
-    border: "1px solid var(--color-border)",
+    backgroundColor: "#0f172a",
+    border: "1px solid rgba(255,255,255,0.15)",
     borderRadius: "10px",
     fontSize: "12px",
-    color: "var(--color-foreground)",
+    color: "#f8fafc",
+    boxShadow: "0 10px 25px -5px rgba(0,0,0,0.6)",
+    padding: "8px 12px",
   },
-  labelStyle: { color: "var(--color-muted-foreground)" },
+  itemStyle: { color: "#f8fafc", fontWeight: 600 },
+  labelStyle: { color: "#94a3b8", marginBottom: "4px", fontWeight: 500 },
 } as const;
 
 export function ScoreTrend({
@@ -175,7 +178,7 @@ export function ScoreBars({
               dataKey="score"
               position={layout === "vertical" ? "right" : "top"}
               formatter={(v: number) => (v === 0 || v ? `${v}%` : "")}
-              style={{ fill: "var(--color-muted-foreground)", fontSize: 11, fontWeight: 600 }}
+              style={{ fill: "#cbd5e1", fontSize: 11, fontWeight: 700 }}
             />
             {data.map((d, i) => (
               <Cell key={i} fill={barColor(Number(d["score"]))} />
