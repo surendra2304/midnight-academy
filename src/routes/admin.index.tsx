@@ -232,15 +232,6 @@ function AdminDashboard() {
               >
                 <div className="col-span-2 flex flex-wrap items-center gap-2 lg:col-span-1">
                   <span className="text-sm font-semibold text-foreground">{t.name}</span>
-                  {t.activeParticipants > 0 ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                      <span className="relative flex size-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
-                      </span>
-                      {t.activeParticipants} writing
-                    </span>
-                  ) : null}
                 </div>
                 <Tag>{t.category}</Tag>
                 <span className="text-sm text-muted-foreground">{t.questions} questions</span>
@@ -249,7 +240,18 @@ function AdminDashboard() {
                   {t.participants > 0 ? `${t.average}%` : "—"}
                 </span>
                 <span className="flex items-center justify-between gap-3">
-                  <StatusTag status={t.status as "draft" | "active" | "completed"} />
+                  <div className="flex items-center gap-2">
+                    {t.activeParticipants > 0 ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        <span className="relative flex size-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
+                        </span>
+                        {t.activeParticipants} writing
+                      </span>
+                    ) : null}
+                    <StatusTag status={t.status as "draft" | "active" | "completed"} />
+                  </div>
                   <span className="text-xs text-primary">Manage</span>
                 </span>
               </Link>

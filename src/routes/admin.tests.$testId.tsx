@@ -203,6 +203,10 @@ function TestDetail() {
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground lg:text-3xl">
               {test.name}
             </h1>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Tag tone="primary">{test.category}</Tag>
+            <DifficultyTag difficulty={test.difficulty as "Easy" | "Medium" | "Hard"} />
             {test.activeParticipants > 0 ? (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                 <span className="relative flex size-2">
@@ -212,10 +216,6 @@ function TestDetail() {
                 {test.activeParticipants} currently writing
               </span>
             ) : null}
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Tag tone="primary">{test.category}</Tag>
-            <DifficultyTag difficulty={test.difficulty as "Easy" | "Medium" | "Hard"} />
             <StatusTag status={test.status as "draft" | "active" | "completed"} />
             {test.code ? (
               <button

@@ -104,21 +104,23 @@ function AdminTests() {
             >
               <div className="flex items-start justify-between gap-3">
                 <Tag tone="primary">{t.category}</Tag>
-                <StatusTag status={t.status as "draft" | "active" | "completed"} />
+                <div className="flex items-center gap-2">
+                  {t.activeParticipants > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="relative flex size-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
+                      </span>
+                      {t.activeParticipants} writing
+                    </span>
+                  ) : null}
+                  <StatusTag status={t.status as "draft" | "active" | "completed"} />
+                </div>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <h3 className="text-base font-semibold leading-snug text-foreground">
                   {t.name}
                 </h3>
-                {t.activeParticipants > 0 ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                    <span className="relative flex size-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
-                    </span>
-                    {t.activeParticipants} writing
-                  </span>
-                ) : null}
               </div>
               <p className="mt-1.5 font-mono text-xs text-primary">{t.code || "Draft (No Code)"}</p>
               <div className="mt-4 flex flex-wrap items-center gap-2">

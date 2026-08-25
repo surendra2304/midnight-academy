@@ -17,8 +17,16 @@ const questionInput = z.object({
 export const listAdminTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, average, weakestAxis } = await import("./admin.server");
+    const { assertAdmin, average, autoFinalizeStaleAttempts } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
+
+    const { data: rawTests } = await context.supabase
+      .from("tests")
+      .select("id")
+      .eq("owner_id", context.userId);
+    if (rawTests?.length) {
+      await autoFinalizeStaleAttempts(context.supabase, rawTests.map((t) => t.id));
+    }
 
     const { data: tests } = await context.supabase
       .from("tests")
@@ -56,8 +64,10 @@ export const getAdminTest = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => z.object({ testId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { assertAdmin, average, weakestAxis } = await import("./admin.server");
+    const { assertAdmin, average, autoFinalizeStaleAttempts } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
+
+    await autoFinalizeStaleAttempts(context.supabase, [data.testId]);
 
     const { data: test } = await context.supabase
       .from("tests")
@@ -365,8 +375,16 @@ export const setTestStatus = createServerFn({ method: "POST" })
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, average, weakestAxis } = await import("./admin.server");
+    const { assertAdmin, average, autoFinalizeStaleAttempts } = await import("./admin.server");
     await assertAdmin(context.supabase, context.userId);
+
+    const { data: rawTests } = await context.supabase
+      .from("tests")
+      .select("id")
+      .eq("owner_id", context.userId);
+    if (rawTests?.length) {
+      await autoFinalizeStaleAttempts(context.supabase, rawTests.map((t) => t.id));
+    }
 
     const [{ data: tests }, { count: flagged }] = await Promise.all([
       context.supabase
