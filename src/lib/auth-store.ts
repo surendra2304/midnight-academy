@@ -24,7 +24,44 @@ type AuthState = {
 // SSR-safe initial state: on the server there is never an active client session
 const SERVER_SNAPSHOT: AuthState = { user: null, loading: false, pendingOAuth: null };
 
-let state: AuthState = { user: null, loading: true, pendingOAuth: null };
+const CACHED_USER_KEY = "ma_cached_user";
+
+function loadCachedUser(): User | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(CACHED_USER_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.id === "string" && (parsed.role === "ADMIN" || parsed.role === "STUDENT")) {
+      return parsed as User;
+    }
+  } catch {
+    // Ignore invalid cache
+  }
+  return null;
+}
+
+function saveCachedUser(user: User | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (user) {
+      localStorage.setItem(CACHED_USER_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(CACHED_USER_KEY);
+    }
+  } catch {
+    // Ignore storage issues
+  }
+}
+
+// Initial state: On client, start with cached user (if present) so page refreshes never bounce to /auth
+const initialCachedUser = typeof window !== "undefined" ? loadCachedUser() : null;
+
+let state: AuthState = {
+  user: initialCachedUser,
+  loading: initialCachedUser ? false : true,
+  pendingOAuth: null,
+};
 let listeners: (() => void)[] = [];
 let restorePromise: Promise<void> | null = null;
 let isInitialized = false;
@@ -37,6 +74,9 @@ function notify() {
 
 function updateState(newState: Partial<AuthState>) {
   state = { ...state, ...newState };
+  if ("user" in newState) {
+    saveCachedUser(newState.user ?? null);
+  }
   notify();
 }
 
@@ -85,14 +125,26 @@ async function doRestoreSession(): Promise<void> {
       error,
     } = await supabase.auth.getSession();
     if (error || !session?.user) {
+      // If we had a cached user, let's also check getUser() in case getSession() was temporarily out of sync
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const user = await fetchUserProfileAndRole(userData.user.id, userData.user.email ?? "");
+        updateState({ user, loading: false, pendingOAuth: null });
+        return;
+      }
       updateState({ user: null, loading: false });
       return;
     }
 
     const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
     updateState({ user, loading: false, pendingOAuth: null });
-  } catch {
-    updateState({ user: null, loading: false });
+  } catch (err) {
+    // If fetching profile fails (e.g. offline/network glitch on refresh), keep cached user rather than logging out
+    if (state.user) {
+      updateState({ loading: false });
+    } else {
+      updateState({ user: null, loading: false });
+    }
   }
 }
 
@@ -107,10 +159,6 @@ if (typeof window !== "undefined" && !isInitialized) {
         const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
         updateState({ user, loading: false, pendingOAuth: null });
       } catch (err) {
-        // A brand-new Google identity: the OAuth session exists but no role
-        // has been assigned yet, so registration is unfinished. Surface it
-        // (only on the live SIGNED_IN event — never on reloads/refreshes,
-        // so lingering sessions cannot hijack the normal auth page).
         const isGoogleNoRole =
           event === "SIGNED_IN" &&
           err instanceof Error &&
@@ -128,8 +176,8 @@ if (typeof window !== "undefined" && !isInitialized) {
               fullName: typeof meta["full_name"] === "string" ? meta["full_name"] : null,
             },
           });
-        } else if (currentState.user) {
-          // If we already had an active valid user (e.g. during a test), do NOT wipe them out on background token refresh jitter
+        } else if (state.user) {
+          // If we already had an active valid user, do NOT wipe them out on background token refresh or network jitter
           updateState({ loading: false });
         } else {
           updateState({ user: null, loading: false });
