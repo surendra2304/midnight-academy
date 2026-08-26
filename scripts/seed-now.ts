@@ -132,6 +132,7 @@ async function main() {
               test_id: t.id,
               position: q.position,
               text: q.text,
+              category: t.category,
               topic: q.topic,
               difficulty: q.difficulty,
               concepts: q.concepts,
