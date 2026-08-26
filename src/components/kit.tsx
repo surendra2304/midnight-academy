@@ -82,12 +82,18 @@ export function Tag({
   className?: string | undefined;
 }) {
   const tones: Record<string, string> = {
-    neutral: "border-slate-200 bg-slate-100/80 text-slate-700",
-    primary: "border-blue-200 bg-blue-50 text-blue-700",
-    violet: "border-purple-200 bg-purple-50 text-purple-700",
-    success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    warning: "border-amber-200 bg-amber-50 text-amber-800",
-    danger: "border-rose-200 bg-rose-50 text-rose-700",
+    neutral:
+      "border-border bg-surface-2/70 text-foreground dark:border-border dark:bg-surface-2 dark:text-foreground",
+    primary:
+      "border-primary/30 bg-primary/10 text-primary dark:border-primary/30 dark:bg-primary/15 dark:text-primary",
+    violet:
+      "border-violet/30 bg-violet/10 text-violet dark:border-violet/30 dark:bg-violet/15 dark:text-violet",
+    success:
+      "border-success/30 bg-success/10 text-success dark:border-success/30 dark:bg-success/15 dark:text-success",
+    warning:
+      "border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/15 dark:text-warning",
+    danger:
+      "border-destructive/30 bg-destructive/10 text-destructive dark:border-destructive/30 dark:bg-destructive/15 dark:text-destructive",
   };
   return (
     <span

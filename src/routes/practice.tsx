@@ -122,9 +122,9 @@ function PracticeLibrary() {
               Practice Library
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground lg:text-base">
-              Structured comprehension tests ready when you are — no code needed. Read each passage
-              under the timer, rewrite it from memory, and get the same AI evaluation used in real
-              tests.
+              Passage comprehension drills designed to test and build English reading comprehension.
+              Read each passage under the timer, express the core idea from memory, and get instant
+              AI feedback.
             </p>
           </div>
           <div className="rounded-xl border border-primary/25 bg-primary/8 px-6 py-4 text-center">
@@ -134,24 +134,6 @@ function PracticeLibrary() {
             </p>
           </div>
         </section>
-
-        <div className="mt-8 flex flex-wrap gap-2">
-          {["All", ...CATEGORIES].map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setActiveCategory(c)}
-              className={
-                "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors " +
-                (activeCategory === c
-                  ? "border-primary/60 bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-border-strong hover:text-foreground")
-              }
-            >
-              {c}
-            </button>
-          ))}
-        </div>
 
         {loading ? (
           <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">

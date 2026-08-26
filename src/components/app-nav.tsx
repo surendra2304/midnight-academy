@@ -101,24 +101,6 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
               </Link>
             </DropdownMenuItem>
           </>
-        )}
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onClick={(e) => {
-            e.preventDefault();
-            toggleTheme();
-          }}
-        >
-          {isDark ? (
-            <>
-              <Sun className="mr-2 size-4 text-amber-500" /> Light Mode
-            </>
-          ) : (
-            <>
-              <Moon className="mr-2 size-4 text-blue-500" /> Dark Mode (v1)
-            </>
-          )}
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={async () => {

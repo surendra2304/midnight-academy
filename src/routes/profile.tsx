@@ -242,11 +242,11 @@ function ProfilePage() {
         </Panel>
 
         <Panel className="mt-6">
-          <h2 className="text-base font-semibold text-foreground">Appearance</h2>
+          <h2 className="text-base font-semibold text-foreground">Settings</h2>
           <div className="mt-3">
             <Row
-              title="Dark Mode (First Version UI)"
-              description="Switch between the crisp white theme and the original Midnight Navy dark interface."
+              title="Dark Mode"
+              description="Switch between the crisp white theme and the dark interface."
             >
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-muted-foreground">
