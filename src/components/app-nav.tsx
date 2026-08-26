@@ -101,6 +101,7 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
               </Link>
             </DropdownMenuItem>
           </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={async () => {
