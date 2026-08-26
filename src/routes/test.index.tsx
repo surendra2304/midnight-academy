@@ -243,24 +243,46 @@ function EnterTest() {
             {problem === "completed" ? (
               <ErrorNote
                 icon={<CheckCircle2 className="size-4 shrink-0 text-primary" />}
-                title="You've already completed this test"
-                body="Each code allows one attempt. You can revisit your evaluation instead."
+                title="You've completed this test before"
+                body="You can view your previous result or retake this test to improve your score."
                 tone="primary"
                 action={
-                  existingAttemptId ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {existingAttemptId ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() =>
+                          navigate({
+                            to: "/result/$attemptId",
+                            params: { attemptId: existingAttemptId },
+                          })
+                        }
+                      >
+                        View previous result
+                      </Button>
+                    ) : null}
                     <Button
                       size="sm"
-                      className="mt-3"
-                      onClick={() =>
-                        navigate({
-                          to: "/result/$attemptId",
-                          params: { attemptId: existingAttemptId },
-                        })
-                      }
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          const res = await startAttempt({
+                            data: { code: code.trim().toUpperCase(), allowRetake: true },
+                          });
+                          if (!("error" in res)) {
+                            setVerifiedData(res as VerifiedTestData);
+                          }
+                        } catch {
+                          toast.error("Could not start retake.");
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
                     >
-                      View my result
+                      Retake test
                     </Button>
-                  ) : null
+                  </div>
                 }
               />
             ) : null}

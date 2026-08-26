@@ -3,11 +3,11 @@ import { z } from "zod";
 
 describe("Gemini AI Comprehension Evaluator Pipeline Hardening", () => {
   const RawEvaluationSchema = z.object({
-    score: z.number().min(0).max(10).optional().default(0),
+    score: z.coerce.number().min(0).max(10).optional().default(0),
     feedback: z.string().max(3000).optional().default(""),
     missed_concepts: z.array(z.string()).optional().default([]),
     missed_constraints: z.array(z.string()).optional().default([]),
-    axis_scores: z.record(z.string(), z.number()).optional().default({}),
+    axis_scores: z.record(z.string(), z.coerce.number()).optional().default({}),
   });
 
   const clamp = (value: unknown, fallback = 0) =>
