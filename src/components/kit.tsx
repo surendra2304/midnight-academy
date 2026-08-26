@@ -10,7 +10,7 @@ export function PageShell({
   className?: string | undefined;
 }) {
   return (
-    <div className={cn("mx-auto w-full max-w-[1400px] px-5 py-10 lg:px-8 lg:py-14", className)}>
+    <div className={cn("mx-auto w-full max-w-[1400px] px-5 py-8 lg:px-8 lg:py-10", className)}>
       {children}
     </div>
   );
@@ -30,7 +30,7 @@ export function SectionHeading({
   return (
     <div className={cn("mb-5 flex flex-wrap items-end justify-between gap-3", className)}>
       <div>
-        <h2 className="text-lg font-bold text-foreground lg:text-xl">{title}</h2>
+        <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
         {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
       </div>
       {action}
@@ -47,29 +47,27 @@ export function Panel({
   className?: string | undefined;
   quiet?: boolean | undefined;
 }) {
-  return (
-    <section className={cn(quiet ? "panel-quiet" : "panel", "p-5 lg:p-6", className)}>
-      {children}
-    </section>
-  );
+  return <div className={cn(quiet ? "panel-quiet" : "panel", "p-6", className)}>{children}</div>;
 }
 
 export function StatCard({
   label,
   value,
   hint,
+  className,
 }: {
   label: string;
   value: ReactNode;
   hint?: string | undefined;
+  className?: string | undefined;
 }) {
   return (
-    <div className="panel p-5">
+    <div className={cn("panel p-6", className)}>
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-3 text-3xl font-extrabold tabular-nums text-foreground">{value}</p>
-      {hint ? <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p> : null}
+      <p className="mt-2.5 text-3xl font-extrabold tabular-nums text-foreground">{value}</p>
+      {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
@@ -80,21 +78,21 @@ export function Tag({
   className,
 }: {
   children: ReactNode;
-  tone?: "neutral" | "primary" | "violet" | "success" | "warning" | "danger";
+  tone?: "neutral" | "primary" | "violet" | "success" | "warning" | "danger" | undefined;
   className?: string | undefined;
 }) {
   const tones: Record<string, string> = {
-    neutral: "border-border text-muted-foreground",
-    primary: "border-primary/35 text-primary",
-    violet: "border-violet/35 text-violet",
-    success: "border-success/35 text-success",
-    warning: "border-warning/35 text-warning",
-    danger: "border-destructive/35 text-destructive",
+    neutral: "border-slate-200 bg-slate-100/80 text-slate-700",
+    primary: "border-blue-200 bg-blue-50 text-blue-700",
+    violet: "border-purple-200 bg-purple-50 text-purple-700",
+    success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    warning: "border-amber-200 bg-amber-50 text-amber-800",
+    danger: "border-rose-200 bg-rose-50 text-rose-700",
   };
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider",
+        "inline-flex items-center rounded-md border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider",
         tones[tone],
         className,
       )}

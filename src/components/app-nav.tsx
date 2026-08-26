@@ -41,10 +41,10 @@ function NavLinks({ items }: { items: NavItem[] }) {
             key={item.to}
             to={item.to}
             className={cn(
-              "whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors",
+              "whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
               active
-                ? "bg-surface-2 font-semibold text-foreground"
-                : "text-muted-foreground hover:bg-surface-2/60 hover:text-foreground",
+                ? "bg-blue-50 font-semibold text-blue-700"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
             )}
           >
             {item.label}
@@ -72,8 +72,8 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2 py-1.5 text-left transition-colors hover:border-border-strong">
-        <span className="grid size-7 place-items-center rounded-full bg-primary/15 text-[11px] font-bold text-primary">
+      <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg border border-border bg-white px-2.5 py-1.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs">
+        <span className="grid size-7 place-items-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-700">
           {initials}
         </span>
         <span className="hidden text-sm font-medium text-foreground sm:block">
@@ -81,7 +81,7 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
         </span>
         <ChevronDown className="size-4 text-muted-foreground" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 bg-white border border-border shadow-lg">
         <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
           {email}
         </DropdownMenuLabel>
@@ -118,22 +118,22 @@ export function AppNav({ admin }: { admin?: boolean | undefined }) {
   const isAdmin = admin ?? user?.role === "ADMIN";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-5 py-3 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur-md">
+      <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-5 py-3.5 lg:px-8">
         <Link to={isAdmin ? "/admin" : "/dashboard"} className="shrink-0">
           <Wordmark suffix={isAdmin ? "Admin" : undefined} />
         </Link>
         <div className="mx-auto hidden lg:block">
           <NavLinks items={isAdmin ? adminNav : studentNav} />
         </div>
-        <div className="ml-auto flex items-center gap-2 lg:ml-0">
+        <div className="ml-auto flex items-center gap-3 lg:ml-0">
           <div className="hidden sm:block">
             <NotificationsMenu />
           </div>
           <ProfileMenu admin={isAdmin} />
         </div>
       </div>
-      <div className="border-t border-border px-3 py-2 lg:hidden">
+      <div className="border-t border-border bg-white px-3 py-2 lg:hidden">
         <NavLinks items={isAdmin ? adminNav : studentNav} />
       </div>
     </header>

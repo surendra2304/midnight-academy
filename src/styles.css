@@ -5,12 +5,13 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Midnight Academy design system.
- * Single dark theme: deep midnight navy surfaces, icy blue + soft violet accents.
+ * Kaligan AI Design System
+ * Pure white background, high-contrast crisp surfaces, vibrant blue primary filled buttons,
+ * and blue outline secondary buttons.
  */
 
 @theme inline {
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Manrope", ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -58,62 +59,66 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --shadow-elev: 0 1px 0 0 oklch(1 0 0 / 4%) inset, 0 18px 40px -24px oklch(0 0 0 / 70%);
-  --shadow-glow: 0 0 0 1px oklch(0.72 0.15 235 / 25%), 0 0 60px -12px oklch(0.72 0.15 235 / 40%);
+  --shadow-elev: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  --shadow-glow: 0 0 0 1px rgb(37 99 235 / 20%), 0 4px 20px -2px rgb(37 99 235 / 15%);
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 
-  --background: oklch(0.16 0.028 264);
-  --foreground: oklch(0.975 0.006 250);
+  /* Pure White Background */
+  --background: #ffffff;
+  --foreground: #0f172a;
 
-  --surface: oklch(0.203 0.028 262);
-  --surface-2: oklch(0.235 0.028 263);
+  /* Crisp White Surfaces & Light Grey Containers */
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
 
-  --card: oklch(0.203 0.028 262);
-  --card-foreground: oklch(0.975 0.006 250);
-  --popover: oklch(0.219 0.028 262);
-  --popover-foreground: oklch(0.975 0.006 250);
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
 
-  --primary: oklch(0.74 0.145 233);
-  --primary-foreground: oklch(0.17 0.03 258);
+  /* Primary Blue Theme (Filled Buttons) */
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
 
-  --secondary: oklch(0.253 0.03 262);
-  --secondary-foreground: oklch(0.95 0.008 250);
+  /* Secondary Theme (Blue Outline) */
+  --secondary: #ffffff;
+  --secondary-foreground: #2563eb;
 
-  --violet: oklch(0.7 0.13 295);
+  --violet: #6366f1;
 
-  --muted: oklch(0.253 0.03 262);
-  --muted-foreground: oklch(0.68 0.028 254);
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
 
-  --accent: oklch(0.28 0.038 262);
-  --accent-foreground: oklch(0.97 0.006 250);
+  --accent: #eff6ff;
+  --accent-foreground: #1d4ed8;
 
-  --destructive: oklch(0.63 0.2 25);
-  --destructive-foreground: oklch(0.98 0.005 250);
-  --success: oklch(0.7 0.13 158);
-  --warning: oklch(0.78 0.14 78);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --warning: #d97706;
 
-  --border: oklch(0.31 0.03 260);
-  --border-strong: oklch(0.4 0.035 258);
-  --input: oklch(0.3 0.03 260);
-  --ring: oklch(0.74 0.145 233);
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --input: #e2e8f0;
+  --ring: #2563eb;
 
-  --chart-1: oklch(0.74 0.145 233);
-  --chart-2: oklch(0.7 0.13 295);
-  --chart-3: oklch(0.7 0.13 158);
-  --chart-4: oklch(0.78 0.14 78);
-  --chart-5: oklch(0.63 0.2 25);
+  --chart-1: #2563eb;
+  --chart-2: #6366f1;
+  --chart-3: #16a34a;
+  --chart-4: #d97706;
+  --chart-5: #dc2626;
 
-  --sidebar: oklch(0.19 0.028 262);
-  --sidebar-foreground: oklch(0.95 0.008 250);
-  --sidebar-primary: oklch(0.74 0.145 233);
-  --sidebar-primary-foreground: oklch(0.17 0.03 258);
-  --sidebar-accent: oklch(0.26 0.03 262);
-  --sidebar-accent-foreground: oklch(0.97 0.006 250);
-  --sidebar-border: oklch(0.31 0.03 260);
-  --sidebar-ring: oklch(0.74 0.145 233);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f8fafc;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #2563eb;
 }
 
 @layer base {
@@ -122,7 +127,8 @@
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light;
+    background-color: #ffffff;
   }
 
   body {
@@ -142,22 +148,22 @@
 @utility panel {
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
-  background-color: var(--color-surface);
-  box-shadow: var(--shadow-elev);
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
 }
 
 @utility panel-quiet {
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
-  background-color: oklch(0.203 0.028 262 / 60%);
+  background-color: #f8fafc;
 }
 
 @utility text-gradient {
   background-image: linear-gradient(
-    100deg,
-    var(--color-foreground) 10%,
-    var(--color-primary) 55%,
-    var(--color-violet) 95%
+    135deg,
+    #0f172a 0%,
+    #1e40af 60%,
+    #2563eb 100%
   );
   background-clip: text;
   color: transparent;
@@ -168,14 +174,15 @@
 }
 
 @utility grid-backdrop {
+  background-color: #ffffff;
   background-image:
-    radial-gradient(ellipse 70% 55% at 50% -10%, oklch(0.74 0.145 233 / 18%), transparent 70%),
-    linear-gradient(to right, oklch(1 0 0 / 3.5%) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(1 0 0 / 3.5%) 1px, transparent 1px);
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgb(37 99 235 / 6%), transparent 70%),
+    linear-gradient(to right, rgb(226 232 240 / 50%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(226 232 240 / 50%) 1px, transparent 1px);
   background-size:
     100% 100%,
-    72px 72px,
-    72px 72px;
+    56px 56px,
+    56px 56px;
 }
 
 @keyframes ma-fade-up {
@@ -220,7 +227,7 @@
   position: sticky;
   bottom: 0;
   z-index: 10;
-  background: var(--color-surface);
+  background: #ffffff;
   padding-top: 0.5rem;
   margin-top: 1rem;
 }
