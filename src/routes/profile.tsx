@@ -21,6 +21,7 @@ import {
   updateStudentProfile,
   type StudentAnalytics,
 } from "@/lib/student.functions";
+import { useTheme } from "@/hooks/use-theme";
 
 export const Route = createFileRoute("/profile")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
@@ -76,6 +77,7 @@ const BRANCHES = [
 const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Graduated"];
 
 function ProfilePage() {
+  const { isDark, toggleTheme } = useTheme();
   const [data, setData] = useState<StudentAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -237,6 +239,23 @@ function ProfilePage() {
               </Button>
             </div>
           </form>
+        </Panel>
+
+        <Panel className="mt-6">
+          <h2 className="text-base font-semibold text-foreground">Appearance</h2>
+          <div className="mt-3">
+            <Row
+              title="Dark Mode (First Version UI)"
+              description="Switch between the crisp white theme and the original Midnight Navy dark interface."
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {isDark ? "Dark Theme" : "Light Theme"}
+                </span>
+                <Switch checked={isDark} onCheckedChange={toggleTheme} />
+              </div>
+            </Row>
+          </div>
         </Panel>
 
         <Panel className="mt-6">

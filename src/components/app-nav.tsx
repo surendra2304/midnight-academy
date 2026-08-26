@@ -1,6 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Bell, ChevronDown, LogOut, Settings, User } from "lucide-react";
+import { ChevronDown, LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { Wordmark } from "@/components/brand";
 import { NotificationsMenu } from "@/components/notifications-menu";
 import {
@@ -43,8 +44,8 @@ function NavLinks({ items }: { items: NavItem[] }) {
             className={cn(
               "whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
               active
-                ? "bg-blue-50 font-semibold text-blue-700"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                ? "bg-primary/10 font-semibold text-primary"
+                : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
             )}
           >
             {item.label}
@@ -57,6 +58,7 @@ function NavLinks({ items }: { items: NavItem[] }) {
 
 function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
   const { user, signOut } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const isAdmin = admin ?? user?.role === "ADMIN";
 
@@ -72,8 +74,8 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg border border-border bg-white px-2.5 py-1.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs">
-        <span className="grid size-7 place-items-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-700">
+      <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-left transition-colors hover:border-border-strong hover:bg-surface-2 cursor-pointer shadow-2xs">
+        <span className="grid size-7 place-items-center rounded-full bg-primary/15 text-[11px] font-bold text-primary">
           {initials}
         </span>
         <span className="hidden text-sm font-medium text-foreground sm:block">
@@ -81,7 +83,7 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
         </span>
         <ChevronDown className="size-4 text-muted-foreground" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-white border border-border shadow-lg">
+      <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg">
         <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
           {email}
         </DropdownMenuLabel>
@@ -101,6 +103,24 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
           </>
         )}
         <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={(e) => {
+            e.preventDefault();
+            toggleTheme();
+          }}
+        >
+          {isDark ? (
+            <>
+              <Sun className="mr-2 size-4 text-amber-500" /> Light Mode
+            </>
+          ) : (
+            <>
+              <Moon className="mr-2 size-4 text-blue-500" /> Dark Mode (v1)
+            </>
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
           onClick={async () => {
             await signOut();
             navigate({ to: "/" });
@@ -118,7 +138,7 @@ export function AppNav({ admin }: { admin?: boolean | undefined }) {
   const isAdmin = admin ?? user?.role === "ADMIN";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-5 py-3.5 lg:px-8">
         <Link to={isAdmin ? "/admin" : "/dashboard"} className="shrink-0">
           <Wordmark suffix={isAdmin ? "Admin" : undefined} />
@@ -133,7 +153,7 @@ export function AppNav({ admin }: { admin?: boolean | undefined }) {
           <ProfileMenu admin={isAdmin} />
         </div>
       </div>
-      <div className="border-t border-border bg-white px-3 py-2 lg:hidden">
+      <div className="border-t border-border bg-background px-3 py-2 lg:hidden">
         <NavLinks items={isAdmin ? adminNav : studentNav} />
       </div>
     </header>
