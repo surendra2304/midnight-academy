@@ -450,8 +450,15 @@ function RunTest() {
               autoFocus
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              onPaste={(e) => {
+                e.preventDefault();
+                toast.error("Pasting is disabled. Please type your understanding from memory.");
+              }}
+              onCopy={(e) => e.preventDefault()}
+              onCut={(e) => e.preventDefault()}
+              onDrop={(e) => e.preventDefault()}
               placeholder="Describe what you think the question is asking: the objective, the constraints, and the expected input/output..."
-              className="mt-6 min-h-[220px] resize-none text-base leading-relaxed"
+              className="mt-6 min-h-[220px] resize-none text-base leading-relaxed select-none"
               disabled={submitting}
             />
             <div
