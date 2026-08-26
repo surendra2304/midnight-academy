@@ -350,7 +350,7 @@ export const finishAttempt = createServerFn({ method: "POST" })
 
     const { data: attempt } = await supabaseAdmin
       .from("attempts")
-      .select("id, student_id, status")
+      .select("id, test_id, student_id, status")
       .eq("id", data.attemptId)
       .maybeSingle();
 
