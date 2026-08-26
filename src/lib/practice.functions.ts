@@ -105,40 +105,51 @@ export const listPracticeTests = createServerFn({ method: "GET" })
       },
     ];
 
-    // Seed/sync practice tests into Supabase
-    for (const t of ENGLISH_PRACTICE_TESTS) {
-      await supabaseAdmin.from("tests").upsert(
-        {
-          id: t.id,
-          name: t.name,
-          category: t.category,
-          difficulty: t.difficulty,
-          question_count: t.question_count,
-          seconds_per_question: t.seconds_per_question,
-          response_seconds: t.response_seconds,
-          status: t.status,
-          is_practice: t.is_practice,
-          code: t.code,
-        },
-        { onConflict: "id" },
-      );
+    // Get an admin or any user to be the owner of the practice tests
+    const { data: adminRoles } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin").limit(1);
+    let ownerId = adminRoles?.[0]?.user_id;
+    if (!ownerId) {
+      const { data: anyUser } = await supabaseAdmin.auth.admin.listUsers();
+      ownerId = anyUser?.users?.[0]?.id;
+    }
 
-      for (const q of t.questions) {
-        await supabaseAdmin.from("questions").upsert(
+    if (ownerId) {
+      // Seed/sync practice tests into Supabase
+      for (const t of ENGLISH_PRACTICE_TESTS) {
+        await supabaseAdmin.from("tests").upsert(
           {
-            id: q.id,
-            test_id: t.id,
-            position: q.position,
-            text: q.text,
-            topic: q.topic,
-            difficulty: q.difficulty,
-            concepts: q.concepts,
-            constraints: q.constraints,
-            reference_answer: q.reference_answer,
-            approved: true,
+            id: t.id,
+            owner_id: ownerId,
+            name: t.name,
+            category: t.category,
+            difficulty: t.difficulty,
+            question_count: t.question_count,
+            seconds_per_question: t.seconds_per_question,
+            response_seconds: t.response_seconds,
+            status: t.status,
+            is_practice: t.is_practice,
+            code: t.code,
           },
           { onConflict: "id" },
         );
+
+        for (const q of t.questions) {
+          await supabaseAdmin.from("questions").upsert(
+            {
+              id: q.id,
+              test_id: t.id,
+              position: q.position,
+              text: q.text,
+              topic: q.topic,
+              difficulty: q.difficulty,
+              concepts: q.concepts,
+              constraints: q.constraints,
+              reference_answer: q.reference_answer,
+              approved: true,
+            },
+            { onConflict: "id" },
+          );
+        }
       }
     }
 
