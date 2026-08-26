@@ -132,55 +132,6 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
-  useEffect(() => {
-    // Global copy and paste prevention across the application
-    const preventCopyPaste = (e: ClipboardEvent) => {
-      e.preventDefault();
-    };
-
-    const preventCut = (e: ClipboardEvent) => {
-      e.preventDefault();
-    };
-
-    const preventKeyShortcuts = (e: KeyboardEvent) => {
-      // Prevent Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+U, Ctrl+Shift+I, Cmd+C, Cmd+V, Cmd+X
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "c" ||
-          e.key === "C" ||
-          e.key === "v" ||
-          e.key === "V" ||
-          e.key === "x" ||
-          e.key === "X" ||
-          e.key === "u" ||
-          e.key === "U")
-      ) {
-        e.preventDefault();
-      }
-    };
-
-    const preventContextMenu = (e: MouseEvent) => {
-      // Allow right click if user is clicking on normal interactive form controls or links if needed,
-      // but prevent copying context
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        // Prevent paste context menu
-      }
-    };
-
-    document.addEventListener("copy", preventCopyPaste, true);
-    document.addEventListener("paste", preventCopyPaste, true);
-    document.addEventListener("cut", preventCut, true);
-    document.addEventListener("keydown", preventKeyShortcuts, true);
-    document.addEventListener("contextmenu", preventContextMenu, true);
-
-    return () => {
-      document.removeEventListener("copy", preventCopyPaste, true);
-      document.removeEventListener("paste", preventCopyPaste, true);
-      document.removeEventListener("cut", preventCut, true);
-      document.removeEventListener("keydown", preventKeyShortcuts, true);
-      document.removeEventListener("contextmenu", preventContextMenu, true);
-    };
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

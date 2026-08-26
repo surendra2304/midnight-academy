@@ -283,6 +283,53 @@ function RunTest() {
     }
   }, [stage, loading, showOnboarding, testMeta?.responseSeconds, attemptId, index, total]);
 
+  useEffect(() => {
+    // Exam-only copy and paste prevention
+    if (stage !== "read" && stage !== "respond") return;
+
+    const preventCopyPaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+    };
+
+    const preventCut = (e: ClipboardEvent) => {
+      e.preventDefault();
+    };
+
+    const preventKeyShortcuts = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "c" ||
+          e.key === "C" ||
+          e.key === "v" ||
+          e.key === "V" ||
+          e.key === "x" ||
+          e.key === "X" ||
+          e.key === "u" ||
+          e.key === "U")
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    const preventContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener("copy", preventCopyPaste, true);
+    document.addEventListener("paste", preventCopyPaste, true);
+    document.addEventListener("cut", preventCut, true);
+    document.addEventListener("keydown", preventKeyShortcuts, true);
+    document.addEventListener("contextmenu", preventContextMenu, true);
+
+    return () => {
+      document.removeEventListener("copy", preventCopyPaste, true);
+      document.removeEventListener("paste", preventCopyPaste, true);
+      document.removeEventListener("cut", preventCut, true);
+      document.removeEventListener("keydown", preventKeyShortcuts, true);
+      document.removeEventListener("contextmenu", preventContextMenu, true);
+    };
+  }, [stage]);
+
   // 6. Handle Attempt Evaluation completion
   const triggerFinishAttempt = useCallback(async () => {
     if (!attemptId) return;
