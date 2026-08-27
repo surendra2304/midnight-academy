@@ -280,13 +280,6 @@ function ResultPage() {
     interpretation: data.axes?.["interpretation"] ?? 0,
   };
 
-  // Collect all missed items across questions
-  const allMissedConcepts = Array.from(
-    new Set(data.answers.flatMap((a) => a.missedConcepts || [])),
-  );
-  const allMissedConstraints = Array.from(
-    new Set(data.answers.flatMap((a) => a.missedConstraints || [])),
-  );
 
   return (
     <div className="min-h-screen">
@@ -328,39 +321,78 @@ function ResultPage() {
               <h2 className="text-base font-semibold text-foreground">Assessment Summary</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {overallScore >= 80
-                  ? "Excellent technical comprehension! You reliably captured primary objectives, constraints and expected data formats across problem statements."
+                  ? "Excellent comprehension! You reliably captured primary objectives, constraints, and conveyed the meaning with clear expression."
                   : overallScore >= 60
-                    ? "Good overall comprehension with occasional oversights in boundary constraints or underlying technical concepts."
-                    : "You are attempting to solve before fully digesting constraints and problem objectives. Focus on identifying stated limits before drafting explanations."}
+                    ? "Good overall comprehension with occasional oversights in boundary constraints, specific conditions, or phrasing clarity."
+                    : "Focus on identifying all stated limits, conditions, and core rules before drafting your explanation."}
               </p>
             </Panel>
-            <Panel>
-              <h2 className="text-base font-semibold text-foreground">What You Missed</h2>
-              {allMissedConcepts.length === 0 && allMissedConstraints.length === 0 ? (
+            <Panel className="flex flex-col">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-base font-semibold text-foreground">What You Missed</h2>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  By question
+                </span>
+              </div>
+              {data.answers.every(
+                (a) =>
+                  (a.missedConstraints?.length ?? 0) === 0 &&
+                  (a.missedConcepts?.length ?? 0) === 0,
+              ) ? (
                 <p className="mt-3 text-sm text-success">
                   Outstanding — you captured all identified concepts and constraints accurately!
                 </p>
               ) : (
-                <ul className="mt-3 space-y-2.5">
-                  {allMissedConstraints.map((c) => (
-                    <li
-                      key={`c-${c}`}
-                      className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground"
-                    >
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-warning" />
-                      <span className="font-semibold text-warning">Constraint: </span> {c}
-                    </li>
-                  ))}
-                  {allMissedConcepts.map((m) => (
-                    <li
-                      key={`m-${m}`}
-                      className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground"
-                    >
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-                      <span className="font-semibold text-primary">Concept: </span> {m}
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-3 max-h-[300px] space-y-2.5 overflow-y-auto pr-1">
+                  {data.answers.map((a, i) => {
+                    const hasMissed =
+                      (a.missedConstraints?.length ?? 0) > 0 ||
+                      (a.missedConcepts?.length ?? 0) > 0;
+                    if (!hasMissed) return null;
+
+                    return (
+                      <div
+                        key={a.id}
+                        className="rounded-lg border border-border/70 bg-surface-2/40 p-2.5 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-1.5 font-semibold">
+                          <span className="text-foreground">
+                            Question {String(i + 1).padStart(2, "0")}
+                            {a.question?.topic ? (
+                              <span className="font-normal text-muted-foreground">
+                                {" "}
+                                · {a.question.topic}
+                              </span>
+                            ) : null}
+                          </span>
+                          {a.score !== null ? (
+                            <span className="text-primary font-bold">{a.score}/10</span>
+                          ) : null}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {(a.missedConstraints || []).map((c) => (
+                            <span
+                              key={c}
+                              className="inline-flex items-center gap-1 rounded border border-warning/30 bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning"
+                            >
+                              <span className="size-1 shrink-0 rounded-full bg-warning" />
+                              <span>{c}</span>
+                            </span>
+                          ))}
+                          {(a.missedConcepts || []).map((m) => (
+                            <span
+                              key={m}
+                              className="inline-flex items-center gap-1 rounded border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                            >
+                              <span className="size-1 shrink-0 rounded-full bg-primary" />
+                              <span>{m}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </Panel>
           </div>
@@ -428,21 +460,26 @@ function ResultPage() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
                         AI Evaluation
                       </p>
-                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      <p className="mt-3 text-sm leading-relaxed text-foreground/90 whitespace-pre-line">
                         {a.feedback || "Comprehension processed successfully."}
                       </p>
-                      {a.missedConstraints.length > 0 || a.missedConcepts.length > 0 ? (
-                        <div className="mt-4 flex flex-wrap gap-1.5">
-                          {a.missedConstraints.map((c) => (
-                            <Tag key={c} tone="warning">
-                              missed constraint: {c}
-                            </Tag>
-                          ))}
-                          {a.missedConcepts.map((m) => (
-                            <Tag key={m} tone="primary">
-                              missed concept: {m}
-                            </Tag>
-                          ))}
+                      {(a.missedConstraints?.length ?? 0) > 0 || (a.missedConcepts?.length ?? 0) > 0 ? (
+                        <div className="mt-4 border-t border-border/50 pt-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Missed Points:
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {(a.missedConstraints || []).map((c) => (
+                              <Tag key={c} tone="warning">
+                                Constraint: {c}
+                              </Tag>
+                            ))}
+                            {(a.missedConcepts || []).map((m) => (
+                              <Tag key={m} tone="primary">
+                                Concept: {m}
+                              </Tag>
+                            ))}
+                          </div>
                         </div>
                       ) : null}
                       {a.manualFeedback ? (

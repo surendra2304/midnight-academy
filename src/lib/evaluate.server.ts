@@ -19,34 +19,50 @@ export type EvaluationResult = {
   axisScores: Partial<Record<AxisKey, number>>;
 };
 
-const SYSTEM = `You evaluate ONLY how well a student UNDERSTOOD what a question is asking. The student does NOT need to solve the problem, calculate the mathematical answer, or write any code/solutions.
+const SYSTEM = `You evaluate how accurately and completely a student UNDERSTOOD an English passage/statement, and how clearly and grammatically they expressed their understanding from memory.
 
-The student was shown the question passage briefly, it was hidden, and they were asked to write — in their own words from memory — what the problem is asking for, what inputs/conditions were given, and what goal needs to be achieved.
+The student was shown a short statement/passage briefly. It was then hidden, and they were asked to write in their own words from memory:
+1. What the statement means / requires.
+2. What conditions, rules, limitations, or constraints were specified.
 
-CRITICAL EVALUATION PHILOSOPHY:
-1. NO SOLUTION REQUIRED: Do NOT penalize the student for not providing the final mathematical answer or calculation (e.g. if the question asks "how long will the journey take?", the student does NOT need to compute "3 hours" — they only need to understand that the question asks to find the travel time after speed increases).
-2. UNDERSTANDING OVER NUMERICAL TRIVIA: If the student accurately states what is happening and what the question is asking (e.g. "a train covers a distance in some time, speed is increased, find new time"), give them high comprehension marks (8.5 - 10.0).
-3. ENCOURAGING & FAIR: Reward any student who grasped the essence of the problem.
+YOUR EVALUATION CRITERIA:
+1. CORE MEANING & COMPREHENSION (Primary Weight):
+   - Did the student capture the true intended meaning, rules, cause-and-effect, and purpose of the passage?
+   - Did they misinterpret any crucial statement details?
+2. MISSED CONSTRAINTS & DETAILS:
+   - Identify which key constraints, exceptions, numbers/limits, conditions, or concepts they omitted.
+3. GRAMMAR & WRITING CLARITY:
+   - Evaluate English grammar, spelling, sentence structure, and vocabulary precision.
+   - If there are grammatical errors or awkward phrasing, explain how to improve them.
+4. NO MATHEMATICAL / CODE SOLUTION NEEDED:
+   - The student only needs to explain the problem/statement from memory, NOT solve or calculate math/code.
 
 Score these five attributes on a scale of 0 to 10:
-- objective (0-10): Did they grasp the main goal of what the problem wants to find or determine? (Give 8-10 if they identify what needs to be found/calculated).
-- constraint (0-10): Did they understand the conditions, changes, or limitations mentioned (e.g. speed increased, discount applied, pipes running together)?
-- io (0-10): Did they recognize what scenario/inputs are given and what output is sought?
-- interpretation (0-10): Did they express the problem clearly in their own words?
-- concept (0-10): Did they identify the relevant general domain concept (e.g. speed & distance, profit & loss, work & time, arrays, stacks)?
+- objective (0-10): Did they grasp the main goal, rule, or core premise of the statement?
+- constraint (0-10): Did they capture specific conditions, limits, timeframes, penalties, or exceptions?
+- io (0-10): Did they identify the key actors, inputs, scenarios, and expected outcomes?
+- interpretation (0-10): Meaning accuracy — did they accurately express the intended meaning in their own words without distorting facts?
+- concept (0-10): Grammar and expression quality — correct sentence structure, English grammar, spelling, and vocabulary.
 
 SCORING BENCHMARKS:
-- 8.5 - 10.0: Student clearly understands what the question is asking.
-- 7.0 - 8.4: Student captured the main goal with minor omitted details.
-- 5.0 - 6.9: Partial understanding of what is asked.
-- Below 5.0: Only for empty, nonsensical, or completely irrelevant text.
+- 9.0 - 10.0: Excellent comprehension of all nuances with clear, grammatically correct English.
+- 7.5 - 8.9: Strong grasp of core meaning with minor omitted constraints or slight grammatical flaws.
+- 5.0 - 7.4: Partial understanding (captured some points but missed critical rules/constraints, or had notable grammar issues).
+- Below 5.0: Inaccurate meaning, severe misinterpretation, or mostly irrelevant text.
+- 0: Completely empty, gibberish, or unrelated.
+
+FEEDBACK REQUIREMENTS:
+Your feedback MUST be constructive and structured into 3 distinct parts (use concise, clear sentences):
+1. What you understood: Explicitly state the correct points and meaning the student captured.
+2. What you missed: Explicitly state what conditions, details, or constraints they left out or misstated.
+3. Grammar & Clarity: Mention any grammar, spelling, or sentence structure corrections (or praise good grammar).
 
 Return ONLY JSON of this exact shape:
 {
   "score": <number 0-10, overall comprehension rating>,
-  "feedback": "<2-3 encouraging, positive sentences confirming that they understood the problem well and highlighting the key requirement they identified>",
-  "missed_concepts": ["<verbatim string from EXPECTED CONCEPTS if completely absent>"],
-  "missed_constraints": ["<verbatim string from STATED CONSTRAINTS if completely absent>"],
+  "feedback": "<Structured feedback with: 1. What was understood, 2. What was missed, 3. Grammar & expression feedback>",
+  "missed_concepts": ["<item from EXPECTED CONCEPTS if omitted or not conveyed>"],
+  "missed_constraints": ["<item from STATED CONSTRAINTS if omitted or not conveyed>"],
   "axis_scores": {
     "objective": <0-10>,
     "constraint": <0-10>,
@@ -59,7 +75,7 @@ Return ONLY JSON of this exact shape:
 // Runtime Zod schema to strictly validate AI outputs rather than trusting raw JSON
 const RawEvaluationSchema = z.object({
   score: z.coerce.number().min(0).max(10).optional().default(0),
-  feedback: z.string().max(3000).optional().default(""),
+  feedback: z.string().max(4000).optional().default(""),
   missed_concepts: z.array(z.string()).optional().default([]),
   missed_constraints: z.array(z.string()).optional().default([]),
   axis_scores: z.record(z.string(), z.coerce.number()).optional().default({}),
@@ -69,17 +85,39 @@ const clamp = (value: unknown, fallback = 0) =>
   typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : fallback;
 
 /**
- * Strict whitelist filter: only allows missed concepts or constraints that exist in the canonical question definition.
- * Prevents prompt-injection or AI hallucination of arbitrary tags.
+ * Filter and resolve missed concepts or constraints against canonical list and AI findings.
  */
 const pickFromCanonical = (canonicalList: string[], reported: string[]): string[] => {
-  if (!Array.isArray(reported) || canonicalList.length === 0) return [];
-  const lookup = new Map(canonicalList.map((item) => [item.toLowerCase().trim(), item]));
+  if (!Array.isArray(reported)) return [];
+  if (canonicalList.length === 0) {
+    return reported
+      .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+      .map((item) => item.trim())
+      .slice(0, 5);
+  }
+
   const out: string[] = [];
   for (const item of reported) {
-    if (typeof item !== "string") continue;
-    const match = lookup.get(item.toLowerCase().trim());
-    if (match && !out.includes(match)) out.push(match);
+    if (typeof item !== "string" || !item.trim()) continue;
+    const cleaned = item.toLowerCase().trim();
+    // 1. Direct match with canonical
+    const directMatch = canonicalList.find((c) => c.toLowerCase().trim() === cleaned);
+    if (directMatch && !out.includes(directMatch)) {
+      out.push(directMatch);
+      continue;
+    }
+    // 2. Substring match with canonical
+    const subMatch = canonicalList.find(
+      (c) => c.toLowerCase().includes(cleaned) || cleaned.includes(c.toLowerCase()),
+    );
+    if (subMatch && !out.includes(subMatch)) {
+      out.push(subMatch);
+      continue;
+    }
+    // 3. Meaningful AI identified constraint/concept tag
+    if (item.trim().length >= 3 && item.trim().length <= 80 && !out.includes(item.trim())) {
+      out.push(item.trim());
+    }
   }
   return out;
 };
