@@ -1,8 +1,8 @@
 import { requireAuth } from "@/lib/auth-guard";
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AlertCircle, ArrowRight, Flag, LayoutDashboard, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, ArrowRight, Flag, LayoutDashboard, Loader2, Play, RefreshCw } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
 import { ComprehensionBreakdown } from "@/components/comprehension";
 import { CountUp, PageShell, Panel, SectionHeading, Tag } from "@/components/kit";
@@ -12,6 +12,7 @@ import {
   getResult,
   processAttemptEvaluation,
   saveManualReview,
+  startAttempt,
 } from "@/lib/attempts.functions";
 import { scoreTextClass } from "@/lib/mock-data";
 import { useAuth } from "@/hooks/use-auth";
@@ -83,6 +84,7 @@ type ResultData = {
 
 function ResultPage() {
   const { attemptId } = useParams({ from: "/result/$attemptId" });
+  const navigate = useNavigate();
   // The signed-in viewer (instructor or student). The student's attempt data
   // lives only in studentAttemptData — the global auth session is never
   // touched, so the top bar always shows the signed-in user.
@@ -94,6 +96,7 @@ function ResultPage() {
   const [savingReviewId, setSavingReviewId] = useState<string | null>(null);
   const [studentAttemptData, setStudentAttemptData] = useState<ResultData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retaking, setRetaking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [flaggingIds, setFlaggingIds] = useState<string[]>([]);
 
@@ -562,7 +565,7 @@ function ResultPage() {
           </div>
         </section>
 
-        <div className="mt-8 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap items-center gap-3">
           {isInstructor && data.test?.id ? (
             <Button asChild size="lg">
               <Link to="/admin/tests/$testId" params={{ testId: data.test.id }}>
@@ -571,12 +574,57 @@ function ResultPage() {
               </Link>
             </Button>
           ) : (
-            <Button asChild size="lg" variant={isInstructor ? "default" : "outline"}>
-              <Link to={isInstructor ? "/admin/tests" : "/dashboard"}>
-                <LayoutDashboard className="size-4" />
-                {isInstructor ? "Back to Tests" : "Back to Dashboard"}
-              </Link>
-            </Button>
+            <>
+              {data.test?.code ? (
+                <Button
+                  size="lg"
+                  className="glow-ring"
+                  disabled={retaking}
+                  onClick={async () => {
+                    if (!data.test?.code) return;
+                    setRetaking(true);
+                    try {
+                      const res = await startAttempt({
+                        data: { code: data.test.code, allowRetake: true },
+                      });
+                      if (!("error" in res)) {
+                        navigate({
+                          to: "/test/run",
+                          search: { attemptId: res.attemptId },
+                        });
+                      } else {
+                        toast.error("Could not restart this test. Please try from Practice Library.");
+                      }
+                    } catch {
+                      toast.error("Could not restart test.");
+                    } finally {
+                      setRetaking(false);
+                    }
+                  }}
+                >
+                  {retaking ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" /> Preparing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="size-4" /> Retake Test
+                    </>
+                  )}
+                </Button>
+              ) : null}
+              <Button asChild size="lg" variant={isInstructor ? "default" : "outline"}>
+                <Link to={isInstructor ? "/admin/tests" : "/dashboard"}>
+                  <LayoutDashboard className="size-4" />
+                  {isInstructor ? "Back to Tests" : "Back to Dashboard"}
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="ghost">
+                <Link to="/practice">
+                  Browse Practice Library <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </>
           )}
         </div>
       </PageShell>

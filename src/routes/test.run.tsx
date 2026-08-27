@@ -1,5 +1,5 @@
 import { requireAuth } from "@/lib/auth-guard";
-import Onboarding from "@/routes/onboarding";
+import { Onboarding } from "@/components/onboarding";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, EyeOff, Loader2, RefreshCw, Timer } from "lucide-react";
@@ -284,30 +284,54 @@ function RunTest() {
   }, [stage, loading, showOnboarding, testMeta?.responseSeconds, attemptId, index, total]);
 
   useEffect(() => {
-    // Exam-only copy and paste prevention
+    // Exam-only copy, paste, text selection, and context menu prevention
     if (stage !== "read" && stage !== "respond") return;
 
-    const preventCopyPaste = (e: ClipboardEvent) => {
+    const preventCopy = (e: ClipboardEvent) => {
       e.preventDefault();
+    };
+
+    const preventPaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      toast.error("Pasting is disabled. Please type your understanding from memory.");
     };
 
     const preventCut = (e: ClipboardEvent) => {
       e.preventDefault();
     };
 
-    const preventKeyShortcuts = (e: KeyboardEvent) => {
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "c" ||
-          e.key === "C" ||
-          e.key === "v" ||
-          e.key === "V" ||
-          e.key === "x" ||
-          e.key === "X" ||
-          e.key === "u" ||
-          e.key === "U")
-      ) {
+    const preventSelect = (e: Event) => {
+      // Disallow selection during reading stage
+      if (stage === "read") {
         e.preventDefault();
+      }
+    };
+
+    const preventDrag = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    const preventKeyShortcuts = (e: KeyboardEvent) => {
+      const isModifier = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+
+      // Block Paste shortcuts
+      if ((isModifier && key === "v") || (e.shiftKey && e.key === "Insert")) {
+        e.preventDefault();
+        toast.error("Pasting is disabled. Please type your understanding from memory.");
+        return;
+      }
+
+      // Block Copy / Cut shortcuts
+      if ((isModifier && (key === "c" || key === "x" || key === "u" || key === "p")) || (isModifier && e.key === "Insert") || (e.shiftKey && e.key === "Delete")) {
+        e.preventDefault();
+        return;
+      }
+
+      // Block Select All during reading stage
+      if (stage === "read" && isModifier && key === "a") {
+        e.preventDefault();
+        return;
       }
     };
 
@@ -315,16 +339,22 @@ function RunTest() {
       e.preventDefault();
     };
 
-    document.addEventListener("copy", preventCopyPaste, true);
-    document.addEventListener("paste", preventCopyPaste, true);
+    document.addEventListener("copy", preventCopy, true);
+    document.addEventListener("paste", preventPaste, true);
     document.addEventListener("cut", preventCut, true);
+    document.addEventListener("selectstart", preventSelect, true);
+    document.addEventListener("dragstart", preventDrag, true);
+    document.addEventListener("drop", preventDrag, true);
     document.addEventListener("keydown", preventKeyShortcuts, true);
     document.addEventListener("contextmenu", preventContextMenu, true);
 
     return () => {
-      document.removeEventListener("copy", preventCopyPaste, true);
-      document.removeEventListener("paste", preventCopyPaste, true);
+      document.removeEventListener("copy", preventCopy, true);
+      document.removeEventListener("paste", preventPaste, true);
       document.removeEventListener("cut", preventCut, true);
+      document.removeEventListener("selectstart", preventSelect, true);
+      document.removeEventListener("dragstart", preventDrag, true);
+      document.removeEventListener("drop", preventDrag, true);
       document.removeEventListener("keydown", preventKeyShortcuts, true);
       document.removeEventListener("contextmenu", preventContextMenu, true);
     };
@@ -455,7 +485,16 @@ function RunTest() {
           <>
             <div
               className="panel animate-fade-up select-none p-6 lg:p-8"
+              style={{
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                MozUserSelect: "none",
+                msUserSelect: "none",
+              }}
+              onSelectStart={(e) => e.preventDefault()}
               onCopy={(e) => e.preventDefault()}
+              onCut={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <Tag tone="primary">
@@ -465,11 +504,20 @@ function RunTest() {
                   <DifficultyTag difficulty={question.difficulty as "Easy" | "Medium" | "Hard"} />
                 ) : null}
               </div>
-              <p className="mt-6 text-lg leading-relaxed text-foreground lg:text-xl">
+              <p
+                className="mt-6 text-lg leading-relaxed text-foreground select-none lg:text-xl"
+                style={{
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
+                  MozUserSelect: "none",
+                  msUserSelect: "none",
+                }}
+                onSelectStart={(e) => e.preventDefault()}
+              >
                 {question.text}
               </p>
             </div>
-            <p className="mt-6 text-center text-xs text-muted-foreground">
+            <p className="mt-6 text-center text-xs text-muted-foreground select-none">
               You have limited time to understand this question.
             </p>
             <div className="mt-5 flex justify-center">
@@ -503,9 +551,13 @@ function RunTest() {
               }}
               onCopy={(e) => e.preventDefault()}
               onCut={(e) => e.preventDefault()}
-              onDrop={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                toast.error("Pasting/dropping text is disabled.");
+              }}
+              onContextMenu={(e) => e.preventDefault()}
               placeholder="Describe what you think the question is asking: the objective, the constraints, and the expected input/output..."
-              className="mt-6 min-h-[220px] resize-none text-base leading-relaxed select-none"
+              className="mt-6 min-h-[220px] resize-none text-base leading-relaxed"
               disabled={submitting}
             />
             <div

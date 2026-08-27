@@ -23,7 +23,7 @@ const slides = [
   },
 ];
 
-function Onboarding({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
+export function Onboarding({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
   const [step, setStep] = useState(0);
   const slide = slides[step]!;
   const last = step === slides.length - 1;

@@ -49,21 +49,61 @@ export const startAttempt = createServerFn({ method: "POST" })
       .maybeSingle();
 
     // Practice tests (or when allowRetake is true) can always be retaken fresh
-    const canRetake = test.is_practice || data.allowRetake;
+    const canRetake = Boolean(test.is_practice || data.allowRetake);
 
     if (existing && existing.status !== "in_progress" && !canRetake) {
       return { error: "completed" as const, attemptId: existing.id };
     }
 
-    let attemptId = existing?.status === "in_progress" ? existing.id : undefined;
+    let attemptId: string | undefined;
+    if (existing?.status === "in_progress") {
+      const { count: existingAnswered } = await supabaseAdmin
+        .from("attempt_answers")
+        .select("id", { count: "exact", head: true })
+        .eq("attempt_id", existing.id)
+        .not("submitted_at", "is", null);
+
+      // If existing in_progress attempt still has questions left to answer, resume it
+      if ((existingAnswered ?? 0) < total) {
+        attemptId = existing.id;
+      }
+    }
+
     if (!attemptId) {
       const { data: created, error } = await supabaseAdmin
         .from("attempts")
         .insert({ test_id: test.id, student_id: context.userId })
         .select("id")
         .single();
-      if (error || !created) throw new Error("Could not start this test. Please try again.");
-      attemptId = created.id;
+
+      if (!error && created) {
+        attemptId = created.id;
+      } else if (canRetake && existing?.id) {
+        // Fallback if the database has a UNIQUE (test_id, student_id) constraint:
+        // Reset the existing attempt so the student can take the test cleanly from question 1
+        await supabaseAdmin.from("attempt_answers").delete().eq("attempt_id", existing.id);
+
+        const { data: updated, error: updateError } = await supabaseAdmin
+          .from("attempts")
+          .update({
+            status: "in_progress",
+            score: null,
+            axes: null,
+            blur_count: 0,
+            started_at: new Date().toISOString(),
+            completed_at: null,
+          })
+          .eq("id", existing.id)
+          .select("id")
+          .single();
+
+        if (updateError || !updated) {
+          throw new Error("Could not start this test. Please try again.");
+        }
+        attemptId = updated.id;
+      } else {
+        throw new Error("Could not start this test. Please try again.");
+      }
     }
 
     const { count: answered } = await supabaseAdmin
