@@ -154,36 +154,24 @@ export async function evaluateAnswer(input: EvaluationInput): Promise<Evaluation
   const validated = parsed.success
     ? parsed.data
     : {
-        score: 7.5,
+        score: 0,
         feedback:
-          "Good effort explaining the question. You captured the main objective and requirements clearly.",
-        missed_concepts: [],
-        missed_constraints: [],
-        axis_scores: { objective: 7.5, constraint: 7.5, io: 7.5, concept: 7.5, interpretation: 7.5 },
+          "Could not assess comprehension for this answer. Please ensure you explain the meaning and conditions clearly.",
+        missed_concepts: input.concepts,
+        missed_constraints: input.constraints,
+        axis_scores: { objective: 0, constraint: 0, io: 0, concept: 0, interpretation: 0 },
       };
 
   const axes = validated.axis_scores || {};
-  const axisValues = Object.values(axes).filter((v) => typeof v === "number" && Number.isFinite(v));
-  const avgAxis = axisValues.length ? axisValues.reduce((a, b) => a + b, 0) / axisValues.length : 0;
-
-  // If score is 0 but axis scores were given by AI, use the average of axes
-  let finalScore = clamp(validated.score);
-  if (finalScore === 0 && avgAxis > 0) {
-    finalScore = clamp(avgAxis);
-  }
-  // If student wrote at least 15 characters of understanding and AI returned 0 without explanation, ensure a minimum passing comprehension mark
-  if (finalScore === 0 && input.response.trim().length >= 15) {
-    finalScore = 7.0;
-  }
-
-  const defaultAxisScore = finalScore > 0 ? finalScore : 7.0;
+  const finalScore = clamp(validated.score);
+  const defaultAxisScore = finalScore;
 
   return {
     score: finalScore,
     feedback:
       validated.feedback.trim().length > 0
         ? validated.feedback.trim()
-        : "Your explanation captures the core problem and conditions effectively.",
+        : "Evaluation complete.",
     missedConcepts: pickFromCanonical(input.concepts, validated.missed_concepts),
     missedConstraints: pickFromCanonical(input.constraints, validated.missed_constraints),
     axisScores: {
