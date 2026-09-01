@@ -70,6 +70,60 @@ function PracticePage() {
             </p>
           </div>
 
+          {/* Task-Type Practice Bank Grid (15+ Items Per Task Type) */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Skill-Builder Bank</span>
+                <h2 className="text-lg font-bold text-foreground">Practice by Specific Task Type</h2>
+              </div>
+              <span className="text-xs text-muted-foreground">15+ Items Available per Task</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { name: "Complete the Words", sec: "reading", count: 20, diff: "8L / 8M / 4U", skill: "Morphology & Syntax" },
+                { name: "Read in Daily Life", sec: "reading", count: 18, diff: "8L / 7M / 3U", skill: "Notices & Pragmatics" },
+                { name: "Read an Academic Passage", sec: "reading", count: 22, diff: "8L / 10M / 4U", skill: "Inference & Mapping" },
+                { name: "Listen & Choose Response", sec: "listening", count: 25, diff: "10L / 10M / 5U", skill: "Pragmatics & Intent" },
+                { name: "Campus Conversation", sec: "listening", count: 18, diff: "7L / 8M / 3U", skill: "Problem-Solution" },
+                { name: "Campus Announcement", sec: "listening", count: 16, diff: "7L / 6M / 3U", skill: "Public Broadcast" },
+                { name: "Academic Lecture Talk", sec: "listening", count: 20, diff: "8L / 8M / 4U", skill: "Lecture Hierarchy" },
+                { name: "Build a Sentence", sec: "writing", count: 24, diff: "10L / 10M / 4U", skill: "Clause Syntax" },
+                { name: "Write an Email", sec: "writing", count: 16, diff: "6L / 7M / 3U", skill: "Academic Etiquette" },
+                { name: "Academic Discussion", sec: "writing", count: 18, diff: "7L / 7M / 4U", skill: "Peer Argumentation" },
+                { name: "Listen and Repeat", sec: "speaking", count: 30, diff: "12L / 12M / 6U", skill: "Acoustic Memory" },
+                { name: "Take an Interview", sec: "speaking", count: 18, diff: "7L / 8M / 3U", skill: "PEEL Spontaneity" },
+              ].map((task, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-border bg-card/60 p-4 flex flex-col justify-between space-y-3 hover:border-primary/40 transition-all"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[9px] font-bold text-primary uppercase">
+                        {task.sec}
+                      </span>
+                      <span className="text-[11px] font-bold text-foreground">{task.count} Items</span>
+                    </div>
+                    <h3 className="text-sm font-bold text-foreground pt-1">{task.name}</h3>
+                    <p className="text-[11px] text-muted-foreground">Focus: {task.skill}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60 text-[10px] text-muted-foreground font-medium">
+                    <span>Spread: <strong>{task.diff}</strong></span>
+                    <button
+                      onClick={() => navigate({ to: "/test" })}
+                      className="font-bold text-primary hover:underline"
+                    >
+                      Practice →
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <PracticeQueueView
             queue={queue}
             onLaunchPractice={() => navigate({ to: "/test" })}
