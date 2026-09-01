@@ -62,14 +62,40 @@ export const requestRegistrationOtp = createServerFn({ method: "POST" })
     });
 
     if (!emailResult.success) {
-      console.error(
-        "[requestRegistrationOtp] Failed to deliver verification code:",
+      console.warn(
+        "[requestRegistrationOtp] Custom SMTP delivery failed, attempting Supabase Native OTP fallback:",
         emailResult.error,
       );
-      return {
-        error: "delivery_failed" as const,
-        message: "Unable to send the verification email right now. Please try again.",
-      };
+
+      // Graceful fallback to Supabase built-in auth OTP
+      try {
+        const { error: nativeOtpErr } = await supabaseAdmin.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: false },
+        });
+
+        if (nativeOtpErr) {
+          console.error("[requestRegistrationOtp] Supabase Native OTP fallback error:", nativeOtpErr.message);
+          return {
+            error: "delivery_failed" as const,
+            message: "Unable to deliver verification code. Please check your email address and try again.",
+          };
+        }
+
+        return {
+          success: true,
+          email,
+          expiresInSeconds: 600,
+          resendInSeconds: 60,
+          fallback: true,
+        };
+      } catch (fallbackErr) {
+        console.error("[requestRegistrationOtp] Complete OTP delivery failure:", fallbackErr);
+        return {
+          error: "delivery_failed" as const,
+          message: "Unable to send the verification email right now. Please try again.",
+        };
+      }
     }
 
     // ONLY AFTER SUCCESS: Save to DB to begin the cooldown

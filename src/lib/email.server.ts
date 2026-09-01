@@ -12,6 +12,21 @@ export interface SendEmailOptions {
 
 let cachedTransporter: nodemailer.Transporter | null = null;
 
+function createTransporterForPort(port: number, secure: boolean, user: string, pass: string): nodemailer.Transporter {
+  return nodemailer.createTransport({
+    host: process.env["SMTP_HOST"] || "smtp.gmail.com",
+    port,
+    secure,
+    auth: {
+      user,
+      pass,
+    },
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000,
+  });
+}
+
 function getTransporter(): nodemailer.Transporter | null {
   const user = (process.env["SMTP_USER"] || "").trim();
   const pass = (process.env["SMTP_APP_PASSWORD"] || "").trim();
@@ -24,24 +39,9 @@ function getTransporter(): nodemailer.Transporter | null {
   }
 
   if (!cachedTransporter) {
-    // Port/secure are configurable so production can switch to 587 + STARTTLS
-    // if the hosting platform blocks direct outbound SSL on 465.
-    const port = Number(process.env["SMTP_PORT"] || 465);
-    cachedTransporter = nodemailer.createTransport({
-      host: process.env["SMTP_HOST"] || "smtp.gmail.com",
-      port,
-      secure: process.env["SMTP_SECURE"] ? process.env["SMTP_SECURE"] === "true" : port === 465,
-      auth: {
-        user,
-        pass,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-      pool: true,
-      maxConnections: 3,
-      maxMessages: 50,
-    });
+    const port = Number(process.env["SMTP_PORT"] || 587);
+    const secure = process.env["SMTP_SECURE"] ? process.env["SMTP_SECURE"] === "true" : port === 465;
+    cachedTransporter = createTransporterForPort(port, secure, user, pass);
   }
 
   return cachedTransporter;
@@ -89,28 +89,43 @@ export async function sendEmail({
       console.log(`[email.server] Email sent successfully, messageId: ${info.messageId}`);
       return { success: true, messageId: info.messageId };
     } catch (firstErr: unknown) {
-      // Transient SMTP failures (connection drops, greeting timeouts) are common
-      // in serverless environments; one retry with a fresh connection helps.
       console.warn(
-        "[email.server] First send attempt failed, retrying once:",
+        "[email.server] Primary send attempt failed, attempting fallback port:",
         describeSmtpError(firstErr),
       );
       cachedTransporter = null;
-      const retryTransporter = getTransporter();
-      if (!retryTransporter) {
-        return { success: false, error: "SMTP not configured" };
-      }
-      const info = await retryTransporter.sendMail(message);
-      console.log(`[email.server] Email sent on retry, messageId: ${info.messageId}`);
+      // Failover between 587 and 465
+      const currentPort = Number(process.env["SMTP_PORT"] || 587);
+      const fallbackPort = currentPort === 587 ? 465 : 587;
+      const fallbackSecure = fallbackPort === 465;
+      const user = (process.env["SMTP_USER"] || "").trim();
+      const pass = (process.env["SMTP_APP_PASSWORD"] || "").trim();
+
+      const fallbackTransporter = createTransporterForPort(fallbackPort, fallbackSecure, user, pass);
+      const info = await fallbackTransporter.sendMail(message);
+      console.log(`[email.server] Email sent via fallback port ${fallbackPort}, messageId: ${info.messageId}`);
       return { success: true, messageId: info.messageId };
     }
   } catch (err: unknown) {
-    // Technical error logged strictly to server-side stderr (no credentials/PII)
     console.error("[email.server] Failed to send email via Gmail SMTP:", describeSmtpError(err));
     return {
       success: false,
       error: "Unable to deliver verification email. Please verify your email configuration.",
     };
+  }
+}
+
+/**
+ * Diagnostic health check server utility to test SMTP connectivity on demand (Admin only).
+ */
+export async function checkSmtpHealth(): Promise<{ ok: boolean; details: string }> {
+  try {
+    const transporter = getTransporter();
+    if (!transporter) return { ok: false, details: "SMTP credentials not configured" };
+    await transporter.verify();
+    return { ok: true, details: "SMTP connection verified successfully" };
+  } catch (err) {
+    return { ok: false, details: describeSmtpError(err) };
   }
 }
 
