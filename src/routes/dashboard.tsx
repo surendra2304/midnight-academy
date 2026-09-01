@@ -16,10 +16,10 @@ export const Route = createFileRoute("/dashboard")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
   head: () => ({
     meta: [
-      { title: "TOEFL Dashboard — Midnight Academy" },
+      { title: "English Proficiency Dashboard — Midnight Academy" },
       {
         name: "description",
-        content: "Track your TOEFL 2026 band score, section performance, diagnostic weakness areas, and personalized practice queue.",
+        content: "Track your standardized band score, 4-section performance, diagnostic weakness areas, and personalized practice queue.",
       },
     ],
   }),
@@ -63,7 +63,7 @@ function Dashboard() {
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading your TOEFL dashboard & analytics...</p>
+            <p className="text-sm text-muted-foreground">Loading your examination dashboard & analytics...</p>
           </div>
         </PageShell>
       </div>
@@ -78,7 +78,7 @@ function Dashboard() {
           {/* Hero Header */}
           <section className="rounded-2xl border border-border bg-gradient-to-r from-card/80 via-card/50 to-card/80 p-8 shadow-lg flex flex-wrap items-center justify-between gap-6">
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-primary">Official TOEFL iBT 2026 Hub</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-primary">Standardized Examination Hub</span>
               <h1 className="text-2xl font-black text-foreground lg:text-3xl mt-1">
                 Student Learning Center
               </h1>

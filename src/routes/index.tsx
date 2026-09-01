@@ -21,10 +21,10 @@ import { AppNav } from "@/components/app-nav";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Midnight Academy — Official 2026 Format TOEFL iBT Preparation" },
+      { title: "Midnight Academy — Standardized Academic English Assessment" },
       {
         name: "description",
-        content: "Master the 2026 TOEFL iBT format with multistage adaptive mocks, deterministic answer analytics, and rubric-calibrated AI speaking & writing evaluations.",
+        content: "Master standardized English proficiency with multistage adaptive mocks, deterministic answer analytics, and rubric-calibrated AI speaking & writing evaluations.",
       },
     ],
   }),
@@ -40,7 +40,7 @@ function Landing() {
       <header className="relative overflow-hidden border-b border-border py-20 px-6 lg:py-28">
         <div className="mx-auto max-w-5xl text-center space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary uppercase tracking-wider">
-            <Sparkles className="size-3.5" /> 2026 TOEFL iBT Format Ready
+            <Sparkles className="size-3.5" /> Multistage Adaptive Examination Architecture
           </div>
 
           <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-6xl lg:text-7xl">
@@ -51,7 +51,7 @@ function Landing() {
           </h1>
 
           <p className="mx-auto max-w-2xl text-sm md:text-base text-muted-foreground leading-relaxed">
-            Experience complete full-length adaptive mocks across Reading, Listening, Writing, and Speaking with instant deterministic scoring, ETS-calibrated AI evaluation, and actionable weakness diagnostics.
+            Experience complete full-length adaptive mocks across Reading, Listening, Writing, and Speaking with instant deterministic scoring, rubric-calibrated AI evaluation, and actionable weakness diagnostics.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
