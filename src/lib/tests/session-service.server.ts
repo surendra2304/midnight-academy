@@ -266,9 +266,9 @@ export class AttemptSessionService {
   }
 
   /**
-   * Finalize attempt and transition to evaluation/scoring.
+   * Finalize attempt and trigger complete background evaluation pipeline.
    */
-  async finalizeAttempt(attemptId: string, _studentId: string) {
+  async finalizeAttempt(attemptId: string, studentId: string) {
     await supabaseAdmin
       .from('attempts')
       .update({
@@ -276,6 +276,15 @@ export class AttemptSessionService {
         completed_at: new Date().toISOString(),
       })
       .eq('id', attemptId);
+
+    // Trigger evaluation pipeline asynchronously (non-blocking background task)
+    import('../evaluation/mock-pipeline.server').then(({ mockEvaluationPipelineService }) => {
+      mockEvaluationPipelineService.processAttemptEvaluation(attemptId).catch((err) => {
+        console.error('[AttemptSessionService] Evaluation pipeline error:', err);
+      });
+    }).catch(err => {
+      console.error('[AttemptSessionService] Failed to load evaluation pipeline:', err);
+    });
 
     return { attemptId, status: 'evaluating' as const };
   }
