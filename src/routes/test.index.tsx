@@ -117,13 +117,13 @@ function TestCatalog() {
   const speakingTest = tests.find((t) => t.category?.toLowerCase() === "speaking")?.testVersionId || tests[0]?.testVersionId;
   const fullMockTest = tests.find((t) => t.category?.toLowerCase().includes("mock") || t.name?.includes("Full"))?.testVersionId || tests[0]?.testVersionId;
 
-  // Group tests by Series (Mock Packs)
+  // 6 Complete Named Mock Series (Original Themes & Identifiers)
   const seriesList: MockSeries[] = [
     {
-      id: "series-alpha",
+      id: "series-lunar",
       name: "Lunar Series 01",
-      theme: "Standard Academic Benchmark",
-      badgeColor: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+      theme: "Standard Academic Benchmark & Diagnostic Baseline",
+      badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
       isFree: true,
       fullMockTestId: fullMockTest,
       sectionTests: {
@@ -134,10 +134,10 @@ function TestCatalog() {
       },
     },
     {
-      id: "series-beta",
+      id: "series-solar",
       name: "Solar Series 02",
-      theme: "Upper Difficulty Multistage",
-      badgeColor: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+      theme: "Upper-Level Multistage Adaptive Stress-Test",
+      badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20",
       isFree: false,
       fullMockTestId: tests.filter((t) => t.category?.toLowerCase().includes("mock"))[1]?.testVersionId || fullMockTest,
       sectionTests: {
@@ -148,10 +148,52 @@ function TestCatalog() {
       },
     },
     {
-      id: "series-gamma",
+      id: "series-nebula",
       name: "Nebula Series 03",
-      theme: "Intensive Diagnostic Calibration",
-      badgeColor: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+      theme: "Natural Sciences & Complex Synthesis Focus",
+      badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+      isFree: false,
+      fullMockTestId: fullMockTest,
+      sectionTests: {
+        readingId: readingTest,
+        listeningId: listeningTest,
+        writingId: writingTest,
+        speakingId: speakingTest,
+      },
+    },
+    {
+      id: "series-eclipse",
+      name: "Eclipse Series 04",
+      theme: "Social Sciences & Conversational Pragmatics Focus",
+      badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+      isFree: false,
+      fullMockTestId: fullMockTest,
+      sectionTests: {
+        readingId: readingTest,
+        listeningId: listeningTest,
+        writingId: writingTest,
+        speakingId: speakingTest,
+      },
+    },
+    {
+      id: "series-polaris",
+      name: "Polaris Series 05",
+      theme: "High-Pacing Time Management & Efficiency Drill",
+      badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+      isFree: false,
+      fullMockTestId: fullMockTest,
+      sectionTests: {
+        readingId: readingTest,
+        listeningId: listeningTest,
+        writingId: writingTest,
+        speakingId: speakingTest,
+      },
+    },
+    {
+      id: "series-aurora",
+      name: "Aurora Series 06",
+      theme: "Advanced Band 5.5–6.0 Mastery Calibration",
+      badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
       isFree: false,
       fullMockTestId: fullMockTest,
       sectionTests: {
