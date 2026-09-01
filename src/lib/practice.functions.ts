@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Practice & Test Catalog Server Functions
  * Fetches published test blueprints and section details from Supabase with robust fallback series.
  */
@@ -30,7 +30,7 @@ export const DEFAULT_MOCK_SERIES: PublishedTestItem[] = [
     name: "Lunar Series 01: Official Diagnostic Benchmark",
     category: "Full Mock",
     difficulty: "Medium",
-    code: "TOEFL-LUNAR-01",
+    code: "MA-LUNAR-01",
     questionCount: 12,
     sections: [
       { id: "f3000000-0000-0000-0000-000000000010", sectionType: "reading", sectionOrder: 0, timingSeconds: 1800 },
@@ -45,7 +45,7 @@ export const DEFAULT_MOCK_SERIES: PublishedTestItem[] = [
     name: "Solar Series 02: Advanced Adaptive Assessment",
     category: "Full Mock",
     difficulty: "Hard",
-    code: "TOEFL-SOLAR-02",
+    code: "MA-SOLAR-02",
     questionCount: 12,
     sections: [
       { id: "f3000000-0000-0000-0000-000000000012", sectionType: "reading", sectionOrder: 0, timingSeconds: 1800 },
@@ -60,7 +60,7 @@ export const DEFAULT_MOCK_SERIES: PublishedTestItem[] = [
     name: "Nebula Series 03: Natural Sciences Focus",
     category: "Full Mock",
     difficulty: "Medium",
-    code: "TOEFL-NEBULA-03",
+    code: "MA-NEBULA-03",
     questionCount: 12,
     sections: [
       { id: "f3000000-0000-0000-0000-000000000013", sectionType: "reading", sectionOrder: 0, timingSeconds: 1800 },
@@ -75,7 +75,7 @@ export const DEFAULT_MOCK_SERIES: PublishedTestItem[] = [
     name: "Eclipse Series 04: Social Sciences & Pragmatics",
     category: "Full Mock",
     difficulty: "Hard",
-    code: "TOEFL-ECLIPSE-04",
+    code: "MA-ECLIPSE-04",
     questionCount: 12,
     sections: [
       { id: "f3000000-0000-0000-0000-000000000014", sectionType: "reading", sectionOrder: 0, timingSeconds: 1800 },
@@ -90,7 +90,7 @@ export const DEFAULT_MOCK_SERIES: PublishedTestItem[] = [
     name: "Polaris Series 05: Speed & Efficiency Calibration",
     category: "Full Mock",
     difficulty: "Medium",
-    code: "TOEFL-POLARIS-05",
+    code: "MA-POLARIS-05",
     questionCount: 12,
     sections: [
       { id: "f3000000-0000-0000-0000-000000000015", sectionType: "reading", sectionOrder: 0, timingSeconds: 1800 },
@@ -105,7 +105,7 @@ export const DEFAULT_MOCK_SERIES: PublishedTestItem[] = [
     name: "Aurora Series 06: Band 6.0 Mastery Benchmark",
     category: "Full Mock",
     difficulty: "Hard",
-    code: "TOEFL-AURORA-06",
+    code: "MA-AURORA-06",
     questionCount: 12,
     sections: [
       { id: "f3000000-0000-0000-0000-000000000016", sectionType: "reading", sectionOrder: 0, timingSeconds: 1800 },

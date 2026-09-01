@@ -100,8 +100,10 @@ function TestCatalog() {
         },
       });
 
-      if (res?.attemptId) {
-        navigate({ to: "/test/run", search: { attemptId: res.attemptId } });
+      const attemptId = (res as any)?.snapshot?.attemptId || (res as any)?.attemptId;
+
+      if (attemptId) {
+        navigate({ to: "/test/run", search: { attemptId } });
       } else {
         toast.error("Failed to initialize test session. Please try again.");
       }

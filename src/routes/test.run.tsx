@@ -14,10 +14,10 @@ export const Route = createFileRoute("/test/run")({
   }),
   head: () => ({
     meta: [
-      { title: "TOEFL Examination — Midnight Academy" },
+      { title: "Standardized Examination — Midnight Academy" },
       {
         name: "description",
-        content: "Official TOEFL iBT 2026 Examination Runner.",
+        content: "Official Standardized Multistage Adaptive Examination Runner.",
       },
     ],
   }),
