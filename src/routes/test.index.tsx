@@ -306,7 +306,13 @@ function TestCatalog() {
                         disabled={!series.sectionTests.readingId || startingId === series.sectionTests.readingId}
                         onClick={() => series.sectionTests.readingId && handleStartTest(series.sectionTests.readingId)}
                       >
-                        Practice Reading
+                        {startingId === series.sectionTests.readingId ? (
+                          <>
+                            <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
+                          </>
+                        ) : (
+                          "Practice Reading"
+                        )}
                       </Button>
                     </div>
 
@@ -330,7 +336,13 @@ function TestCatalog() {
                         disabled={!series.sectionTests.listeningId || startingId === series.sectionTests.listeningId}
                         onClick={() => series.sectionTests.listeningId && handleStartTest(series.sectionTests.listeningId)}
                       >
-                        Practice Listening
+                        {startingId === series.sectionTests.listeningId ? (
+                          <>
+                            <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
+                          </>
+                        ) : (
+                          "Practice Listening"
+                        )}
                       </Button>
                     </div>
 
@@ -354,7 +366,13 @@ function TestCatalog() {
                         disabled={!series.sectionTests.writingId || startingId === series.sectionTests.writingId}
                         onClick={() => series.sectionTests.writingId && handleStartTest(series.sectionTests.writingId)}
                       >
-                        Practice Writing
+                        {startingId === series.sectionTests.writingId ? (
+                          <>
+                            <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
+                          </>
+                        ) : (
+                          "Practice Writing"
+                        )}
                       </Button>
                     </div>
 
@@ -378,7 +396,13 @@ function TestCatalog() {
                         disabled={!series.sectionTests.speakingId || startingId === series.sectionTests.speakingId}
                         onClick={() => series.sectionTests.speakingId && handleStartTest(series.sectionTests.speakingId)}
                       >
-                        Practice Speaking
+                        {startingId === series.sectionTests.speakingId ? (
+                          <>
+                            <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
+                          </>
+                        ) : (
+                          "Practice Speaking"
+                        )}
                       </Button>
                     </div>
                   </div>
