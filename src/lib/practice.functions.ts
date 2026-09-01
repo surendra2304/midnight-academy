@@ -191,6 +191,7 @@ export const getPublishedTests = createServerFn({ method: "GET" })
         if (!t) return null;
         return {
           id: t.id,
+          testVersionId: v.id,
           name: t.name,
           category: t.category,
           difficulty: t.difficulty,

@@ -58,6 +58,7 @@ function TestCatalog() {
   const [tests, setTests] = useState<
     Array<{
       id: string;
+      testVersionId: string;
       name: string;
       category: string;
       difficulty: string;
@@ -83,14 +84,20 @@ function TestCatalog() {
     loadCatalog();
   }, []);
 
-  const handleStartTest = async (testId: string) => {
+  const handleStartTest = async (testVersionId?: string) => {
+    const targetVersionId = testVersionId || tests[0]?.testVersionId;
+    if (!targetVersionId) {
+      toast.error("Test blueprint is being prepared. Please try again in a moment.");
+      return;
+    }
+
     try {
-      setStartingId(testId);
+      setStartingId(targetVersionId);
       const res = await startToeflAttempt({
         data: {
-          testId,
+          testVersionId: targetVersionId,
           examMode: "full",
-          isTimed: true,
+          allowRetake: true,
         },
       });
 
@@ -104,6 +111,12 @@ function TestCatalog() {
     }
   };
 
+  const readingTest = tests.find((t) => t.category?.toLowerCase() === "reading")?.testVersionId || tests[0]?.testVersionId;
+  const listeningTest = tests.find((t) => t.category?.toLowerCase() === "listening")?.testVersionId || tests[0]?.testVersionId;
+  const writingTest = tests.find((t) => t.category?.toLowerCase() === "writing")?.testVersionId || tests[0]?.testVersionId;
+  const speakingTest = tests.find((t) => t.category?.toLowerCase() === "speaking")?.testVersionId || tests[0]?.testVersionId;
+  const fullMockTest = tests.find((t) => t.category?.toLowerCase().includes("mock") || t.name?.includes("Full"))?.testVersionId || tests[0]?.testVersionId;
+
   // Group tests by Series (Mock Packs)
   const seriesList: MockSeries[] = [
     {
@@ -112,12 +125,12 @@ function TestCatalog() {
       theme: "Standard Academic Benchmark",
       badgeColor: "bg-blue-500/10 text-blue-500 border-blue-500/20",
       isFree: true,
-      fullMockTestId: tests.find((t) => t.category.toLowerCase().includes("mock") || t.name.includes("Full"))?.id,
+      fullMockTestId: fullMockTest,
       sectionTests: {
-        readingId: tests.find((t) => t.category.toLowerCase() === "reading")?.id,
-        listeningId: tests.find((t) => t.category.toLowerCase() === "listening")?.id,
-        writingId: tests.find((t) => t.category.toLowerCase() === "writing")?.id,
-        speakingId: tests.find((t) => t.category.toLowerCase() === "speaking")?.id,
+        readingId: readingTest,
+        listeningId: listeningTest,
+        writingId: writingTest,
+        speakingId: speakingTest,
       },
     },
     {
@@ -126,12 +139,12 @@ function TestCatalog() {
       theme: "Upper Difficulty Multistage",
       badgeColor: "bg-purple-500/10 text-purple-500 border-purple-500/20",
       isFree: false,
-      fullMockTestId: tests.filter((t) => t.category.toLowerCase().includes("mock"))[1]?.id || tests[0]?.id,
+      fullMockTestId: tests.filter((t) => t.category?.toLowerCase().includes("mock"))[1]?.testVersionId || fullMockTest,
       sectionTests: {
-        readingId: tests.find((t) => t.category.toLowerCase() === "reading")?.id,
-        listeningId: tests.find((t) => t.category.toLowerCase() === "listening")?.id,
-        writingId: tests.find((t) => t.category.toLowerCase() === "writing")?.id,
-        speakingId: tests.find((t) => t.category.toLowerCase() === "speaking")?.id,
+        readingId: readingTest,
+        listeningId: listeningTest,
+        writingId: writingTest,
+        speakingId: speakingTest,
       },
     },
     {
@@ -140,12 +153,12 @@ function TestCatalog() {
       theme: "Intensive Diagnostic Calibration",
       badgeColor: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
       isFree: false,
-      fullMockTestId: tests[0]?.id,
+      fullMockTestId: fullMockTest,
       sectionTests: {
-        readingId: tests.find((t) => t.category.toLowerCase() === "reading")?.id,
-        listeningId: tests.find((t) => t.category.toLowerCase() === "listening")?.id,
-        writingId: tests.find((t) => t.category.toLowerCase() === "writing")?.id,
-        speakingId: tests.find((t) => t.category.toLowerCase() === "speaking")?.id,
+        readingId: readingTest,
+        listeningId: listeningTest,
+        writingId: writingTest,
+        speakingId: speakingTest,
       },
     },
   ];
