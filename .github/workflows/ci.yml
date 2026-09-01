@@ -24,8 +24,19 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Vitest Suite (All 17+ test files)
+      - name: Run Vitest Suite (All 18 test files)
         run: npm run test
+        env:
+          SUPABASE_URL: https://mock-toefl-project.supabase.co
+          SUPABASE_SECRET_KEY: mock-service-role-key-for-ci-and-testing
+          VITE_SUPABASE_URL: https://mock-toefl-project.supabase.co
+          VITE_SUPABASE_ANON_KEY: mock-anon-key-for-ci-and-testing
+          GEMINI_API_KEY: mock-gemini-key-for-testing
 
       - name: Run Production SSR & Client Build
         run: npm run build
+        env:
+          SUPABASE_URL: https://mock-toefl-project.supabase.co
+          SUPABASE_SECRET_KEY: mock-service-role-key-for-ci-and-testing
+          VITE_SUPABASE_URL: https://mock-toefl-project.supabase.co
+          VITE_SUPABASE_ANON_KEY: mock-anon-key-for-ci-and-testing
