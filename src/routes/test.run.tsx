@@ -30,6 +30,7 @@ function RunTest() {
   const [blueprint, setBlueprint] = useState<HydratedBlueprint | null>(null);
   const [initialState, setInitialState] = useState<SessionState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!attemptId) {
@@ -45,12 +46,10 @@ function RunTest() {
           setBlueprint(res.blueprint);
           setInitialState(resolvedState);
         } else {
-          toast.error("Test session data was incomplete");
-          navigate({ to: "/test" });
+          setErrorMsg("Test session data was incomplete. Please return to catalog.");
         }
       } catch (err: unknown) {
-        toast.error((err as Error)?.message || "Failed to resume session");
-        navigate({ to: "/test" });
+        setErrorMsg((err as Error)?.message || "Failed to resume session");
       } finally {
         setLoading(false);
       }
@@ -59,11 +58,28 @@ function RunTest() {
     hydrate();
   }, [attemptId, navigate]);
 
-  if (loading || !blueprint || !initialState) {
+  if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-3">
         <Loader2 className="size-8 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">Loading test blueprint & assets...</p>
+      </div>
+    );
+  }
+
+  if (errorMsg || !blueprint || !initialState) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground p-6">
+        <div className="max-w-md w-full rounded-2xl border border-destructive/20 bg-card p-8 text-center space-y-4">
+          <p className="text-base font-bold text-foreground">Session Initialization Issue</p>
+          <p className="text-xs text-muted-foreground">{errorMsg || "Unable to load test session."}</p>
+          <button
+            onClick={() => navigate({ to: "/test" })}
+            className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90"
+          >
+            Return to Test Catalog
+          </button>
+        </div>
       </div>
     );
   }
