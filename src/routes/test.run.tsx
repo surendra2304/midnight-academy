@@ -86,10 +86,9 @@ function RunTest() {
 
   return (
     <FullMockRunnerOrchestrator
-      attemptId={attemptId!}
-      blueprint={blueprint}
-      initialState={initialState}
-      onFinish={() => navigate({ to: `/result/${attemptId}` })}
+      initialBlueprint={blueprint}
+      initialSnapshot={initialState}
+      onFinalized={() => navigate({ to: `/result/${attemptId}` })}
     />
   );
 }
