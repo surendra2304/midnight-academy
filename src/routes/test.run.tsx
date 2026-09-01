@@ -40,9 +40,13 @@ function RunTest() {
     async function hydrate() {
       try {
         const res = await resumeToeflAttempt({ data: { attemptId: attemptId! } });
-        if (res?.blueprint && res?.state) {
+        const resolvedState = (res as any)?.snapshot || (res as any)?.state;
+        if (res?.blueprint && resolvedState) {
           setBlueprint(res.blueprint);
-          setInitialState(res.state);
+          setInitialState(resolvedState);
+        } else {
+          toast.error("Test session data was incomplete");
+          navigate({ to: "/test" });
         }
       } catch (err: unknown) {
         toast.error((err as Error)?.message || "Failed to resume session");
