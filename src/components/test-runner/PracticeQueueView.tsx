@@ -81,9 +81,11 @@ export function PracticeQueueView({ queue, onLaunchPractice }: PracticeQueueView
               <Button
                 size="sm"
                 className="w-full text-xs font-semibold"
-                onClick={() => onLaunchPractice && onLaunchPractice(rec.contentItemId)}
+                asChild
               >
-                <Play className="size-3 mr-1.5 fill-current" /> Practice Item
+                <Link to="/test">
+                  <Play className="size-3 mr-1.5 fill-current" /> Practice This Skill
+                </Link>
               </Button>
             </div>
           </article>
