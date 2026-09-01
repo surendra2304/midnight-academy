@@ -12,10 +12,10 @@ export const Route = createFileRoute("/history")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
   head: () => ({
     meta: [
-      { title: "TOEFL Score History — Midnight Academy" },
+      { title: "Standardized Exam History — Midnight Academy" },
       {
         name: "description",
-        content: "View all completed TOEFL mock tests, section assessments, and score reports over time.",
+        content: "View all completed mock tests, section assessments, and score reports over time.",
       },
     ],
   }),

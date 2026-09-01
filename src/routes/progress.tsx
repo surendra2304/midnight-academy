@@ -12,7 +12,7 @@ export const Route = createFileRoute("/progress")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
   head: () => ({
     meta: [
-      { title: "TOEFL Skill Analytics & Progress — Midnight Academy" },
+      { title: "Skill Analytics & Progress — Midnight Academy" },
       {
         name: "description",
         content: "Detailed 4-section performance breakdown, task-type timing efficiency, and weakness diagnostics.",

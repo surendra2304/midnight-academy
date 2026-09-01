@@ -12,10 +12,10 @@ export const Route = createFileRoute("/practice")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
   head: () => ({
     meta: [
-      { title: "TOEFL Practice Queue — Midnight Academy" },
+      { title: "Targeted Practice Queue — Midnight Academy" },
       {
         name: "description",
-        content: "Personalized practice queue generated from your diagnosed TOEFL skill weakness profile.",
+        content: "Personalized practice queue generated from your diagnosed English skill weakness profile.",
       },
     ],
   }),
