@@ -34,7 +34,8 @@ export type ToeflItemType =
   | 'academic_discussion'
   // Speaking
   | 'listen_repeat'
-  | 'take_interview';
+  | 'take_interview'
+  | 'shadowing';
 
 // ============================================================================
 // 2. Blueprint & Content Entities

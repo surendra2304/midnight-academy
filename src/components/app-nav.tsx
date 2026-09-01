@@ -20,6 +20,7 @@ const studentNav: NavItem[] = [
   { label: "Dashboard", to: "/dashboard" },
   { label: "Test Catalog", to: "/test" },
   { label: "Dictation", to: "/dictation" },
+  { label: "Shadowing", to: "/shadowing" },
   { label: "Practice Queue", to: "/practice" },
   { label: "Score History", to: "/history" },
   { label: "Skill Analytics", to: "/progress" },
