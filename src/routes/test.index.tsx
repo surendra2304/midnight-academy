@@ -1,5 +1,5 @@
-import { requireAuth } from "@/lib/auth-guard";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { requireAuth } from "@/lib/auth-guard";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Award,
@@ -15,6 +15,7 @@ import {
   Play,
   Sparkles,
   Zap,
+  AlertCircle,
 } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
 import { PageShell } from "@/components/kit";
@@ -22,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { getPublishedTests } from "@/lib/practice.functions";
 import { startToeflAttempt } from "@/lib/tests/engine.functions";
 import { toast } from "sonner";
+import type { ToeflSectionType, ToeflExamMode } from "@/types/toefl";
 
 export const Route = createFileRoute("/test/")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
@@ -38,34 +40,25 @@ export const Route = createFileRoute("/test/")({
   component: TestCatalog,
 });
 
-interface MockSeries {
+export interface PublishedTestItem {
   id: string;
+  testVersionId: string;
   name: string;
-  theme: string;
-  badgeColor: string;
-  isFree: boolean;
-  fullMockTestId?: string;
-  sectionTests: {
-    readingId?: string;
-    listeningId?: string;
-    writingId?: string;
-    speakingId?: string;
-  };
+  category: string;
+  difficulty: string;
+  code: string | null;
+  questionCount: number;
+  sections: Array<{
+    id: string;
+    sectionType: ToeflSectionType;
+    sectionOrder: number;
+    timingSeconds: number;
+  }>;
 }
 
 function TestCatalog() {
   const navigate = useNavigate();
-  const [tests, setTests] = useState<
-    Array<{
-      id: string;
-      testVersionId: string;
-      name: string;
-      category: string;
-      difficulty: string;
-      code: string | null;
-      questionCount: number;
-    }>
-  >([]);
+  const [tests, setTests] = useState<PublishedTestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "full" | "reading" | "listening" | "writing" | "speaking">("all");
@@ -74,9 +67,10 @@ function TestCatalog() {
     async function loadCatalog() {
       try {
         const res = await getPublishedTests();
-        setTests(res || []);
+        setTests((res as PublishedTestItem[]) || []);
       } catch (err) {
         console.error("Failed to load catalog:", err);
+        toast.error("Could not load test catalog. Please try refreshing.");
       } finally {
         setLoading(false);
       }
@@ -84,126 +78,41 @@ function TestCatalog() {
     loadCatalog();
   }, []);
 
-  const handleStartTest = async (testVersionId?: string) => {
-    const targetVersionId = testVersionId || tests[0]?.testVersionId;
-    if (!targetVersionId) {
-      toast.error("Test blueprint is being prepared. Please try again in a moment.");
+  const handleStartTest = async (
+    testVersionId: string,
+    examMode: ToeflExamMode = "full",
+    sectionTypeFilter?: ToeflSectionType
+  ) => {
+    if (!testVersionId) {
+      toast.error("Selected test blueprint is not available.");
       return;
     }
 
     try {
-      setStartingId(targetVersionId);
+      const buttonKey = `${testVersionId}-${examMode}-${sectionTypeFilter || "all"}`;
+      setStartingId(buttonKey);
+
       const res = await startToeflAttempt({
         data: {
-          testVersionId: targetVersionId,
-          examMode: "full",
+          testVersionId,
+          examMode,
           allowRetake: true,
         },
       });
 
       if (res?.attemptId) {
         navigate({ to: "/test/run", search: { attemptId: res.attemptId } });
+      } else {
+        toast.error("Failed to initialize test session. Please try again.");
       }
     } catch (err: unknown) {
-      toast.error((err as Error)?.message || "Failed to start assessment");
+      const errorMsg = (err as Error)?.message || "Failed to start assessment";
+      console.error("Test start failure:", err);
+      toast.error(`Start Error: ${errorMsg}`);
     } finally {
       setStartingId(null);
     }
   };
-
-  const readingTest = tests.find((t) => t.category?.toLowerCase() === "reading")?.testVersionId || tests[0]?.testVersionId;
-  const listeningTest = tests.find((t) => t.category?.toLowerCase() === "listening")?.testVersionId || tests[0]?.testVersionId;
-  const writingTest = tests.find((t) => t.category?.toLowerCase() === "writing")?.testVersionId || tests[0]?.testVersionId;
-  const speakingTest = tests.find((t) => t.category?.toLowerCase() === "speaking")?.testVersionId || tests[0]?.testVersionId;
-  const fullMockTest = tests.find((t) => t.category?.toLowerCase().includes("mock") || t.name?.includes("Full"))?.testVersionId || tests[0]?.testVersionId;
-
-  // 6 Complete Named Mock Series (Original Themes & Identifiers)
-  const seriesList: MockSeries[] = [
-    {
-      id: "series-lunar",
-      name: "Lunar Series 01",
-      theme: "Standard Academic Benchmark & Diagnostic Baseline",
-      badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-      isFree: true,
-      fullMockTestId: fullMockTest,
-      sectionTests: {
-        readingId: readingTest,
-        listeningId: listeningTest,
-        writingId: writingTest,
-        speakingId: speakingTest,
-      },
-    },
-    {
-      id: "series-solar",
-      name: "Solar Series 02",
-      theme: "Upper-Level Multistage Adaptive Stress-Test",
-      badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-      isFree: false,
-      fullMockTestId: tests.filter((t) => t.category?.toLowerCase().includes("mock"))[1]?.testVersionId || fullMockTest,
-      sectionTests: {
-        readingId: readingTest,
-        listeningId: listeningTest,
-        writingId: writingTest,
-        speakingId: speakingTest,
-      },
-    },
-    {
-      id: "series-nebula",
-      name: "Nebula Series 03",
-      theme: "Natural Sciences & Complex Synthesis Focus",
-      badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-      isFree: false,
-      fullMockTestId: fullMockTest,
-      sectionTests: {
-        readingId: readingTest,
-        listeningId: listeningTest,
-        writingId: writingTest,
-        speakingId: speakingTest,
-      },
-    },
-    {
-      id: "series-eclipse",
-      name: "Eclipse Series 04",
-      theme: "Social Sciences & Conversational Pragmatics Focus",
-      badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20",
-      isFree: false,
-      fullMockTestId: fullMockTest,
-      sectionTests: {
-        readingId: readingTest,
-        listeningId: listeningTest,
-        writingId: writingTest,
-        speakingId: speakingTest,
-      },
-    },
-    {
-      id: "series-polaris",
-      name: "Polaris Series 05",
-      theme: "High-Pacing Time Management & Efficiency Drill",
-      badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-      isFree: false,
-      fullMockTestId: fullMockTest,
-      sectionTests: {
-        readingId: readingTest,
-        listeningId: listeningTest,
-        writingId: writingTest,
-        speakingId: speakingTest,
-      },
-    },
-    {
-      id: "series-aurora",
-      name: "Aurora Series 06",
-      theme: "Advanced Band 5.5–6.0 Mastery Calibration",
-      badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-      isFree: false,
-      fullMockTestId: fullMockTest,
-      sectionTests: {
-        readingId: readingTest,
-        listeningId: listeningTest,
-        writingId: writingTest,
-        speakingId: speakingTest,
-      },
-    },
-  ];
 
   if (loading) {
     return (
@@ -212,12 +121,19 @@ function TestCatalog() {
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading standardized mock test series...</p>
+            <p className="text-sm text-muted-foreground">Loading published standardized mock tests...</p>
           </div>
         </PageShell>
       </div>
     );
   }
+
+  // Filter tests based on active tab
+  const filteredTests = tests.filter((t) => {
+    if (activeTab === "all") return true;
+    if (activeTab === "full") return t.sections.length >= 4 || t.category.toLowerCase().includes("mock");
+    return t.sections.some((s) => s.sectionType === activeTab);
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -228,7 +144,7 @@ function TestCatalog() {
           <div className="rounded-3xl border border-border bg-card/60 p-8 shadow-sm lg:p-10 flex flex-wrap items-center justify-between gap-6">
             <div className="space-y-2 max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary uppercase">
-                <Sparkles className="size-3.5" /> Complete Standardized Mock Tests
+                <Sparkles className="size-3.5" /> Published Standardized Tests
               </div>
               <h1 className="text-3xl font-black tracking-tight text-foreground lg:text-4xl">
                 Mock Tests & Section Practice
@@ -238,24 +154,24 @@ function TestCatalog() {
               </p>
             </div>
 
-            {/* Quick Stats Summary */}
+            {/* Stats Counter */}
             <div className="flex items-center gap-4">
-              <div className="rounded-2xl border border-border bg-background/80 px-5 py-3.5 text-center">
-                <p className="text-[10px] font-bold uppercase text-muted-foreground">Available Mocks</p>
-                <p className="text-xl font-black text-foreground">{tests.length || 6}</p>
+              <div className="rounded-2xl border border-border bg-background/80 px-5 py-3.5 text-center min-w-[120px]">
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">Published Tests</p>
+                <p className="text-xl font-black text-foreground">{tests.length}</p>
               </div>
-              <div className="rounded-2xl border border-border bg-background/80 px-5 py-3.5 text-center">
+              <div className="rounded-2xl border border-border bg-background/80 px-5 py-3.5 text-center min-w-[120px]">
                 <p className="text-[10px] font-bold uppercase text-muted-foreground">AI Evaluation</p>
                 <p className="text-xl font-black text-primary">Instant</p>
               </div>
             </div>
           </div>
 
-          {/* Section Filter Pills */}
+          {/* Filter Pills */}
           <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
             {[
-              { id: "all", label: "All Mock Series", icon: Layers },
-              { id: "full", label: "Full Tests (4 Sections)", icon: Zap },
+              { id: "all", label: "All Tests", icon: Layers },
+              { id: "full", label: "Full Mocks (4 Sections)", icon: Zap },
               { id: "reading", label: "Reading Section", icon: BookOpen },
               { id: "listening", label: "Listening Section", icon: Headphones },
               { id: "writing", label: "Writing Section", icon: PenTool },
@@ -280,178 +196,233 @@ function TestCatalog() {
             })}
           </div>
 
-          {/* Series & Test Pack Cards */}
-          <div className="space-y-6">
-            {seriesList.map((series, sIdx) => {
-              return (
-                <div
-                  key={series.id}
-                  className="rounded-3xl border border-border bg-card/40 p-6 lg:p-8 shadow-sm space-y-6 transition-all hover:border-primary/40 hover:shadow-md"
-                >
-                  {/* Series Top Info */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="size-12 rounded-2xl bg-gradient-to-tr from-primary/20 via-accent/20 to-primary/10 flex items-center justify-center font-black text-primary text-lg">
-                        0{sIdx + 1}
+          {/* Empty State if No Tests in DB */}
+          {tests.length === 0 ? (
+            <div className="rounded-3xl border border-border bg-card/40 p-12 text-center space-y-4">
+              <AlertCircle className="mx-auto size-12 text-muted-foreground/60" />
+              <h3 className="text-lg font-bold text-foreground">No Published Tests Available Yet</h3>
+              <p className="mx-auto max-w-md text-xs text-muted-foreground leading-relaxed">
+                New standardized blueprints are currently being drafted and calibrated by instructors. Please check back shortly or explore practice drills.
+              </p>
+              <Button asChild variant="outline">
+                <Link to="/practice">Explore Practice Queue</Link>
+              </Button>
+            </div>
+          ) : filteredTests.length === 0 ? (
+            <div className="rounded-3xl border border-border bg-card/40 p-10 text-center space-y-3">
+              <p className="text-sm font-semibold text-muted-foreground">
+                No tests match the selected filter ({activeTab}).
+              </p>
+              <Button size="sm" variant="ghost" onClick={() => setActiveTab("all")}>
+                Reset Filter
+              </Button>
+            </div>
+          ) : (
+            /* Data-Driven Test Cards */
+            <div className="space-y-6">
+              {filteredTests.map((test, tIdx) => {
+                const hasReading = test.sections.some((s) => s.sectionType === "reading");
+                const hasListening = test.sections.some((s) => s.sectionType === "listening");
+                const hasWriting = test.sections.some((s) => s.sectionType === "writing");
+                const hasSpeaking = test.sections.some((s) => s.sectionType === "speaking");
+                const isFullMock = test.sections.length >= 4 || test.category.toLowerCase().includes("mock");
+
+                const fullButtonKey = `${test.testVersionId}-full-all`;
+
+                return (
+                  <div
+                    key={test.testVersionId}
+                    className="rounded-3xl border border-border bg-card/40 p-6 lg:p-8 shadow-sm space-y-6 transition-all hover:border-primary/40 hover:shadow-md"
+                  >
+                    {/* Top Info Bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="size-12 rounded-2xl bg-gradient-to-tr from-primary/20 via-accent/20 to-primary/10 flex items-center justify-center font-black text-primary text-lg">
+                          0{tIdx + 1}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-black text-foreground">{test.name}</h3>
+                            <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold text-primary">
+                              {test.difficulty}
+                            </span>
+                            {test.code && (
+                              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+                                {test.code}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {isFullMock ? "Complete 4-Section Standardized Adaptive Mock Exam" : `${test.category} Practice Assessment`}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-black text-foreground">{series.name}</h3>
-                          <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${series.badgeColor}`}>
-                            {series.isFree ? "Free Practice" : "Standard"}
+
+                      {/* Primary Action Button */}
+                      {(activeTab === "all" || activeTab === "full") && (
+                        <Button
+                          size="sm"
+                          className="font-bold px-6 shadow-md shadow-primary/20"
+                          disabled={startingId === fullButtonKey}
+                          onClick={() => handleStartTest(test.testVersionId, isFullMock ? "full" : "section")}
+                        >
+                          {startingId === fullButtonKey ? (
+                            <>
+                              <Loader2 className="size-3.5 mr-1.5 animate-spin" /> Preparing Exam...
+                            </>
+                          ) : (
+                            <>
+                              <Play className="size-3.5 mr-1.5 fill-current" />
+                              {isFullMock ? "Start Full Mock (90m)" : "Start Assessment"}
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Section Breakdown Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+                      {/* Reading Section Card */}
+                      <div
+                        className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
+                          !hasReading ? "opacity-30" : activeTab !== "all" && activeTab !== "reading" ? "opacity-50" : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                            <BookOpen className="size-4 text-blue-500" /> Reading
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-semibold">
+                            {test.sections.find((s) => s.sectionType === "reading")
+                              ? `${Math.round((test.sections.find((s) => s.sectionType === "reading")!.timingSeconds || 1500) / 60)} Mins`
+                              : "N/A"}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground">{series.theme}</p>
+                        <p className="text-[11px] text-muted-foreground">Cloze passages & academic texts</p>
+                        <Button
+                          size="xs"
+                          variant="secondary"
+                          className="w-full text-xs font-bold"
+                          disabled={!hasReading || startingId === `${test.testVersionId}-section-reading`}
+                          onClick={() => handleStartTest(test.testVersionId, "section", "reading")}
+                        >
+                          {startingId === `${test.testVersionId}-section-reading` ? (
+                            <>
+                              <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
+                            </>
+                          ) : (
+                            "Practice Reading"
+                          )}
+                        </Button>
                       </div>
-                    </div>
 
-                    {/* Primary Full Mock Action */}
-                    {series.fullMockTestId && (activeTab === "all" || activeTab === "full") && (
-                      <Button
-                        size="sm"
-                        className="font-bold px-6 shadow-md shadow-primary/20"
-                        disabled={startingId === series.fullMockTestId}
-                        onClick={() => handleStartTest(series.fullMockTestId!)}
+                      {/* Listening Section Card */}
+                      <div
+                        className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
+                          !hasListening ? "opacity-30" : activeTab !== "all" && activeTab !== "listening" ? "opacity-50" : ""
+                        }`}
                       >
-                        {startingId === series.fullMockTestId ? (
-                          <>
-                            <Loader2 className="size-3.5 mr-1.5 animate-spin" /> Preparing Exam...
-                          </>
-                        ) : (
-                          <>
-                            <Play className="size-3.5 mr-1.5 fill-current" /> Start Full Mock (90m)
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Section Test Breakdowns */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
-                    {/* Reading */}
-                    <div
-                      className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
-                        activeTab !== "all" && activeTab !== "reading" ? "opacity-40" : ""
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                          <BookOpen className="size-4 text-blue-500" /> Reading
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                            <Headphones className="size-4 text-emerald-500" /> Listening
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-semibold">
+                            {test.sections.find((s) => s.sectionType === "listening")
+                              ? `${Math.round((test.sections.find((s) => s.sectionType === "listening")!.timingSeconds || 1200) / 60)} Mins`
+                              : "N/A"}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-muted-foreground font-semibold">25 Mins</span>
+                        <p className="text-[11px] text-muted-foreground">Conversations & academic talks</p>
+                        <Button
+                          size="xs"
+                          variant="secondary"
+                          className="w-full text-xs font-bold"
+                          disabled={!hasListening || startingId === `${test.testVersionId}-section-listening`}
+                          onClick={() => handleStartTest(test.testVersionId, "section", "listening")}
+                        >
+                          {startingId === `${test.testVersionId}-section-listening` ? (
+                            <>
+                              <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
+                            </>
+                          ) : (
+                            "Practice Listening"
+                          )}
+                        </Button>
                       </div>
-                      <p className="text-[11px] text-muted-foreground">Cloze passage & academic comprehension</p>
-                      <Button
-                        size="xs"
-                        variant="secondary"
-                        className="w-full text-xs font-bold"
-                        disabled={!series.sectionTests.readingId || startingId === series.sectionTests.readingId}
-                        onClick={() => series.sectionTests.readingId && handleStartTest(series.sectionTests.readingId)}
-                      >
-                        {startingId === series.sectionTests.readingId ? (
-                          <>
-                            <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
-                          </>
-                        ) : (
-                          "Practice Reading"
-                        )}
-                      </Button>
-                    </div>
 
-                    {/* Listening */}
-                    <div
-                      className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
-                        activeTab !== "all" && activeTab !== "listening" ? "opacity-40" : ""
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                          <Headphones className="size-4 text-emerald-500" /> Listening
-                        </div>
-                        <span className="text-[10px] text-muted-foreground font-semibold">20 Mins</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">Conversations, talks & announcements</p>
-                      <Button
-                        size="xs"
-                        variant="secondary"
-                        className="w-full text-xs font-bold"
-                        disabled={!series.sectionTests.listeningId || startingId === series.sectionTests.listeningId}
-                        onClick={() => series.sectionTests.listeningId && handleStartTest(series.sectionTests.listeningId)}
+                      {/* Writing Section Card */}
+                      <div
+                        className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
+                          !hasWriting ? "opacity-30" : activeTab !== "all" && activeTab !== "writing" ? "opacity-50" : ""
+                        }`}
                       >
-                        {startingId === series.sectionTests.listeningId ? (
-                          <>
-                            <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
-                          </>
-                        ) : (
-                          "Practice Listening"
-                        )}
-                      </Button>
-                    </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                            <PenTool className="size-4 text-purple-500" /> Writing
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-semibold">
+                            {test.sections.find((s) => s.sectionType === "writing")
+                              ? `${Math.round((test.sections.find((s) => s.sectionType === "writing")!.timingSeconds || 1500) / 60)} Mins`
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">Email & academic discussion</p>
+                        <Button
+                          size="xs"
+                          variant="secondary"
+                          className="w-full text-xs font-bold"
+                          disabled={!hasWriting || startingId === `${test.testVersionId}-section-writing`}
+                          onClick={() => handleStartTest(test.testVersionId, "section", "writing")}
+                        >
+                          {startingId === `${test.testVersionId}-section-writing` ? (
+                            <>
+                              <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
+                            </>
+                          ) : (
+                            "Practice Writing"
+                          )}
+                        </Button>
+                      </div>
 
-                    {/* Writing */}
-                    <div
-                      className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
-                        activeTab !== "all" && activeTab !== "writing" ? "opacity-40" : ""
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                          <PenTool className="size-4 text-purple-500" /> Writing
-                        </div>
-                        <span className="text-[10px] text-muted-foreground font-semibold">25 Mins</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">Sentence syntax, email & discussion</p>
-                      <Button
-                        size="xs"
-                        variant="secondary"
-                        className="w-full text-xs font-bold"
-                        disabled={!series.sectionTests.writingId || startingId === series.sectionTests.writingId}
-                        onClick={() => series.sectionTests.writingId && handleStartTest(series.sectionTests.writingId)}
+                      {/* Speaking Section Card */}
+                      <div
+                        className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
+                          !hasSpeaking ? "opacity-30" : activeTab !== "all" && activeTab !== "speaking" ? "opacity-50" : ""
+                        }`}
                       >
-                        {startingId === series.sectionTests.writingId ? (
-                          <>
-                            <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
-                          </>
-                        ) : (
-                          "Practice Writing"
-                        )}
-                      </Button>
-                    </div>
-
-                    {/* Speaking */}
-                    <div
-                      className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
-                        activeTab !== "all" && activeTab !== "speaking" ? "opacity-40" : ""
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                          <Mic className="size-4 text-rose-500" /> Speaking
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                            <Mic className="size-4 text-rose-500" /> Speaking
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-semibold">
+                            {test.sections.find((s) => s.sectionType === "speaking")
+                              ? `${Math.round((test.sections.find((s) => s.sectionType === "speaking")!.timingSeconds || 900) / 60)} Mins`
+                              : "N/A"}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-muted-foreground font-semibold">15 Mins</span>
+                        <p className="text-[11px] text-muted-foreground">Repetition & interview speech</p>
+                        <Button
+                          size="xs"
+                          variant="secondary"
+                          className="w-full text-xs font-bold"
+                          disabled={!hasSpeaking || startingId === `${test.testVersionId}-section-speaking`}
+                          onClick={() => handleStartTest(test.testVersionId, "section", "speaking")}
+                        >
+                          {startingId === `${test.testVersionId}-section-speaking` ? (
+                            <>
+                              <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
+                            </>
+                          ) : (
+                            "Practice Speaking"
+                          )}
+                        </Button>
                       </div>
-                      <p className="text-[11px] text-muted-foreground">Repetition fluency & spoken interview</p>
-                      <Button
-                        size="xs"
-                        variant="secondary"
-                        className="w-full text-xs font-bold"
-                        disabled={!series.sectionTests.speakingId || startingId === series.sectionTests.speakingId}
-                        onClick={() => series.sectionTests.speakingId && handleStartTest(series.sectionTests.speakingId)}
-                      >
-                        {startingId === series.sectionTests.speakingId ? (
-                          <>
-                            <Loader2 className="size-3 mr-1 animate-spin" /> Launching...
-                          </>
-                        ) : (
-                          "Practice Speaking"
-                        )}
-                      </Button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </PageShell>
     </div>

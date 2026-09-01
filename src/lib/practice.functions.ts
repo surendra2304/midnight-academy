@@ -167,15 +167,18 @@ export const listPracticeTests = createServerFn({ method: "GET" })
   });
 
 /**
- * Fetch all published TOEFL tests for the student catalog.
+ * Fetch all published TOEFL tests and series for the student catalog.
+ * Returns fully data-driven published test blueprints and section details.
  */
 export const getPublishedTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Fetch published test versions along with parent test details and sections
     const { data: publishedVersions } = await supabaseAdmin
       .from("test_versions")
-      .select("id, test_id, tests(id, name, category, difficulty, code, question_count)")
+      .select("id, test_id, blueprint_version, status, tests(id, name, category, difficulty, code, question_count), sections(id, section_type, section_order, timing_seconds)")
       .eq("status", "published");
 
     const tests = (publishedVersions || [])
@@ -189,14 +192,30 @@ export const getPublishedTests = createServerFn({ method: "GET" })
           question_count: number;
         };
         if (!t) return null;
+
+        const rawSections = (v.sections as unknown as Array<{
+          id: string;
+          section_type: "reading" | "listening" | "writing" | "speaking";
+          section_order: number;
+          timing_seconds: number;
+        }>) || [];
+
+        const sections = [...rawSections].sort((a, b) => a.section_order - b.section_order);
+
         return {
           id: t.id,
           testVersionId: v.id,
           name: t.name,
-          category: t.category,
-          difficulty: t.difficulty,
+          category: t.category || "Full Mock",
+          difficulty: t.difficulty || "Medium",
           code: t.code,
           questionCount: t.question_count || 4,
+          sections: sections.map((s) => ({
+            id: s.id,
+            sectionType: s.section_type,
+            sectionOrder: s.section_order,
+            timingSeconds: s.timing_seconds,
+          })),
         };
       })
       .filter(Boolean);
