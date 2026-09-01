@@ -114,6 +114,13 @@ export class ContentValidator {
           }
         }
 
+        // Dictation check: Must have valid prompt or reference transcript
+        if (item.itemType === 'dictation') {
+          if (!item.promptSnippet || item.promptSnippet.trim().length === 0) {
+            errors.push({ path: itemPath, message: 'Dictation item must contain a reference sentence transcript.', severity: 'error' });
+          }
+        }
+
         // Listening audio check: Must have audioAssetPath
         if (
           item.itemType === 'listen_choose_response' ||

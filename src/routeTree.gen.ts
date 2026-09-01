@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DictationRouteImport } from './routes/dictation'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -43,6 +44,11 @@ const AdminRoute = AdminRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DictationRoute = DictationRouteImport.update({
+  id: '/dictation',
+  path: '/dictation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/dictation': typeof DictationRoute
   '/history': typeof HistoryRoute
   '/practice': typeof PracticeRoute
   '/profile': typeof ProfileRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/dictation': typeof DictationRoute
   '/history': typeof HistoryRoute
   '/practice': typeof PracticeRoute
   '/profile': typeof ProfileRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/dictation': typeof DictationRoute
   '/history': typeof HistoryRoute
   '/practice': typeof PracticeRoute
   '/profile': typeof ProfileRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/dashboard'
+    | '/dictation'
     | '/history'
     | '/practice'
     | '/profile'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard'
+    | '/dictation'
     | '/history'
     | '/practice'
     | '/profile'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/dashboard'
+    | '/dictation'
     | '/history'
     | '/practice'
     | '/profile'
@@ -269,6 +281,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  DictationRoute: typeof DictationRoute
   HistoryRoute: typeof HistoryRoute
   PracticeRoute: typeof PracticeRoute
   ProfileRoute: typeof ProfileRoute
@@ -302,6 +315,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dictation': {
+      id: '/dictation'
+      path: '/dictation'
+      fullPath: '/dictation'
+      preLoaderRoute: typeof DictationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -452,6 +472,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  DictationRoute: DictationRoute,
   HistoryRoute: HistoryRoute,
   PracticeRoute: PracticeRoute,
   ProfileRoute: ProfileRoute,

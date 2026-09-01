@@ -27,6 +27,7 @@ export type ToeflItemType =
   | 'listen_conversation'
   | 'listen_announcement'
   | 'listen_academic_talk'
+  | 'dictation'
   // Writing
   | 'build_sentence'
   | 'write_email'

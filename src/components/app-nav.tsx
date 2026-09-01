@@ -19,6 +19,7 @@ type NavItem = { label: string; to: string };
 const studentNav: NavItem[] = [
   { label: "Dashboard", to: "/dashboard" },
   { label: "Test Catalog", to: "/test" },
+  { label: "Dictation", to: "/dictation" },
   { label: "Practice Queue", to: "/practice" },
   { label: "Score History", to: "/history" },
   { label: "Skill Analytics", to: "/progress" },
