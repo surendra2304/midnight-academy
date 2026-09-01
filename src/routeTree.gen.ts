@@ -18,6 +18,7 @@ import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as ShadowingRouteImport } from './routes/shadowing'
+import { Route as VocabularyRouteImport } from './routes/vocabulary'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminCreateRouteImport } from './routes/admin.create'
@@ -75,6 +76,11 @@ const ProgressRoute = ProgressRouteImport.update({
 const ShadowingRoute = ShadowingRouteImport.update({
   id: '/shadowing',
   path: '/shadowing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VocabularyRoute = VocabularyRouteImport.update({
+  id: '/vocabulary',
+  path: '/vocabulary',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/shadowing': typeof ShadowingRoute
+  '/vocabulary': typeof VocabularyRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/create': typeof AdminCreateRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/shadowing': typeof ShadowingRoute
+  '/vocabulary': typeof VocabularyRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/create': typeof AdminCreateRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/shadowing': typeof ShadowingRoute
+  '/vocabulary': typeof VocabularyRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/create': typeof AdminCreateRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/shadowing'
+    | '/vocabulary'
     | '/admin/analytics'
     | '/admin/create'
     | '/auth/callback'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/shadowing'
+    | '/vocabulary'
     | '/admin/analytics'
     | '/admin/create'
     | '/auth/callback'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/shadowing'
+    | '/vocabulary'
     | '/admin/analytics'
     | '/admin/create'
     | '/auth/callback'
@@ -299,6 +311,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   ShadowingRoute: typeof ShadowingRoute
+  VocabularyRoute: typeof VocabularyRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthErrorRoute: typeof AuthErrorRoute
   ResultAttemptIdRoute: typeof ResultAttemptIdRoute
@@ -370,6 +383,13 @@ declare module '@tanstack/react-router' {
       path: '/shadowing'
       fullPath: '/shadowing'
       preLoaderRoute: typeof ShadowingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vocabulary': {
+      id: '/vocabulary'
+      path: '/vocabulary'
+      fullPath: '/vocabulary'
+      preLoaderRoute: typeof VocabularyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -498,6 +518,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   ShadowingRoute: ShadowingRoute,
+  VocabularyRoute: VocabularyRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthErrorRoute: AuthErrorRoute,
   ResultAttemptIdRoute: ResultAttemptIdRoute,
