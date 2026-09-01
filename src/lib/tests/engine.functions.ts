@@ -12,7 +12,7 @@ export const startToeflAttempt = createServerFn({ method: 'POST' })
   .validator((data) =>
     z
       .object({
-        testVersionId: z.string().uuid(),
+        testVersionId: z.string(),
         examMode: z.enum(['full', 'section', 'practice', 'diagnostic']).optional(),
         allowRetake: z.boolean().optional(),
       })
@@ -30,7 +30,7 @@ export const startToeflAttempt = createServerFn({ method: 'POST' })
 
 export const resumeToeflAttempt = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
-  .validator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ attemptId: z.string() }).parse(data))
   .handler(async ({ data, context }) => {
     const { attemptSessionService } = await import('./session-service.server');
     return attemptSessionService.resumeAttempt(data.attemptId, context.userId);

@@ -151,14 +151,14 @@ export class AttemptSessionService {
     );
 
     const snapshot: SessionSnapshot = {
-      attemptId: attempt.id,
-      status: attempt.status === 'evaluated' ? 'completed' : isExpired ? 'section_transition' : 'in_progress',
-      examMode: (attempt.exam_mode as ToeflExamMode) || 'practice',
+      attemptId: attempt?.id || attemptId,
+      status: attempt?.status === 'evaluated' ? 'completed' : isExpired ? 'section_transition' : 'in_progress',
+      examMode: (attempt?.exam_mode as ToeflExamMode) || examMode,
       currentSectionIndex: activeSecIndex,
       currentItemIndex: 0,
       sectionStartedAt: currentAttemptSec?.started_at || null,
       sectionRemainingSeconds: remainingSeconds,
-      isSectionLocked: isExpired || attempt.status === 'evaluated',
+      isSectionLocked: isExpired || attempt?.status === 'evaluated',
       responses: responsesMap,
     };
 
