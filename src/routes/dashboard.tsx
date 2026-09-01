@@ -12,6 +12,9 @@ import { PracticeQueueView } from "@/components/test-runner/PracticeQueueView";
 import type { StudentWeaknessProfile } from "@/lib/analytics/analytics-engine";
 import type { RecommendationItem } from "@/lib/recommendations/recommendation-engine";
 
+import { getUserMembership } from "@/lib/membership/membership.functions";
+import { MembershipCard } from "@/components/membership/MembershipUpgradeModal";
+
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
   head: () => ({
@@ -31,14 +34,16 @@ function Dashboard() {
   const [profile, setProfile] = useState<StudentWeaknessProfile | null>(null);
   const [targetBand, setTargetBand] = useState<number>(5.0);
   const [queue, setQueue] = useState<RecommendationItem[]>([]);
+  const [membership, setMembership] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [analyticsRes, queueRes] = await Promise.all([
+        const [analyticsRes, queueRes, memRes] = await Promise.all([
           getStudentAnalyticsDashboard(),
           getStudentPracticeQueue(),
+          getUserMembership(),
         ]);
         if (analyticsRes?.profile) {
           setProfile(analyticsRes.profile);
@@ -46,6 +51,9 @@ function Dashboard() {
         }
         if (queueRes?.queue) {
           setQueue(queueRes.queue);
+        }
+        if (memRes) {
+          setMembership(memRes);
         }
       } catch (err) {
         console.error("Dashboard data load error:", err);
@@ -75,7 +83,18 @@ function Dashboard() {
       <AppNav />
       <PageShell>
         <div className="space-y-10 pb-16">
-          {/* Hero Header */}
+          {/* Membership & Usage Quotas */}
+          {membership ? (
+            <MembershipCard
+              currentTier={membership.tier}
+              quotas={membership.quotas}
+              onUpgradeSuccess={() => {
+                setMembership((prev: any) => ({ ...prev, tier: "member", isUnlimited: true }));
+              }}
+            />
+          ) : null}
+
+          {/* Quick Start Card Banner */}
           <section className="rounded-2xl border border-border bg-gradient-to-r from-card/80 via-card/50 to-card/80 p-8 shadow-lg flex flex-wrap items-center justify-between gap-6">
             <div>
               <span className="text-xs font-bold uppercase tracking-widest text-primary">Standardized Examination Hub</span>
