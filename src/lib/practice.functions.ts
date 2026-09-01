@@ -165,3 +165,40 @@ export const listPracticeTests = createServerFn({ method: "GET" })
       code: t.code,
     }));
   });
+
+/**
+ * Fetch all published TOEFL tests for the student catalog.
+ */
+export const getPublishedTests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: publishedVersions } = await supabaseAdmin
+      .from("test_versions")
+      .select("id, test_id, tests(id, name, category, difficulty, code, question_count)")
+      .eq("status", "published");
+
+    const tests = (publishedVersions || [])
+      .map((v) => {
+        const t = v.tests as unknown as {
+          id: string;
+          name: string;
+          category: string;
+          difficulty: string;
+          code: string | null;
+          question_count: number;
+        };
+        if (!t) return null;
+        return {
+          id: t.id,
+          name: t.name,
+          category: t.category,
+          difficulty: t.difficulty,
+          code: t.code,
+          questionCount: t.question_count || 4,
+        };
+      })
+      .filter(Boolean);
+
+    return tests;
+  });

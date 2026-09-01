@@ -1,346 +1,216 @@
 import { requireAuth } from "@/lib/auth-guard";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
-  AlertTriangle,
-  ArrowRight,
+  Award,
+  BookOpen,
   CalendarClock,
   CheckCircle2,
-  Info,
+  Clock,
+  Filter,
+  Headphones,
   Loader2,
+  Mic,
+  PenTool,
+  Play,
+  Sparkles,
 } from "lucide-react";
-import { Wordmark } from "@/components/brand";
-import { DifficultyTag, Tag } from "@/components/kit";
+import { AppNav } from "@/components/app-nav";
+import { PageShell } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { startAttempt } from "@/lib/attempts.functions";
+import { getPublishedTests } from "@/lib/practice.functions";
+import { startToeflAttempt } from "@/lib/tests/engine.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/test/")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
   head: () => ({
     meta: [
-      { title: "Enter Your Test — Midnight Academy" },
+      { title: "TOEFL Test Catalog — Midnight Academy" },
       {
         name: "description",
-        content:
-          "Enter your test code to begin a Midnight Academy technical comprehension assessment.",
-      },
-      { property: "og:title", content: "Enter Your Test — Midnight Academy" },
-      {
-        property: "og:description",
-        content: "Read the instructions, then start your comprehension test.",
+        content: "Select an official 2026 format TOEFL mock test or targeted section exam.",
       },
     ],
   }),
-  component: EnterTest,
+  component: TestCatalog,
 });
 
-const instructions = [
-  "Each question is shown for a limited time. Read it carefully — your only task is to understand it.",
-  "When the time ends, the question disappears and does not come back.",
-  "You will then explain, in your own words, what the question was asking.",
-  "Do not solve the question. Describe the objective, the constraints and the expected input and output.",
-  "Copying and text selection are disabled while the question is on screen.",
-  "Each test code allows one attempt. Submitting the final question ends the test.",
-];
-
-type Problem = "invalid" | "completed" | "closed" | "expired" | "empty" | null;
-
-type VerifiedTestData = {
-  attemptId: string;
-  answered: number;
-  total: number;
-  test: {
-    id: string;
-    name: string;
-    category: string;
-    difficulty: string;
-    code: string;
-    secondsPerQuestion: number;
-    responseSeconds: number;
-  };
-};
-
-function EnterTest() {
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [problem, setProblem] = useState<Problem>(null);
-  const [existingAttemptId, setExistingAttemptId] = useState<string | null>(null);
-  const [verifiedData, setVerifiedData] = useState<VerifiedTestData | null>(null);
+function TestCatalog() {
   const navigate = useNavigate();
+  const [tests, setTests] = useState<
+    Array<{
+      id: string;
+      name: string;
+      category: string;
+      difficulty: string;
+      code: string | null;
+      questionCount: number;
+    }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [startingId, setStartingId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("all");
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const value = code.trim().toUpperCase();
-    if (!value) return;
-
-    setLoading(true);
-    setProblem(null);
-
-    try {
-      const res = await startAttempt({ data: { code: value } });
-
-      if ("error" in res) {
-        if (res.error === "completed") {
-          setProblem("completed");
-          if ("attemptId" in res && typeof res.attemptId === "string") {
-            setExistingAttemptId(res.attemptId);
-          }
-        } else if (res.error === "closed") {
-          setProblem("closed");
-        } else if (res.error === "expired") {
-          setProblem("expired");
-        } else if (res.error === "empty") {
-          setProblem("empty");
-        } else {
-          setProblem("invalid");
-        }
-        return;
+  useEffect(() => {
+    async function loadCatalog() {
+      try {
+        const res = await getPublishedTests();
+        setTests(res || []);
+      } catch (err) {
+        console.error("Failed to load catalog:", err);
+      } finally {
+        setLoading(false);
       }
-
-      setVerifiedData(res as VerifiedTestData);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to validate test code";
-      toast.error(message);
-      setProblem("invalid");
-    } finally {
-      setLoading(false);
     }
-  }
+    loadCatalog();
+  }, []);
 
-  if (verifiedData) {
+  const handleStartTest = async (testId: string) => {
+    try {
+      setStartingId(testId);
+      const res = await startToeflAttempt({
+        data: {
+          testId,
+          examMode: "full",
+          isTimed: true,
+        },
+      });
+
+      if (res?.attemptId) {
+        navigate({ to: "/test/run", search: { attemptId: res.attemptId } });
+      }
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message || "Failed to start assessment");
+    } finally {
+      setStartingId(null);
+    }
+  };
+
+  const filteredTests = tests.filter((t) => {
+    if (filter === "all") return true;
+    return t.category.toLowerCase().includes(filter.toLowerCase());
+  });
+
+  if (loading) {
     return (
-      <main className="min-h-screen">
-        <header className="border-b border-border px-5 py-4 lg:px-8">
-          <Wordmark />
-        </header>
-        <div className="mx-auto max-w-2xl px-5 py-14">
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground lg:text-3xl">
-            {verifiedData.test.name}
-          </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Tag tone="primary">{verifiedData.test.category}</Tag>
-            <DifficultyTag
-              difficulty={verifiedData.test.difficulty as "Easy" | "Medium" | "Hard"}
-            />
-            <Tag>{verifiedData.total} questions</Tag>
-            <Tag>{verifiedData.test.secondsPerQuestion}s per question</Tag>
-            {verifiedData.answered > 0 ? (
-              <Tag tone="violet">{verifiedData.answered} answered</Tag>
-            ) : null}
+      <div className="min-h-screen bg-background text-foreground">
+        <AppNav />
+        <PageShell>
+          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading TOEFL test catalog...</p>
           </div>
-
-          <section className="panel mt-8 p-6">
-            <h2 className="text-base font-semibold text-foreground">Before You Begin</h2>
-            <ol className="mt-5 space-y-4">
-              {instructions.map((text, i) => (
-                <li key={text} className="flex gap-3.5">
-                  <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-md bg-primary/12 text-[11px] font-bold text-primary">
-                    {i + 1}
-                  </span>
-                  <span className="text-sm leading-relaxed text-muted-foreground">{text}</span>
-                </li>
-              ))}
-            </ol>
-            <div className="mt-6 flex gap-3 rounded-xl border border-primary/25 bg-primary/8 p-4">
-              <Info className="size-4 shrink-0 text-primary" />
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                This test evaluates how well you understand technical questions, not just whether
-                you can solve them.
-              </p>
-            </div>
-          </section>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button
-              size="lg"
-              className="glow-ring"
-              onClick={() => {
-                navigate({
-                  to: "/test/run",
-                  search: { attemptId: verifiedData.attemptId },
-                });
-              }}
-            >
-              {verifiedData.answered > 0 ? "Resume Test" : "Start Test"}{" "}
-              <ArrowRight className="size-4" />
-            </Button>
-            <Button variant="ghost" size="lg" onClick={() => setVerifiedData(null)}>
-              Use a different code
-            </Button>
-          </div>
-        </div>
-      </main>
+        </PageShell>
+      </div>
     );
   }
 
   return (
-    <main className="grid-backdrop flex min-h-screen flex-col">
-      <header className="border-b border-border px-5 py-4 lg:px-8">
-        <Wordmark />
-      </header>
-      <div className="flex flex-1 items-center justify-center px-5 py-16">
-        <div className="w-full max-w-md">
-          <h1 className="text-center text-2xl font-extrabold tracking-tight text-foreground">
-            Enter Your Test
-          </h1>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Your instructor shares a code like <span className="text-foreground">DSA-X7K29</span>.
-          </p>
+    <div className="min-h-screen bg-background text-foreground">
+      <AppNav />
+      <PageShell>
+        <div className="space-y-8 pb-16">
+          {/* Catalog Header */}
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-primary">ETS 2026 Examination Blueprint</span>
+              <h1 className="text-2xl font-black text-foreground lg:text-3xl mt-1">Official Test Catalog</h1>
+              <p className="text-xs text-muted-foreground mt-1">
+                Full-length adaptive mock exams and targeted skill section assessments.
+              </p>
+            </div>
 
-          <form onSubmit={submit} className="panel mt-8 p-6">
-            <label
-              htmlFor="code"
-              className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-            >
-              Enter test code
-            </label>
-            <Input
-              id="code"
-              value={code}
-              onChange={(e) => {
-                setCode(e.target.value);
-                setProblem(null);
-              }}
-              placeholder="DSA-X7K29"
-              className="mt-3 h-12 text-center text-lg font-bold uppercase tracking-[0.22em]"
-              autoComplete="off"
-              disabled={loading}
-            />
+            {/* Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { id: "all", label: "All Tests" },
+                { id: "mock", label: "Full Mocks" },
+                { id: "reading", label: "Reading" },
+                { id: "listening", label: "Listening" },
+                { id: "writing", label: "Writing" },
+                { id: "speaking", label: "Speaking" },
+              ].map((f) => (
+                <Button
+                  key={f.id}
+                  size="sm"
+                  variant={filter === f.id ? "default" : "outline"}
+                  onClick={() => setFilter(f.id)}
+                  className="text-xs"
+                >
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+          </div>
 
-            {problem === "invalid" ? (
-              <ErrorNote
-                icon={<AlertTriangle className="size-4 shrink-0 text-destructive" />}
-                title="That code isn't valid"
-                body="Check the code with your instructor — it may have been typed incorrectly or expired."
-              />
-            ) : null}
-            {problem === "closed" ? (
-              <ErrorNote
-                icon={<CalendarClock className="size-4 shrink-0 text-warning" />}
-                title="This test isn't open right now"
-                body="The instructor has paused it. You'll be able to attempt it once the test window reopens."
-                tone="warning"
-              />
-            ) : null}
-            {problem === "expired" ? (
-              <ErrorNote
-                icon={<CalendarClock className="size-4 shrink-0 text-destructive" />}
-                title="This test has expired"
-                body="The deadline for this test has passed. Reach out to your instructor if you need an extension."
-                tone="danger"
-              />
-            ) : null}
-            {problem === "empty" ? (
-              <ErrorNote
-                icon={<AlertTriangle className="size-4 shrink-0 text-warning" />}
-                title="This test has no questions yet"
-                body="The instructor has not approved any questions for this test code yet."
-                tone="warning"
-              />
-            ) : null}
-            {problem === "completed" ? (
-              <ErrorNote
-                icon={<CheckCircle2 className="size-4 shrink-0 text-primary" />}
-                title="You've completed this test before"
-                body="You can view your previous result or retake this test to improve your score."
-                tone="primary"
-                action={
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {existingAttemptId ? (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          navigate({
-                            to: "/result/$attemptId",
-                            params: { attemptId: existingAttemptId },
-                          })
-                        }
-                      >
-                        View previous result
-                      </Button>
-                    ) : null}
+          {/* Test Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTests.map((t) => {
+              const isFullMock = t.category.toLowerCase().includes("mock");
+
+              return (
+                <article
+                  key={t.id}
+                  className="flex flex-col justify-between rounded-2xl border border-border bg-card/50 p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg space-y-5"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">
+                        {t.category}
+                      </span>
+                      <span className="rounded bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                        {t.difficulty}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-base font-bold text-foreground leading-snug">{t.name}</h3>
+                      {t.code ? (
+                        <p className="text-[11px] font-mono text-muted-foreground mt-1">Code: {t.code}</p>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-xl border border-border/80 bg-background/60 p-3.5 space-y-1.5 text-xs text-muted-foreground">
+                      {isFullMock ? (
+                        <>
+                          <p className="flex items-center gap-2 text-foreground/90 font-medium">
+                            <Clock className="size-3.5 text-primary" /> 90 Minutes Total Duration
+                          </p>
+                          <p className="text-[11px]">4 Sections (Reading → Listening → Writing → Speaking)</p>
+                        </>
+                      ) : (
+                        <p className="flex items-center gap-2 text-foreground/90 font-medium">
+                          <BookOpen className="size-3.5 text-primary" /> Single Skill Targeted Blueprint
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
                     <Button
                       size="sm"
-                      onClick={async () => {
-                        try {
-                          setLoading(true);
-                          const res = await startAttempt({
-                            data: { code: code.trim().toUpperCase(), allowRetake: true },
-                          });
-                          if (!("error" in res)) {
-                            setVerifiedData(res as VerifiedTestData);
-                          }
-                        } catch {
-                          toast.error("Could not start retake.");
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
+                      className="w-full font-bold"
+                      disabled={startingId === t.id}
+                      onClick={() => handleStartTest(t.id)}
                     >
-                      Retake test
+                      {startingId === t.id ? (
+                        <>
+                          <Loader2 className="size-3.5 mr-1.5 animate-spin" /> Preparing Exam...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="size-3.5 mr-1.5 fill-current" /> Start Examination
+                        </>
+                      )}
                     </Button>
                   </div>
-                }
-              />
-            ) : null}
-
-            <Button
-              type="submit"
-              size="lg"
-              className="mt-6 w-full"
-              disabled={loading || !code.trim()}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" /> Verifying...
-                </>
-              ) : (
-                "Continue"
-              )}
-            </Button>
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              No code?{" "}
-              <Link to="/practice" className="text-primary hover:underline">
-                Browse the practice library
-              </Link>
-            </p>
-          </form>
+                </article>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </main>
-  );
-}
-
-function ErrorNote({
-  icon,
-  title,
-  body,
-  tone = "danger",
-  action,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-  tone?: "danger" | "warning" | "primary";
-  action?: React.ReactNode;
-}) {
-  const border =
-    tone === "danger"
-      ? "border-destructive/35 bg-destructive/8"
-      : tone === "warning"
-        ? "border-warning/35 bg-warning/8"
-        : "border-primary/30 bg-primary/8";
-  return (
-    <div role="alert" className={`mt-4 flex gap-3 rounded-xl border p-4 ${border}`}>
-      {icon}
-      <div>
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{body}</p>
-        {action}
-      </div>
+      </PageShell>
     </div>
   );
 }
