@@ -109,10 +109,11 @@ export class AttemptSessionService {
     const blueprint = await loadTestBlueprint(effectiveVersionId, examMode);
 
     // 3. Fetch attempt_sections
+    const targetAttemptId = attempt?.id || attemptId;
     const { data: attemptSections } = await supabaseAdmin
       .from('attempt_sections')
       .select('id, section_id, status, started_at, completed_at')
-      .eq('attempt_id', attempt.id)
+      .eq('attempt_id', targetAttemptId)
       .order('created_at', { ascending: true });
 
     // Determine current active section index
@@ -126,21 +127,23 @@ export class AttemptSessionService {
 
     // 4. Fetch all existing responses for this attempt
     const attemptSecIds = (attemptSections || []).map((s) => s.id);
-    const { data: dbResponses } = await supabaseAdmin
-      .from('responses')
-      .select('content_item_id, raw_answer, normalized_answer, time_spent_ms, flagged, answered_at')
-      .in('attempt_section_id', attemptSecIds);
+    let responsesMap: Record<string, ItemResponseState> = {};
+    if (attemptSecIds.length > 0) {
+      const { data: dbResponses } = await supabaseAdmin
+        .from('responses')
+        .select('content_item_id, raw_answer, normalized_answer, time_spent_ms, flagged, answered_at')
+        .in('attempt_section_id', attemptSecIds);
 
-    const responsesMap: Record<string, ItemResponseState> = {};
-    for (const r of dbResponses || []) {
-      responsesMap[r.content_item_id] = {
-        rawAnswer: r.raw_answer,
-        normalizedAnswer: (r.normalized_answer as Record<string, unknown>) || {},
-        isAnswered: Boolean(r.raw_answer && r.raw_answer.trim().length > 0),
-        isFlagged: Boolean(r.flagged),
-        timeSpentMs: r.time_spent_ms || 0,
-        lastSavedAt: r.answered_at,
-      };
+      for (const r of dbResponses || []) {
+        responsesMap[r.content_item_id] = {
+          rawAnswer: r.raw_answer,
+          normalizedAnswer: (r.normalized_answer as Record<string, unknown>) || {},
+          isAnswered: Boolean(r.raw_answer && r.raw_answer.trim().length > 0),
+          isFlagged: Boolean(r.flagged),
+          timeSpentMs: r.time_spent_ms || 0,
+          lastSavedAt: r.answered_at,
+        };
+      }
     }
 
     // 5. Compute server timing

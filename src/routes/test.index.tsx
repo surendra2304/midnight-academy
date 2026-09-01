@@ -1,4 +1,4 @@
-﻿import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth } from "@/lib/auth-guard";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
@@ -284,13 +284,16 @@ function TestCatalog() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
                       {/* Reading Section Card */}
                       <div
-                        className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
+                        className={`rounded-2xl border border-white/5 bg-surface-2/60 p-4 space-y-3 transition-all hover:border-blue-500/30 hover:bg-surface-2 ${
                           !hasReading ? "opacity-30" : activeTab !== "all" && activeTab !== "reading" ? "opacity-50" : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                            <BookOpen className="size-4 text-blue-500" /> Reading
+                            <span className="size-6 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                              <BookOpen className="size-3.5 text-blue-400" />
+                            </span>
+                            Reading
                           </div>
                           <span className="text-[10px] text-muted-foreground font-semibold">
                             {test.sections.find((s) => s.sectionType === "reading")
@@ -301,8 +304,8 @@ function TestCatalog() {
                         <p className="text-[11px] text-muted-foreground">Cloze passages & academic texts</p>
                         <Button
                           size="xs"
-                          variant="secondary"
-                          className="w-full text-xs font-bold"
+                          variant="outline"
+                          className="w-full text-xs font-bold border-blue-500/30 text-blue-400 bg-blue-500/5 hover:bg-blue-500/15 hover:border-blue-400"
                           disabled={!hasReading || startingId === `${test.testVersionId}-section-reading`}
                           onClick={() => handleStartTest(test.testVersionId, "section", "reading")}
                         >
@@ -318,13 +321,16 @@ function TestCatalog() {
 
                       {/* Listening Section Card */}
                       <div
-                        className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
+                        className={`rounded-2xl border border-white/5 bg-surface-2/60 p-4 space-y-3 transition-all hover:border-emerald-500/30 hover:bg-surface-2 ${
                           !hasListening ? "opacity-30" : activeTab !== "all" && activeTab !== "listening" ? "opacity-50" : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                            <Headphones className="size-4 text-emerald-500" /> Listening
+                            <span className="size-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                              <Headphones className="size-3.5 text-emerald-400" />
+                            </span>
+                            Listening
                           </div>
                           <span className="text-[10px] text-muted-foreground font-semibold">
                             {test.sections.find((s) => s.sectionType === "listening")
@@ -335,8 +341,8 @@ function TestCatalog() {
                         <p className="text-[11px] text-muted-foreground">Conversations & academic talks</p>
                         <Button
                           size="xs"
-                          variant="secondary"
-                          className="w-full text-xs font-bold"
+                          variant="outline"
+                          className="w-full text-xs font-bold border-emerald-500/30 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/15 hover:border-emerald-400"
                           disabled={!hasListening || startingId === `${test.testVersionId}-section-listening`}
                           onClick={() => handleStartTest(test.testVersionId, "section", "listening")}
                         >
@@ -352,13 +358,16 @@ function TestCatalog() {
 
                       {/* Writing Section Card */}
                       <div
-                        className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
+                        className={`rounded-2xl border border-white/5 bg-surface-2/60 p-4 space-y-3 transition-all hover:border-purple-500/30 hover:bg-surface-2 ${
                           !hasWriting ? "opacity-30" : activeTab !== "all" && activeTab !== "writing" ? "opacity-50" : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                            <PenTool className="size-4 text-purple-500" /> Writing
+                            <span className="size-6 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                              <PenTool className="size-3.5 text-purple-400" />
+                            </span>
+                            Writing
                           </div>
                           <span className="text-[10px] text-muted-foreground font-semibold">
                             {test.sections.find((s) => s.sectionType === "writing")
@@ -369,8 +378,8 @@ function TestCatalog() {
                         <p className="text-[11px] text-muted-foreground">Email & academic discussion</p>
                         <Button
                           size="xs"
-                          variant="secondary"
-                          className="w-full text-xs font-bold"
+                          variant="outline"
+                          className="w-full text-xs font-bold border-purple-500/30 text-purple-400 bg-purple-500/5 hover:bg-purple-500/15 hover:border-purple-400"
                           disabled={!hasWriting || startingId === `${test.testVersionId}-section-writing`}
                           onClick={() => handleStartTest(test.testVersionId, "section", "writing")}
                         >
@@ -386,25 +395,28 @@ function TestCatalog() {
 
                       {/* Speaking Section Card */}
                       <div
-                        className={`rounded-2xl border border-border/80 bg-background/60 p-4 space-y-3 ${
+                        className={`rounded-2xl border border-white/5 bg-surface-2/60 p-4 space-y-3 transition-all hover:border-amber-500/30 hover:bg-surface-2 ${
                           !hasSpeaking ? "opacity-30" : activeTab !== "all" && activeTab !== "speaking" ? "opacity-50" : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                            <Mic className="size-4 text-rose-500" /> Speaking
+                            <span className="size-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                              <Mic className="size-3.5 text-amber-400" />
+                            </span>
+                            Speaking
                           </div>
                           <span className="text-[10px] text-muted-foreground font-semibold">
                             {test.sections.find((s) => s.sectionType === "speaking")
-                              ? `${Math.round((test.sections.find((s) => s.sectionType === "speaking")!.timingSeconds || 900) / 60)} Mins`
+                              ? `${Math.round((test.sections.find((s) => s.sectionType === "speaking")!.timingSeconds || 480) / 60)} Mins`
                               : "N/A"}
                           </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground">Repetition & interview speech</p>
                         <Button
                           size="xs"
-                          variant="secondary"
-                          className="w-full text-xs font-bold"
+                          variant="outline"
+                          className="w-full text-xs font-bold border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/15 hover:border-amber-400"
                           disabled={!hasSpeaking || startingId === `${test.testVersionId}-section-speaking`}
                           onClick={() => handleStartTest(test.testVersionId, "section", "speaking")}
                         >
