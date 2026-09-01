@@ -1,4 +1,4 @@
-﻿# Midnight Academy
+# Midnight Academy
 
 > **"Read. Understand. Explain. Improve."**  
 > AI-powered technical question comprehension and articulation assessment platform.
@@ -96,7 +96,9 @@ Detailed technical and engineering guides are available under the `/docs` direct
 
 ## ⚠️ Current Project Status
 
-- **Database & Migrations**: Synchronized and reconciled remotely on Supabase.
-- **Core Test Taking & AI Grading**: Operational.
-- **Authentication**: Email/Password and Google OAuth operational.
-- **Live OTP Registration**: Under active investigation (see [Issue AUTH-OTP-PROD-001](docs/KNOWN_ISSUES.md)).
+- **TOEFL iBT 2026 Release**: Fully deployed and active at [midnight-academy-one.vercel.app](https://midnight-academy-one.vercel.app).
+- **Database & Migrations**: Additive TOEFL domain schema synchronized on Supabase (`test_versions`, `sections`, `modules`, `content_items`, `rubrics`, etc.).
+- **Multi-Modal Examination Suite**: 4-Section Full Mocks (Reading → Listening → Writing → Speaking) and single-skill tests operational.
+- **AI Rubric Evaluations**: Gemini-assisted writing and speaking trait evaluations running with structured JSON validation and prompt injection defenses.
+- **Unified Score Reporting**: 1.0–6.0 official band scores, estimated 0–120 score, diagnostic error reviews, and personalized weakness practice queues live.
+- **Live OTP Registration**: **RESOLVED** ([AUTH-OTP-PROD-001](docs/AUTH_OTP_PROD_RESOLUTION.md)) with dual-port STARTTLS/SSL failover and native OTP fallback.
