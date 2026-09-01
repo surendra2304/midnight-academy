@@ -85,7 +85,12 @@ export class AttemptSessionService {
       await supabaseAdmin.from('attempt_sections').insert(attemptSectionsPayload);
     }
 
-    return this.resumeAttempt(finalAttemptId, studentId, resolvedVersionId);
+    const resumed = await this.resumeAttempt(finalAttemptId, studentId, resolvedVersionId);
+    return {
+      attemptId: finalAttemptId,
+      blueprint: resumed.blueprint,
+      snapshot: resumed.snapshot,
+    };
   }
 
   /**
