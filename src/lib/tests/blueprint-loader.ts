@@ -267,7 +267,7 @@ export async function loadTestBlueprint(
 
     const clientSections: ClientSectionBlueprint[] = sections.map((sec) => {
       const secItems: ClientContentItem[] = (items || [])
-        .filter((i) => moduleToSectionMap.get(i.module_id) === sec.id || i.section_type === sec.section_type)
+        .filter((i) => moduleToSectionMap.get(i.module_id) === sec.id)
         .map((i) => ({
           id: i.id,
           moduleId: i.module_id,

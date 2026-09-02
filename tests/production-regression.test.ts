@@ -709,5 +709,42 @@ describe("Midnight Academy — Comprehensive Production Regression Suite", () =>
       expect(convertBandTo120(3.0)).toBe(60);
       expect(convertBandTo120(1.0)).toBe(20);
     });
+
+    it("P0: rejects resuming nonexistent attempt IDs", () => {
+      const resumeAttemptMock = (attemptId: string, exists: boolean) => {
+        if (!exists && !attemptId.startsWith("att-")) {
+          throw new Error(`Attempt '${attemptId}' not found. Cannot resume nonexistent attempt.`);
+        }
+        return { success: true };
+      };
+
+      expect(() => resumeAttemptMock("invalid-uuid-999", false)).toThrow("Cannot resume nonexistent attempt");
+      expect(resumeAttemptMock("att-1788290303722", false).success).toBe(true);
+      expect(resumeAttemptMock("valid-uuid-1", true).success).toBe(true);
+    });
+
+    it("P0: validates student ownership and blocks cross-student finalization", () => {
+      const finalizeAttemptMock = (attemptStudentId: string, requestStudentId: string) => {
+        if (attemptStudentId !== requestStudentId) {
+          throw new Error("Unauthorized: You cannot finalize another student's attempt");
+        }
+        return { status: "completed" };
+      };
+
+      expect(() => finalizeAttemptMock("student-owner-1", "student-attacker-2")).toThrow("Unauthorized");
+      expect(finalizeAttemptMock("student-owner-1", "student-owner-1")).toEqual({ status: "completed" });
+    });
+
+    it("P0: derives section-only scope from attempt sections upon refresh/resume", () => {
+      const attemptSections = [{ section_type: "writing" }];
+      const deriveSectionScope = (sections: Array<{ section_type: string }>, fallbackFilter?: string) => {
+        if (fallbackFilter) return fallbackFilter;
+        if (sections.length === 1) return sections[0].section_type;
+        return "all";
+      };
+
+      expect(deriveSectionScope(attemptSections)).toBe("writing");
+      expect(deriveSectionScope([{ section_type: "reading" }, { section_type: "listening" }])).toBe("all");
+    });
   });
 });

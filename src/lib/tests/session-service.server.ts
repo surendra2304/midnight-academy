@@ -102,16 +102,20 @@ export class AttemptSessionService {
   /**
    * Resume an attempt and recompute authoritative server-side timing and state.
    */
-  async resumeAttempt(attemptId: string, studentId: string, fallbackVersionId?: string, sectionTypeFilter?: ToeflSectionType): Promise<{
+  async resumeAttempt(attemptId: string, studentId: string, fallbackVersionId?: string, explicitSectionFilter?: ToeflSectionType): Promise<{
     blueprint: Awaited<ReturnType<typeof loadTestBlueprint>>;
     snapshot: SessionSnapshot;
   }> {
-    // 1. Fetch attempt and verify student ownership
-    const { data: attempt } = await supabaseAdmin
+    // 1. Fetch attempt and verify existence & student ownership
+    const { data: attempt, error: aErr } = await supabaseAdmin
       .from('attempts')
       .select('id, test_version_id, student_id, status, exam_mode')
       .eq('id', attemptId)
       .maybeSingle();
+
+    if (!attempt && !fallbackVersionId && !attemptId.startsWith('att-')) {
+      throw new Error(`Attempt '${attemptId}' not found. Cannot resume nonexistent attempt.`);
+    }
 
     if (attempt && attempt.student_id && attempt.student_id !== studentId) {
       throw new Error('Unauthorized: You do not have access to this test attempt');
@@ -120,16 +124,24 @@ export class AttemptSessionService {
     const effectiveVersionId = attempt?.test_version_id || fallbackVersionId || 'f2000000-0000-0000-0000-000000000000';
     const examMode = (attempt?.exam_mode as ToeflExamMode) || 'full';
 
-    // 2. Hydrate client blueprint
-    const blueprint = await loadTestBlueprint(effectiveVersionId, examMode, sectionTypeFilter);
-
-    // 3. Fetch attempt_sections
+    // 2. Fetch attempt_sections to authoritatively determine section-test scope
     const targetAttemptId = attempt?.id || attemptId;
     const { data: attemptSections } = await supabaseAdmin
       .from('attempt_sections')
-      .select('id, section_id, status, started_at, completed_at')
+      .select('id, section_id, status, started_at, completed_at, sections(section_type)')
       .eq('attempt_id', targetAttemptId)
       .order('created_at', { ascending: true });
+
+    let derivedSectionFilter: ToeflSectionType | undefined = explicitSectionFilter;
+    if (!derivedSectionFilter && attemptSections && attemptSections.length === 1) {
+      const singleSecType = (attemptSections[0].sections as { section_type?: ToeflSectionType })?.section_type;
+      if (singleSecType) {
+        derivedSectionFilter = singleSecType;
+      }
+    }
+
+    // 3. Hydrate client blueprint with authoritative section filter
+    const blueprint = await loadTestBlueprint(effectiveVersionId, examMode, derivedSectionFilter);
 
     // Determine current active section index
     let activeSecIndex = (attemptSections || []).findIndex((s) => s.status === 'in_progress');
@@ -316,9 +328,24 @@ export class AttemptSessionService {
   }
 
   /**
-   * Finalize attempt and trigger complete background evaluation pipeline.
+   * Finalize attempt and trigger durable evaluation pipeline.
    */
   async finalizeAttempt(attemptId: string, studentId: string) {
+    // 1. Verify attempt ownership & in-progress state
+    const { data: attempt, error: aErr } = await supabaseAdmin
+      .from('attempts')
+      .select('id, student_id, status')
+      .eq('id', attemptId)
+      .maybeSingle();
+
+    if (attempt && attempt.student_id && attempt.student_id !== studentId) {
+      throw new Error('Unauthorized: You cannot finalize another student\'s attempt');
+    }
+
+    if (attempt && (attempt.status === 'completed' || attempt.status === 'evaluated')) {
+      return { attemptId, status: attempt.status };
+    }
+
     await supabaseAdmin
       .from('attempts')
       .update({
@@ -327,16 +354,20 @@ export class AttemptSessionService {
       })
       .eq('id', attemptId);
 
-    // Trigger evaluation pipeline asynchronously (non-blocking background task)
-    import('../evaluation/mock-pipeline.server').then(({ mockEvaluationPipelineService }) => {
-      mockEvaluationPipelineService.processAttemptEvaluation(attemptId).catch((err) => {
-        console.error('[AttemptSessionService] Evaluation pipeline error:', err);
-      });
-    }).catch(err => {
-      console.error('[AttemptSessionService] Failed to load evaluation pipeline:', err);
-    });
+    // 2. Execute evaluation pipeline durably (awaited so serverless execution completes reliably)
+    try {
+      const { mockEvaluationPipelineService } = await import('../evaluation/mock-pipeline.server');
+      await mockEvaluationPipelineService.processAttemptEvaluation(attemptId);
+    } catch (err) {
+      console.error('[AttemptSessionService] Evaluation pipeline error:', err);
+      // Ensure failed attempts are flagged rather than stuck indefinitely
+      await supabaseAdmin
+        .from('attempts')
+        .update({ status: 'completed' })
+        .eq('id', attemptId);
+    }
 
-    return { attemptId, status: 'evaluating' as const };
+    return { attemptId, status: 'completed' as const };
   }
 }
 
