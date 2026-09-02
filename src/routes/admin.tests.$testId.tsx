@@ -207,13 +207,13 @@ function TestDetail() {
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Tag tone="primary">{test.category}</Tag>
             <DifficultyTag difficulty={test.difficulty as "Easy" | "Medium" | "Hard"} />
-            {test.activeParticipants > 0 ? (
+            {test.participants > 0 ? (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                 <span className="relative flex size-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
                 </span>
-                {test.activeParticipants} currently writing
+                {test.participants} participants
               </span>
             ) : null}
             <StatusTag status={test.status as "draft" | "active" | "completed"} />

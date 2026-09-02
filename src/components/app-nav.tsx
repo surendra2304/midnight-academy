@@ -118,9 +118,9 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
 
 import { Button } from "@/components/ui/button";
 
-export function AppNav() {
+export function AppNav({ admin }: { admin?: boolean } = {}) {
   const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = admin !== undefined ? admin : user?.role === "ADMIN";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-card/70 backdrop-blur">
