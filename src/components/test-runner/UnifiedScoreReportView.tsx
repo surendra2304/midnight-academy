@@ -91,10 +91,10 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
       <section className="rounded-2xl border border-border bg-gradient-to-b from-card/80 to-card/40 p-8 shadow-xl">
         <div className="flex flex-wrap items-center justify-between gap-6 border-b border-border/60 pb-6">
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-primary">TOEFL iBT Official Performance Report</span>
-            <h1 className="text-2xl font-black text-foreground mt-1">{attempt.tests?.name || 'TOEFL Mock Assessment'}</h1>
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">Standardized Performance & AI Evaluation Report</span>
+            <h1 className="text-2xl font-black text-foreground mt-1">{attempt.tests?.name || 'Standardized Mock Assessment'}</h1>
             <p className="text-xs text-muted-foreground mt-1">
-              Evaluated on official ETS 2026 1.0–6.0 Band Scale & Comparative 0–120 Model
+              Evaluated on Official 1.0–6.0 Band Scale & Comparative 0–120 Benchmark Model
             </p>
           </div>
 

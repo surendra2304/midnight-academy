@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Test Definition & Blueprint Loader
  * Hydrates published test versions into client-safe runtime blueprints.
  * Guarantees that answer keys, is_correct, and distractor_rationales are NEVER serialized to clients.
@@ -167,7 +167,7 @@ export function getStandardFallbackBlueprint(
   return {
     testVersionId,
     testId: 'f1000000-0000-0000-0000-000000000000',
-    name: 'TOEFL iBT 2026: Official Standardized Assessment',
+    name: 'Standardized English Proficiency Benchmark Exam',
     examMode,
     blueprintVersion: '2026.1',
     sections: filteredSections.length > 0 ? filteredSections : allSections,
