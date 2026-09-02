@@ -21,7 +21,7 @@ export class AttemptSessionService {
    * Start a new test attempt or resume an active in-progress one.
    */
   async startAttempt(options: StartAttemptOptions) {
-    const { testVersionId, studentId, examMode = 'practice', allowRetake = true } = options;
+    const { testVersionId, studentId, examMode = 'practice', sectionTypeFilter, allowRetake = true } = options;
 
     // 1. Check if an active in-progress attempt already exists for this student & version
     const { data: existing } = await supabaseAdmin
@@ -67,12 +67,18 @@ export class AttemptSessionService {
 
     const finalAttemptId = attempt?.id || `att-${Date.now()}`;
 
-    // 4. Create attempt_sections for each section in the test_version
-    const { data: sections } = await supabaseAdmin
+    // 4. Create attempt_sections for each section in the test_version (filtered if sectionTypeFilter is given)
+    let sectionQuery = supabaseAdmin
       .from('sections')
-      .select('id, section_order')
+      .select('id, section_order, section_type')
       .eq('test_version_id', resolvedVersionId)
       .order('section_order', { ascending: true });
+
+    if (sectionTypeFilter) {
+      sectionQuery = sectionQuery.eq('section_type', sectionTypeFilter);
+    }
+
+    const { data: sections } = await sectionQuery;
 
     if (sections && sections.length > 0 && attempt?.id) {
       const attemptSectionsPayload = sections.map((sec, idx) => ({
@@ -85,7 +91,7 @@ export class AttemptSessionService {
       await supabaseAdmin.from('attempt_sections').insert(attemptSectionsPayload);
     }
 
-    const resumed = await this.resumeAttempt(finalAttemptId, studentId, resolvedVersionId);
+    const resumed = await this.resumeAttempt(finalAttemptId, studentId, resolvedVersionId, sectionTypeFilter);
     return {
       attemptId: finalAttemptId,
       blueprint: resumed.blueprint,
@@ -96,22 +102,26 @@ export class AttemptSessionService {
   /**
    * Resume an attempt and recompute authoritative server-side timing and state.
    */
-  async resumeAttempt(attemptId: string, studentId: string, fallbackVersionId?: string): Promise<{
+  async resumeAttempt(attemptId: string, studentId: string, fallbackVersionId?: string, sectionTypeFilter?: ToeflSectionType): Promise<{
     blueprint: Awaited<ReturnType<typeof loadTestBlueprint>>;
     snapshot: SessionSnapshot;
   }> {
-    // 1. Fetch attempt
+    // 1. Fetch attempt and verify student ownership
     const { data: attempt } = await supabaseAdmin
       .from('attempts')
       .select('id, test_version_id, student_id, status, exam_mode')
       .eq('id', attemptId)
       .maybeSingle();
 
+    if (attempt && attempt.student_id && attempt.student_id !== studentId) {
+      throw new Error('Unauthorized: You do not have access to this test attempt');
+    }
+
     const effectiveVersionId = attempt?.test_version_id || fallbackVersionId || 'f2000000-0000-0000-0000-000000000000';
     const examMode = (attempt?.exam_mode as ToeflExamMode) || 'full';
 
     // 2. Hydrate client blueprint
-    const blueprint = await loadTestBlueprint(effectiveVersionId, examMode);
+    const blueprint = await loadTestBlueprint(effectiveVersionId, examMode, sectionTypeFilter);
 
     // 3. Fetch attempt_sections
     const targetAttemptId = attempt?.id || attemptId;
@@ -187,10 +197,25 @@ export class AttemptSessionService {
   }) {
     const { attemptId, studentId, contentItemId, rawAnswer, normalizedAnswer = {}, timeSpentMs = 0, flagged = false } = params;
 
-    // 1. Validate active section for this item
+    // 1. Verify attempt ownership & active status
+    const { data: attempt, error: aErr } = await supabaseAdmin
+      .from('attempts')
+      .select('id, student_id, status')
+      .eq('id', attemptId)
+      .maybeSingle();
+
+    if (attempt && attempt.student_id && attempt.student_id !== studentId) {
+      throw new Error('Unauthorized: You cannot modify another student\'s attempt');
+    }
+
+    if (attempt && (attempt.status === 'completed' || attempt.status === 'evaluated')) {
+      throw new Error('Attempt is already finalized. Modifications are rejected.');
+    }
+
+    // 2. Validate active section for this item and server timing
     const { data: attemptSec, error: secErr } = await supabaseAdmin
       .from('attempt_sections')
-      .select('id, status, started_at, sections(timing_seconds)')
+      .select('id, status, started_at, sections(id, timing_seconds, section_type)')
       .eq('attempt_id', attemptId)
       .eq('status', 'in_progress')
       .single();
@@ -199,7 +224,14 @@ export class AttemptSessionService {
       throw new Error('No active section in progress for this attempt');
     }
 
-    // 2. Upsert response in database
+    // Server-authoritative timer check: reject writes after expiration
+    const timingSecs = (attemptSec.sections as { timing_seconds?: number })?.timing_seconds || 1800;
+    const { isExpired } = calculateRemainingSeconds(attemptSec.started_at, timingSecs, true);
+    if (isExpired) {
+      throw new Error('Section timing has expired. Responses can no longer be saved for this section.');
+    }
+
+    // 3. Upsert response in database
     const { data: response, error: respErr } = await supabaseAdmin
       .from('responses')
       .upsert(
@@ -229,6 +261,17 @@ export class AttemptSessionService {
    * Advance from current section to next section. Locks previous section.
    */
   async advanceSection(attemptId: string, studentId: string, currentSectionIndex: number) {
+    // Check ownership
+    const { data: attempt } = await supabaseAdmin
+      .from('attempts')
+      .select('id, student_id, status')
+      .eq('id', attemptId)
+      .maybeSingle();
+
+    if (attempt && attempt.student_id && attempt.student_id !== studentId) {
+      throw new Error('Unauthorized: You cannot advance another student\'s attempt');
+    }
+
     const { data: attemptSections } = await supabaseAdmin
       .from('attempt_sections')
       .select('id, status, section_id')
@@ -240,16 +283,18 @@ export class AttemptSessionService {
     }
 
     const currentSec = attemptSections[currentSectionIndex];
-    if (currentSec) {
-      // Mark current as completed
-      await supabaseAdmin
-        .from('attempt_sections')
-        .update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', currentSec.id);
+    if (!currentSec || currentSec.status === 'completed') {
+      throw new Error('Invalid section index or section is already completed');
     }
+
+    // Mark current as completed
+    await supabaseAdmin
+      .from('attempt_sections')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', currentSec.id);
 
     const nextIndex = currentSectionIndex + 1;
     if (nextIndex < attemptSections.length) {

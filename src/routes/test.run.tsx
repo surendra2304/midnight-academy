@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { resumeToeflAttempt } from "@/lib/tests/engine.functions";
 import { FullMockRunnerOrchestrator } from "@/components/test-runner/FullMockRunnerOrchestrator";
-import type { HydratedBlueprint, SessionState } from "@/types/toefl";
+import type { ClientTestBlueprint, SessionSnapshot } from "@/lib/tests/session-state";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/test/run")({
@@ -27,8 +27,8 @@ export const Route = createFileRoute("/test/run")({
 function RunTest() {
   const { attemptId } = useSearch({ from: "/test/run" });
   const navigate = useNavigate();
-  const [blueprint, setBlueprint] = useState<HydratedBlueprint | null>(null);
-  const [initialState, setInitialState] = useState<SessionState | null>(null);
+  const [blueprint, setBlueprint] = useState<ClientTestBlueprint | null>(null);
+  const [initialState, setInitialState] = useState<SessionSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -41,9 +41,10 @@ function RunTest() {
     async function hydrate() {
       try {
         const res = await resumeToeflAttempt({ data: { attemptId: attemptId! } });
+        const resolvedBlueprint = (res as any)?.blueprint;
         const resolvedState = (res as any)?.snapshot || (res as any)?.state;
-        if (res?.blueprint && resolvedState) {
-          setBlueprint(res.blueprint);
+        if (resolvedBlueprint && resolvedState) {
+          setBlueprint(resolvedBlueprint);
           setInitialState(resolvedState);
         } else {
           setErrorMsg("Test session data was incomplete. Please return to catalog.");

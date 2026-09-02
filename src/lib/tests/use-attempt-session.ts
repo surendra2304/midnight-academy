@@ -74,7 +74,7 @@ export function useAttemptSession({
         type: 'SAVE_RESPONSE',
         contentItemId: currentItem.id,
         rawAnswer,
-        normalizedAnswer,
+        ...(normalizedAnswer ? { normalizedAnswer } : {}),
         timestamp: nowIso,
       });
 

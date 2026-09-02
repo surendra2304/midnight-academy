@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Vocabulary Service & SRS Storage
  * Manages 5 core word lists (250+ original TOEFL words), flashcard grading,
  * multiple-choice and fill-in-the-blank quiz generations, and daily review queues.
@@ -133,10 +133,10 @@ function buildSeededWords(): VocabWord[] {
     words.push({
       id: `acad-${idx + 1}`,
       listId: 'list-acad-core',
-      word,
-      partOfSpeech: pos,
-      definition: def,
-      exampleSentence: ex,
+      word: word as string,
+      partOfSpeech: pos as string,
+      definition: def as string,
+      exampleSentence: ex as string,
       synonyms: syns as string[],
       difficulty: diff as any,
       tags: ['academic_core', 'toefl_reading', 'analytical'],
@@ -176,10 +176,10 @@ function buildSeededWords(): VocabWord[] {
     words.push({
       id: `camp-${idx + 1}`,
       listId: 'list-campus-life',
-      word,
-      partOfSpeech: pos,
-      definition: def,
-      exampleSentence: ex,
+      word: word as string,
+      partOfSpeech: pos as string,
+      definition: def as string,
+      exampleSentence: ex as string,
       synonyms: syns as string[],
       difficulty: diff as any,
       tags: ['campus_life', 'toefl_listening', 'administration'],

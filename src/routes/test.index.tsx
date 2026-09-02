@@ -96,6 +96,7 @@ function TestCatalog() {
         data: {
           testVersionId,
           examMode,
+          sectionTypeFilter,
           allowRetake: true,
         },
       });

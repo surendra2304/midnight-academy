@@ -14,6 +14,7 @@ export const startToeflAttempt = createServerFn({ method: 'POST' })
       .object({
         testVersionId: z.string(),
         examMode: z.enum(['full', 'section', 'practice', 'diagnostic']).optional(),
+        sectionTypeFilter: z.enum(['reading', 'listening', 'writing', 'speaking']).optional(),
         allowRetake: z.boolean().optional(),
       })
       .parse(data),
@@ -24,6 +25,7 @@ export const startToeflAttempt = createServerFn({ method: 'POST' })
       testVersionId: data.testVersionId,
       studentId: context.userId,
       examMode: data.examMode,
+      sectionTypeFilter: data.sectionTypeFilter,
       allowRetake: data.allowRetake,
     });
   });

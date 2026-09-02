@@ -216,12 +216,28 @@ export async function loadTestBlueprint(
       .in('section_id', sectionIds)
       .order('module_order', { ascending: true });
 
-    // 4. Fetch content items
-    const { data: items } = await supabaseAdmin
-      .from('content_items')
-      .select('id, module_id, section_type, item_type, difficulty, skill_tags, payload, item_order')
-      .in('section_type', sections.map((s) => s.section_type))
-      .order('item_order', { ascending: true });
+    const moduleIds = (modules || []).map((m) => m.id);
+
+    // 4. Fetch content items strictly belonging to these modules
+    let items: Array<{
+      id: string;
+      module_id: string;
+      section_type: string;
+      item_type: string;
+      difficulty: string;
+      skill_tags: string[];
+      payload: Record<string, unknown>;
+      item_order: number;
+    }> = [];
+
+    if (moduleIds.length > 0) {
+      const { data: dbItems } = await supabaseAdmin
+        .from('content_items')
+        .select('id, module_id, section_type, item_type, difficulty, skill_tags, payload, item_order')
+        .in('module_id', moduleIds)
+        .order('item_order', { ascending: true });
+      items = (dbItems as typeof items) || [];
+    }
 
     if (!items || items.length === 0) {
       return getStandardFallbackBlueprint(testVersionId, examMode, sectionTypeFilter);
@@ -244,9 +260,14 @@ export async function loadTestBlueprint(
     }
 
     // 6. Assemble client-safe blueprint
+    const moduleToSectionMap = new Map<string, string>();
+    for (const mod of modules || []) {
+      moduleToSectionMap.set(mod.id, mod.section_id);
+    }
+
     const clientSections: ClientSectionBlueprint[] = sections.map((sec) => {
       const secItems: ClientContentItem[] = (items || [])
-        .filter((i) => i.section_type === sec.section_type)
+        .filter((i) => moduleToSectionMap.get(i.module_id) === sec.id || i.section_type === sec.section_type)
         .map((i) => ({
           id: i.id,
           moduleId: i.module_id,

@@ -76,24 +76,25 @@ export class MockEvaluationPipelineService {
     };
 
     for (const resp of responses || []) {
-      const item = (resp as unknown as { content_items: { id: string; section_type: ToeflSectionType; item_type: ToeflItemType; payload: Record<string, unknown> } }).content_items;
-      if (!item) continue;
+      const rawItem = (resp as unknown as { content_items: { id: string; section_type: ToeflSectionType; item_type?: ToeflItemType; itemType?: ToeflItemType; payload: Record<string, unknown> } }).content_items;
+      if (!rawItem) continue;
 
-      const secType = item.section_type;
-      const itemOpts = optionsByItem.get(item.id) || [];
+      const itemType = rawItem.item_type || rawItem.itemType;
+      const secType = rawItem.section_type;
+      const itemOpts = optionsByItem.get(rawItem.id) || [];
 
       // A. Deterministic Items (MCQ, Cloze, Build Sentence)
       if (
-        item.itemType === 'read_daily_life' ||
-        item.itemType === 'read_academic' ||
-        item.itemType === 'complete_words' ||
-        item.itemType === 'listen_choose_response' ||
-        item.itemType === 'listen_conversation' ||
-        item.itemType === 'listen_announcement' ||
-        item.itemType === 'listen_academic_talk'
+        itemType === 'read_daily_life' ||
+        itemType === 'read_academic' ||
+        itemType === 'complete_words' ||
+        itemType === 'listen_choose_response' ||
+        itemType === 'listen_conversation' ||
+        itemType === 'listen_announcement' ||
+        itemType === 'listen_academic_talk'
       ) {
         const scoreRes = readingScoringService.scoreItem(resp.raw_answer, {
-          itemType: item.itemType,
+          itemType: itemType,
           options: itemOpts.map((o) => ({
             optionKey: o.option_key,
             optionText: o.option_text,
@@ -112,7 +113,7 @@ export class MockEvaluationPipelineService {
 
         sectionSummaries[secType].rawScore += scoreRes.earnedPoints;
         sectionSummaries[secType].maxScore += scoreRes.maxPoints;
-      } else if (item.itemType === 'build_sentence') {
+      } else if (itemType === 'build_sentence') {
         let parsedTokens: string[] = [];
         try {
           parsedTokens = JSON.parse(resp.raw_answer || '[]');
@@ -121,8 +122,8 @@ export class MockEvaluationPipelineService {
         }
 
         const sentenceRule = {
-          acceptedSequences: (item.payload?.acceptedSequences as string[][]) || [],
-          tokenList: (item.payload?.wordBank as string[]) || [],
+          acceptedSequences: (rawItem.payload?.acceptedSequences as string[][]) || [],
+          tokenList: (rawItem.payload?.wordBank as string[]) || [],
         };
 
         const sentScore = sentenceScoringService.scoreSentence(parsedTokens, sentenceRule);
@@ -139,13 +140,13 @@ export class MockEvaluationPipelineService {
         sectionSummaries[secType].maxScore += sentScore.maxPoints;
       }
       // B. AI-Evaluated Writing Tasks (Write an Email, Academic Discussion)
-      else if (item.itemType === 'write_email' || item.itemType === 'academic_discussion') {
+      else if (itemType === 'write_email' || itemType === 'academic_discussion') {
         const evalResult = await evaluationService.evaluateWriting({
-          taskType: item.itemType,
-          promptText: (item.payload?.prompt as string) || (item.payload?.title as string) || '',
-          contextData: item.payload,
+          taskType: itemType,
+          promptText: (rawItem.payload?.prompt as string) || (rawItem.payload?.title as string) || '',
+          contextData: rawItem.payload,
           studentResponse: resp.raw_answer || '',
-          referenceModelAnswer: item.payload?.modelAnswer as string,
+          referenceModelAnswer: rawItem.payload?.modelAnswer as string,
         });
 
         await supabaseAdmin.from('evaluations').insert({
@@ -170,12 +171,12 @@ export class MockEvaluationPipelineService {
         sectionBands[secType].push(evalResult.score_band);
       }
       // C. AI-Evaluated Speaking Tasks (Listen & Repeat, Interview)
-      else if (item.itemType === 'listen_repeat' || item.itemType === 'take_interview') {
+      else if (itemType === 'listen_repeat' || itemType === 'take_interview') {
         const evalResult = await speakingEvaluationService.evaluateSpeaking({
-          taskType: item.itemType,
-          promptText: (item.payload?.prompt as string) || '',
+          taskType: itemType,
+          promptText: (rawItem.payload?.prompt as string) || '',
           transcript: resp.raw_answer || 'Audio response provided.',
-          referenceModelAnswer: item.payload?.modelAnswer as string,
+          referenceModelAnswer: rawItem.payload?.modelAnswer as string,
         });
 
         await supabaseAdmin.from('evaluations').insert({
