@@ -223,4 +223,77 @@ describe('Generic Test Session State Machine Suite', () => {
     expect(clozeRes.isCorrect).toBe(true);
     expect(clozeRes.score).toBe(1.0);
   });
+
+  it('supports jump navigation across items in active section', () => {
+    let state = sessionReducer(
+      initialIdleState,
+      { type: 'START', attemptId: 'att-123', examMode: 'practice', timestamp: '2026-09-01T10:00:00Z' },
+      mockBlueprint,
+    );
+
+    expect(state.currentItemIndex).toBe(0);
+
+    // Jump to item index 1
+    state = sessionReducer(state, { type: 'NAVIGATE_ITEM', itemIndex: 1 }, mockBlueprint);
+    expect(state.currentItemIndex).toBe(1);
+
+    // Jump back to item index 0
+    state = sessionReducer(state, { type: 'NAVIGATE_ITEM', itemIndex: 0 }, mockBlueprint);
+    expect(state.currentItemIndex).toBe(0);
+  });
+
+  it('makes duplicate start and save requests idempotent', () => {
+    let state = sessionReducer(
+      initialIdleState,
+      { type: 'START', attemptId: 'att-123', examMode: 'practice', timestamp: '2026-09-01T10:00:00Z' },
+      mockBlueprint,
+    );
+
+    // Duplicate save of same answer produces consistent response
+    state = sessionReducer(
+      state,
+      { type: 'SAVE_RESPONSE', contentItemId: 'item-1', rawAnswer: 'A', timestamp: '2026-09-01T10:01:00Z' },
+      mockBlueprint,
+    );
+    state = sessionReducer(
+      state,
+      { type: 'SAVE_RESPONSE', contentItemId: 'item-1', rawAnswer: 'A', timestamp: '2026-09-01T10:01:05Z' },
+      mockBlueprint,
+    );
+
+    expect(state.responses['item-1'].rawAnswer).toBe('A');
+    expect(state.responses['item-1'].isAnswered).toBe(true);
+  });
+
+  it('preserves response state across section navigation and recovery', () => {
+    let state = sessionReducer(
+      initialIdleState,
+      { type: 'START', attemptId: 'att-123', examMode: 'practice', timestamp: '2026-09-01T10:00:00Z' },
+      mockBlueprint,
+    );
+
+    state = sessionReducer(
+      state,
+      { type: 'SAVE_RESPONSE', contentItemId: 'item-1', rawAnswer: 'A', timestamp: '2026-09-01T10:01:00Z' },
+      mockBlueprint,
+    );
+    state = sessionReducer(
+      state,
+      { type: 'SAVE_RESPONSE', contentItemId: 'item-2', rawAnswer: 'growth', timestamp: '2026-09-01T10:02:00Z' },
+      mockBlueprint,
+    );
+
+    // Navigate to next section
+    state = sessionReducer(
+      state,
+      { type: 'ADVANCE_SECTION', nextSectionIndex: 1, timestamp: '2026-09-01T10:30:00Z' },
+      mockBlueprint,
+    );
+
+    // Previous responses are safely preserved
+    expect(state.responses['item-1'].rawAnswer).toBe('A');
+    expect(state.responses['item-2'].rawAnswer).toBe('growth');
+    expect(state.currentSectionIndex).toBe(1);
+    expect(state.currentItemIndex).toBe(0);
+  });
 });
