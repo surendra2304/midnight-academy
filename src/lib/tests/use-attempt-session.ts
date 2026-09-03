@@ -64,16 +64,51 @@ export function useAttemptSession({
     return () => clearInterval(timer);
   }, [state.status, state.currentSectionIndex, state.isSectionLocked, blueprint]);
 
+  const pendingSaveRef = useRef<{
+    attemptId: string;
+    contentItemId: string;
+    rawAnswer: string;
+    normalizedAnswer?: Record<string, unknown> | undefined;
+  } | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const flushPendingSave = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    const pending = pendingSaveRef.current;
+    if (!pending) return;
+    pendingSaveRef.current = null;
+    try {
+      setIsSaving(true);
+      await saveToeflResponse({ data: pending });
+    } catch (err) {
+      console.error("Failed to autosave response:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
+
+  // Flush on unmount
+  useEffect(() => {
+    return () => {
+      if (pendingSaveRef.current) {
+        saveToeflResponse({ data: pendingSaveRef.current }).catch(() => {});
+      }
+    };
+  }, []);
+
   // 2. Action: Select / Save Answer for Current Item
   const handleAnswerChange = useCallback(
-    async (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => {
+    (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => {
       const currentSec = blueprint.sections[stateRef.current.currentSectionIndex];
       const currentItem = currentSec?.items[stateRef.current.currentItemIndex];
       if (!currentItem) return;
 
       const nowIso = new Date().toISOString();
 
-      // Local optimistic dispatch
+      // Local optimistic dispatch (instant UI update, zero latency)
       dispatch({
         type: "SAVE_RESPONSE",
         contentItemId: currentItem.id,
@@ -82,24 +117,22 @@ export function useAttemptSession({
         timestamp: nowIso,
       });
 
-      // Persist to server
-      try {
-        setIsSaving(true);
-        await saveToeflResponse({
-          data: {
-            attemptId: stateRef.current.attemptId,
-            contentItemId: currentItem.id,
-            rawAnswer,
-            normalizedAnswer,
-          },
-        });
-      } catch (err) {
-        console.error("Failed to autosave response:", err);
-      } finally {
-        setIsSaving(false);
+      // Debounce server persistence by 400ms to eliminate typing freezes
+      pendingSaveRef.current = {
+        attemptId: stateRef.current.attemptId,
+        contentItemId: currentItem.id,
+        rawAnswer,
+        normalizedAnswer,
+      };
+
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
+      saveTimeoutRef.current = setTimeout(() => {
+        flushPendingSave();
+      }, 400);
     },
-    [blueprint, dispatch],
+    [blueprint, dispatch, flushPendingSave],
   );
 
   // 3. Action: Toggle Flag
@@ -114,13 +147,15 @@ export function useAttemptSession({
   // 4. Action: Navigate Item
   const handleNavigateItem = useCallback(
     (itemIndex: number) => {
+      flushPendingSave();
       dispatch({ type: "NAVIGATE_ITEM", itemIndex });
     },
-    [dispatch],
+    [dispatch, flushPendingSave],
   );
 
   // 5. Action: Advance to Next Section
   const handleAdvanceSection = useCallback(async () => {
+    await flushPendingSave();
     const nextSecIndex = stateRef.current.currentSectionIndex + 1;
     const nowIso = new Date().toISOString();
 

@@ -173,18 +173,30 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
             source.connect(analyser);
 
             const dataArray = new Uint8Array(analyser.frequencyBinCount);
-            const updateLevel = () => {
-              analyser.getByteFrequencyData(dataArray);
-              let sum = 0;
-              for (let i = 0; i < dataArray.length; i++) {
-                sum += dataArray[i]!;
+            let lastUpdate = 0;
+            const updateLevel = (now: number) => {
+              if (now - lastUpdate > 150) {
+                lastUpdate = now;
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                  sum += dataArray[i]!;
+                }
+                const average = sum / dataArray.length;
+                const normalized = Math.min(100, Math.max(25, Math.round((average / 128) * 100)));
+                setMicVolumeLevel(normalized);
               }
-              const average = sum / dataArray.length;
-              const normalized = Math.min(100, Math.max(25, Math.round((average / 128) * 100)));
-              setMicVolumeLevel(normalized);
               animFrameRef.current = requestAnimationFrame(updateLevel);
             };
-            updateLevel();
+            animFrameRef.current = requestAnimationFrame(updateLevel);
+
+            // Auto-stop VU loop after 3s to keep UI 100% lightweight and lag-free
+            setTimeout(() => {
+              if (animFrameRef.current) {
+                cancelAnimationFrame(animFrameRef.current);
+                animFrameRef.current = null;
+              }
+            }, 3000);
           }
         } catch (ctxErr) {
           console.warn("[HardwareCheck] AudioContext VU meter unavailable:", ctxErr);
