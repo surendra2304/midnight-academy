@@ -45,11 +45,11 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
     props.initialSnapshot.status === "completed",
   );
   const [hasStartedMock, setHasStartedMock] = useState(isResumed);
-  const [micCheckPassed, setMicCheckPassed] = useState(false);
-  const [audioCheckPassed, setAudioCheckPassed] = useState(false);
-
   const [isTestingAudio, setIsTestingAudio] = useState(false);
+  const [audioCheckPassed, setAudioCheckPassed] = useState(false);
   const [isTestingMic, setIsTestingMic] = useState(false);
+  const [micCheckPassed, setMicCheckPassed] = useState(false);
+  const [micFallbackMode, setMicFallbackMode] = useState(false);
   const [micVolumeLevel, setMicVolumeLevel] = useState<number>(0);
   const [echoStage, setEchoStage] = useState<"idle" | "recording" | "playing">("idle");
   const [echoAudioUrl, setEchoAudioUrl] = useState<string | null>(null);
@@ -175,16 +175,26 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
         }
 
         setMicCheckPassed(true);
+        setMicFallbackMode(false);
         toast.success("Microphone connected successfully!");
       } else {
         setMicCheckPassed(true);
+        setMicFallbackMode(true);
       }
-    } catch (err) {
-      console.warn("[HardwareCheck] Microphone access check error:", err);
-      toast.error(
-        "Microphone permission not granted. You can still begin the exam and use text transcription mode.",
-      );
-      setMicCheckPassed(false);
+    } catch (err: unknown) {
+      const e = err as Error;
+      console.warn("[HardwareCheck] Microphone access check error:", e.name, e.message);
+      let detail = "Could not initialize audio input device.";
+      if (e.name === "NotFoundError" || e.name === "DevicesNotFoundError") {
+        detail = "No microphone hardware detected on your computer.";
+      } else if (e.name === "NotReadableError" || e.name === "TrackStartError") {
+        detail = "Microphone is currently in use by another app (e.g. WhatsApp).";
+      } else if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+        detail = "Microphone permission is blocked by Windows Privacy settings or Chrome.";
+      }
+      toast.info(`${detail} Text transcription fallback is enabled for speaking tasks.`);
+      setMicFallbackMode(true);
+      setMicCheckPassed(true);
     } finally {
       setIsTestingMic(false);
     }
@@ -327,9 +337,11 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
                     ) : null}
                     {isTestingMic
                       ? "Requesting..."
-                      : micCheckPassed
-                        ? "Mic Connected ✓"
-                        : "Connect Microphone"}
+                      : micFallbackMode
+                        ? "Text Fallback Ready ✓"
+                        : micCheckPassed
+                          ? "Mic Connected ✓"
+                          : "Connect Microphone"}
                   </Button>
                 </div>
               </div>
