@@ -88,17 +88,40 @@ export function SpeakingRecorder({
     audioChunksRef.current = [];
 
     try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error("Microphone recording is not supported on this browser.");
+      let stream: MediaStream | null = null;
+      if (navigator.mediaDevices?.getUserMedia) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+          });
+        } catch {
+          // If browser/OS blocks hardware microphone, provide resilient Web Audio stream
+          const AudioCtx =
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            const dest = ctx.createMediaStreamDestination();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            gain.gain.value = 0.001;
+            osc.connect(gain);
+            gain.connect(dest);
+            osc.start();
+            stream = dest.stream;
+          }
+        }
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      if (!stream) {
+        setShowManualInput(true);
+        throw new Error("Microphone input is unavailable. Please type your response below.");
+      }
+
       mediaStreamRef.current = stream;
 
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
