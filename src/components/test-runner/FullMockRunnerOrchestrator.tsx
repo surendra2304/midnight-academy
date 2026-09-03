@@ -21,6 +21,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
   const {
@@ -134,44 +135,54 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         micStreamRef.current = stream;
 
-        // Initialize Web Audio API Analyser for live VU volume level meter
-        const AudioContextClass =
-          (
-            window as unknown as {
-              AudioContext?: typeof AudioContext;
-              webkitAudioContext?: typeof AudioContext;
+        // Initialize Web Audio API Analyser for live VU volume level meter if supported
+        try {
+          const AudioContextClass =
+            (
+              window as unknown as {
+                AudioContext?: typeof AudioContext;
+                webkitAudioContext?: typeof AudioContext;
+              }
+            ).AudioContext ||
+            (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+          if (AudioContextClass) {
+            const ctx = new AudioContextClass();
+            audioCtxRef.current = ctx;
+            if (ctx.state === "suspended") {
+              await ctx.resume().catch(() => {});
             }
-          ).AudioContext ||
-          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-        if (AudioContextClass) {
-          const ctx = new AudioContextClass();
-          audioCtxRef.current = ctx;
-          const analyser = ctx.createAnalyser();
-          analyser.fftSize = 256;
-          const source = ctx.createMediaStreamSource(stream);
-          source.connect(analyser);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            const source = ctx.createMediaStreamSource(stream);
+            source.connect(analyser);
 
-          const dataArray = new Uint8Array(analyser.frequencyBinCount);
-          const updateLevel = () => {
-            analyser.getByteFrequencyData(dataArray);
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-              sum += dataArray[i]!;
-            }
-            const average = sum / dataArray.length;
-            const normalized = Math.min(100, Math.round((average / 128) * 100));
-            setMicVolumeLevel(normalized);
-            animFrameRef.current = requestAnimationFrame(updateLevel);
-          };
-          updateLevel();
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const updateLevel = () => {
+              analyser.getByteFrequencyData(dataArray);
+              let sum = 0;
+              for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i]!;
+              }
+              const average = sum / dataArray.length;
+              const normalized = Math.min(100, Math.round((average / 128) * 100));
+              setMicVolumeLevel(normalized);
+              animFrameRef.current = requestAnimationFrame(updateLevel);
+            };
+            updateLevel();
+          }
+        } catch (ctxErr) {
+          console.warn("[HardwareCheck] AudioContext VU meter unavailable, mic stream active:", ctxErr);
         }
+
         setMicCheckPassed(true);
+        toast.success("Microphone connected successfully!");
       } else {
         setMicCheckPassed(true);
       }
-    } catch {
-      alert(
-        "Microphone access was not granted. Please allow microphone access in your browser settings for TOEFL Speaking tasks.",
+    } catch (err) {
+      console.warn("[HardwareCheck] Microphone access check error:", err);
+      toast.error(
+        "Microphone permission not granted. You can still begin the exam and use text transcription mode.",
       );
       setMicCheckPassed(false);
     } finally {
