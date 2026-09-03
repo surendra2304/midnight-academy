@@ -410,7 +410,9 @@ export const finishAttempt = createServerFn({ method: "POST" })
       const { evaluateAttempt } = await import("./attempts.server");
       const { data: answers } = await supabaseAdmin
         .from("attempt_answers")
-        .select("id, question_id, position, response, score, feedback, missed_concepts, missed_constraints")
+        .select(
+          "id, question_id, position, response, score, feedback, missed_concepts, missed_constraints",
+        )
         .eq("attempt_id", attempt.id)
         .order("position", { ascending: true });
 
@@ -480,7 +482,9 @@ export const processAttemptEvaluation = createServerFn({ method: "POST" })
 
     const { data: answers } = await supabaseAdmin
       .from("attempt_answers")
-      .select("id, question_id, position, response, score, feedback, missed_concepts, missed_constraints")
+      .select(
+        "id, question_id, position, response, score, feedback, missed_concepts, missed_constraints",
+      )
       .eq("attempt_id", attempt.id)
       .order("position", { ascending: true });
 

@@ -1,4 +1,4 @@
-﻿# Known Issues & Bug Tracking Log
+# Known Issues & Bug Tracking Log
 
 ## Critical Issues
 
@@ -57,3 +57,24 @@
 - **Status**: `RESOLVED & VERIFIED`
 - **Severity**: `LOW`
 - **Resolution Implemented**: Migration `20260821100002_fix_rls_policies.sql` simplified RLS policies to use direct JWT check `(auth.uid() = id)` and service role execution for role elevation.
+
+---
+
+### Issue: `TOEFL-INTEGRITY-REPAIR-004`
+
+- **Title**: TOEFL Production Fallback and Session State Integrity
+- **Status**: `RESOLVED & VERIFIED`
+- **Severity**: `P0 - ARCHITECTURAL`
+- **Root Cause & Scope**:
+  - `blueprint-loader.ts` contained 70KB of hardcoded synthetic blueprints (`MULTI_SERIES_BLUEPRINTS`) and synthetic attempt IDs (`att-${Date.now()}`).
+  - Evaluator services returned fake fallback scores (`3.0`, `3.5`) when API calls failed.
+  - Speaking recordings lacked a storage bucket and transcription pipeline.
+  - Practice cards lacked individual task launch capabilities.
+- **Resolution Implemented**:
+  1. **Strict Database Authority**: Removed all synthetic blueprints and fallback attempt IDs. Tests now load exclusively from PostgreSQL `test_versions`, failing closed if missing or unpublished.
+  2. **Atomic State & Security**: Implemented atomic section advances via PostgreSQL RPC `advance_attempt_section`. Enforced student ownership checks (`student_id === context.userId`), section timer validation, and module-to-section item authorization.
+  3. **Zero Fake Data Policy**: Eliminated all fake/fallback scores. Evaluations fail closed into retryable `failed` states with UI retry controls.
+  4. **Real Speaking Pipeline**: Created `speaking-recordings` Supabase storage bucket, real audio upload handler, and `@google/genai` audio transcription service (`GeminiSpeechToTextProvider`).
+  5. **Direct Practice Launch**: Built interactive practice runner at `/practice/$taskType` supporting all 12 TOEFL task types with real-time scoring and feedback.
+  6. **Content Seeding**: Seeded and audited 61 original content items, 120 question options, 12 modules, and 6 published blueprints in PostgreSQL. All 6 pass 100% of blueprint validation checks.
+

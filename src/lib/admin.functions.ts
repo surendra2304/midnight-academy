@@ -25,7 +25,10 @@ export const listAdminTests = createServerFn({ method: "GET" })
       .select("id")
       .eq("owner_id", context.userId);
     if (rawTests?.length) {
-      await autoFinalizeStaleAttempts(context.supabase, rawTests.map((t) => t.id));
+      await autoFinalizeStaleAttempts(
+        context.supabase,
+        rawTests.map((t) => t.id),
+      );
     }
 
     const { data: tests } = await context.supabase
@@ -122,9 +125,7 @@ export const getAdminTest = createServerFn({ method: "GET" })
       return 0;
     });
 
-    const activeParticipants = (attempts ?? []).filter(
-      (a) => a.status === "in_progress",
-    ).length;
+    const activeParticipants = (attempts ?? []).filter((a) => a.status === "in_progress").length;
 
     return {
       test: {
@@ -383,7 +384,10 @@ export const getAdminOverview = createServerFn({ method: "GET" })
       .select("id")
       .eq("owner_id", context.userId);
     if (rawTests?.length) {
-      await autoFinalizeStaleAttempts(context.supabase, rawTests.map((t) => t.id));
+      await autoFinalizeStaleAttempts(
+        context.supabase,
+        rawTests.map((t) => t.id),
+      );
     }
 
     const [{ data: tests }, { count: flagged }] = await Promise.all([

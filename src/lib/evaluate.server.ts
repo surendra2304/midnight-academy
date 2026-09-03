@@ -169,9 +169,7 @@ export async function evaluateAnswer(input: EvaluationInput): Promise<Evaluation
   return {
     score: finalScore,
     feedback:
-      validated.feedback.trim().length > 0
-        ? validated.feedback.trim()
-        : "Evaluation complete.",
+      validated.feedback.trim().length > 0 ? validated.feedback.trim() : "Evaluation complete.",
     missedConcepts: pickFromCanonical(input.concepts, validated.missed_concepts),
     missedConstraints: pickFromCanonical(input.constraints, validated.missed_constraints),
     axisScores: {

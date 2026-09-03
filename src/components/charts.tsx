@@ -76,13 +76,7 @@ export function AxisTrend({
   data: Record<string, string | number>[];
   height?: number;
 }) {
-  const colors = [
-    "#2563eb",
-    "#6366f1",
-    "#16a34a",
-    "#d97706",
-    "#dc2626",
-  ];
+  const colors = ["#2563eb", "#6366f1", "#16a34a", "#d97706", "#dc2626"];
   return (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -121,11 +115,7 @@ export function ScoreBars({
   layout?: "vertical" | "horizontal";
 }) {
   const barColor = (score: number) =>
-    score >= 80
-      ? "#16a34a"
-      : score >= 65
-        ? "#2563eb"
-        : "#d97706";
+    score >= 80 ? "#16a34a" : score >= 65 ? "#2563eb" : "#d97706";
 
   return (
     <div style={{ height }} className="w-full">

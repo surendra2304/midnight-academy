@@ -3,10 +3,10 @@
  * Interactive click-to-place and re-orderable word chip interface.
  */
 
-import React, { useState, useEffect } from 'react';
-import type { ClientContentItem } from '@/lib/tests/session-state';
-import { RotateCcw, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from "react";
+import type { ClientContentItem } from "@/lib/tests/session-state";
+import { RotateCcw, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export interface BuildSentenceRendererProps {
   item: ClientContentItem;
@@ -21,7 +21,8 @@ export function BuildSentenceRenderer({
   onAnswerChange,
   disabled = false,
 }: BuildSentenceRendererProps) {
-  const wordBank: string[] = (item.payload?.wordBank as string[]) || (item.payload?.words as string[]) || [];
+  const wordBank: string[] =
+    (item.payload?.wordBank as string[]) || (item.payload?.words as string[]) || [];
 
   const [placedWords, setPlacedWords] = useState<string[]>(() => {
     if (!currentAnswer) return [];
@@ -29,7 +30,7 @@ export function BuildSentenceRenderer({
       const parsed = JSON.parse(currentAnswer);
       return Array.isArray(parsed) ? parsed : [];
     } catch {
-      return currentAnswer ? currentAnswer.split(' ') : [];
+      return currentAnswer ? currentAnswer.split(" ") : [];
     }
   });
 
@@ -54,7 +55,7 @@ export function BuildSentenceRenderer({
 
     onAnswerChange(JSON.stringify(nextPlaced), {
       words: nextPlaced,
-      assembledSentence: nextPlaced.join(' '),
+      assembledSentence: nextPlaced.join(" "),
     });
   };
 
@@ -62,14 +63,14 @@ export function BuildSentenceRenderer({
     if (disabled) return;
     const word = placedWords[indexInPlaced];
     const nextPlaced = placedWords.filter((_, idx) => idx !== indexInPlaced);
-    const nextAvail = [...availableWords, word];
+    const nextAvail = word ? [...availableWords, word] : availableWords;
 
     setPlacedWords(nextPlaced);
     setAvailableWords(nextAvail);
 
     onAnswerChange(JSON.stringify(nextPlaced), {
       words: nextPlaced,
-      assembledSentence: nextPlaced.join(' '),
+      assembledSentence: nextPlaced.join(" "),
     });
   };
 
@@ -77,16 +78,20 @@ export function BuildSentenceRenderer({
     if (disabled) return;
     setPlacedWords([]);
     setAvailableWords(wordBank);
-    onAnswerChange(JSON.stringify([]), { words: [], assembledSentence: '' });
+    onAnswerChange(JSON.stringify([]), { words: [], assembledSentence: "" });
   };
 
-  const promptText = (item.payload?.prompt as string) || 'Build a grammatically correct sentence using the words below:';
+  const promptText =
+    (item.payload?.prompt as string) ||
+    "Build a grammatically correct sentence using the words below:";
 
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-border bg-card/40 p-6 space-y-4">
         <div className="border-b border-border pb-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-primary">Build a Sentence</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-primary">
+            Build a Sentence
+          </span>
           <p className="mt-1 text-sm font-medium text-foreground">{promptText}</p>
         </div>
 

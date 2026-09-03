@@ -61,7 +61,9 @@ function TestCatalog() {
   const [tests, setTests] = useState<PublishedTestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"all" | "full" | "reading" | "listening" | "writing" | "speaking">("all");
+  const [activeTab, setActiveTab] = useState<
+    "all" | "full" | "reading" | "listening" | "writing" | "speaking"
+  >("all");
 
   useEffect(() => {
     async function loadCatalog() {
@@ -81,7 +83,7 @@ function TestCatalog() {
   const handleStartTest = async (
     testVersionId: string,
     examMode: ToeflExamMode = "full",
-    sectionTypeFilter?: ToeflSectionType
+    sectionTypeFilter?: ToeflSectionType,
   ) => {
     if (!testVersionId) {
       toast.error("Selected test blueprint is not available.");
@@ -124,7 +126,9 @@ function TestCatalog() {
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading published standardized mock tests...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading published standardized mock tests...
+            </p>
           </div>
         </PageShell>
       </div>
@@ -134,7 +138,8 @@ function TestCatalog() {
   // Filter tests based on active tab
   const filteredTests = tests.filter((t) => {
     if (activeTab === "all") return true;
-    if (activeTab === "full") return t.sections.length >= 4 || t.category.toLowerCase().includes("mock");
+    if (activeTab === "full")
+      return t.sections.length >= 4 || t.category.toLowerCase().includes("mock");
     return t.sections.some((s) => s.sectionType === activeTab);
   });
 
@@ -153,18 +158,23 @@ function TestCatalog() {
                 Mock Tests & Section Practice
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                Take complete full-length multistage adaptive mock exams or practice individual sections with instant AI rubric evaluation and precision band predictions.
+                Take complete full-length multistage adaptive mock exams or practice individual
+                sections with instant AI rubric evaluation and precision band predictions.
               </p>
             </div>
 
             {/* Stats Counter */}
             <div className="flex items-center gap-4">
               <div className="rounded-2xl border border-border bg-background/80 px-5 py-3.5 text-center min-w-[120px]">
-                <p className="text-[10px] font-bold uppercase text-muted-foreground">Published Tests</p>
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">
+                  Published Tests
+                </p>
                 <p className="text-xl font-black text-foreground">{tests.length}</p>
               </div>
               <div className="rounded-2xl border border-border bg-background/80 px-5 py-3.5 text-center min-w-[120px]">
-                <p className="text-[10px] font-bold uppercase text-muted-foreground">AI Evaluation</p>
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">
+                  AI Evaluation
+                </p>
                 <p className="text-xl font-black text-primary">Instant</p>
               </div>
             </div>
@@ -203,9 +213,12 @@ function TestCatalog() {
           {tests.length === 0 ? (
             <div className="rounded-3xl border border-border bg-card/40 p-12 text-center space-y-4">
               <AlertCircle className="mx-auto size-12 text-muted-foreground/60" />
-              <h3 className="text-lg font-bold text-foreground">No Published Tests Available Yet</h3>
+              <h3 className="text-lg font-bold text-foreground">
+                No Published Tests Available Yet
+              </h3>
               <p className="mx-auto max-w-md text-xs text-muted-foreground leading-relaxed">
-                New standardized blueprints are currently being drafted and calibrated by instructors. Please check back shortly or explore practice drills.
+                New standardized blueprints are currently being drafted and calibrated by
+                instructors. Please check back shortly or explore practice drills.
               </p>
               <Button asChild variant="outline">
                 <Link to="/practice">Explore Practice Queue</Link>
@@ -228,7 +241,8 @@ function TestCatalog() {
                 const hasListening = test.sections.some((s) => s.sectionType === "listening");
                 const hasWriting = test.sections.some((s) => s.sectionType === "writing");
                 const hasSpeaking = test.sections.some((s) => s.sectionType === "speaking");
-                const isFullMock = test.sections.length >= 4 || test.category.toLowerCase().includes("mock");
+                const isFullMock =
+                  test.sections.length >= 4 || test.category.toLowerCase().includes("mock");
 
                 const fullButtonKey = `${test.testVersionId}-full-all`;
 
@@ -256,7 +270,9 @@ function TestCatalog() {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {isFullMock ? "Complete 4-Section Standardized Adaptive Mock Exam" : `${test.category} Practice Assessment`}
+                            {isFullMock
+                              ? "Complete 4-Section Standardized Adaptive Mock Exam"
+                              : `${test.category} Practice Assessment`}
                           </p>
                         </div>
                       </div>
@@ -267,7 +283,9 @@ function TestCatalog() {
                           size="sm"
                           className="font-bold px-6 shadow-md shadow-primary/20"
                           disabled={startingId === fullButtonKey}
-                          onClick={() => handleStartTest(test.testVersionId, isFullMock ? "full" : "section")}
+                          onClick={() =>
+                            handleStartTest(test.testVersionId, isFullMock ? "full" : "section")
+                          }
                         >
                           {startingId === fullButtonKey ? (
                             <>
@@ -288,7 +306,11 @@ function TestCatalog() {
                       {/* Reading Section Card */}
                       <div
                         className={`rounded-2xl border border-white/5 bg-surface-2/60 p-4 space-y-3 transition-all hover:border-blue-500/30 hover:bg-surface-2 ${
-                          !hasReading ? "opacity-30" : activeTab !== "all" && activeTab !== "reading" ? "opacity-50" : ""
+                          !hasReading
+                            ? "opacity-30"
+                            : activeTab !== "all" && activeTab !== "reading"
+                              ? "opacity-50"
+                              : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -304,12 +326,16 @@ function TestCatalog() {
                               : "N/A"}
                           </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">Cloze passages & academic texts</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Cloze passages & academic texts
+                        </p>
                         <Button
                           size="xs"
                           variant="outline"
                           className="w-full text-xs font-bold border-blue-500/30 text-blue-400 bg-blue-500/5 hover:bg-blue-500/15 hover:border-blue-400"
-                          disabled={!hasReading || startingId === `${test.testVersionId}-section-reading`}
+                          disabled={
+                            !hasReading || startingId === `${test.testVersionId}-section-reading`
+                          }
                           onClick={() => handleStartTest(test.testVersionId, "section", "reading")}
                         >
                           {startingId === `${test.testVersionId}-section-reading` ? (
@@ -325,7 +351,11 @@ function TestCatalog() {
                       {/* Listening Section Card */}
                       <div
                         className={`rounded-2xl border border-white/5 bg-surface-2/60 p-4 space-y-3 transition-all hover:border-emerald-500/30 hover:bg-surface-2 ${
-                          !hasListening ? "opacity-30" : activeTab !== "all" && activeTab !== "listening" ? "opacity-50" : ""
+                          !hasListening
+                            ? "opacity-30"
+                            : activeTab !== "all" && activeTab !== "listening"
+                              ? "opacity-50"
+                              : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -341,13 +371,20 @@ function TestCatalog() {
                               : "N/A"}
                           </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">Conversations & academic talks</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Conversations & academic talks
+                        </p>
                         <Button
                           size="xs"
                           variant="outline"
                           className="w-full text-xs font-bold border-emerald-500/30 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/15 hover:border-emerald-400"
-                          disabled={!hasListening || startingId === `${test.testVersionId}-section-listening`}
-                          onClick={() => handleStartTest(test.testVersionId, "section", "listening")}
+                          disabled={
+                            !hasListening ||
+                            startingId === `${test.testVersionId}-section-listening`
+                          }
+                          onClick={() =>
+                            handleStartTest(test.testVersionId, "section", "listening")
+                          }
                         >
                           {startingId === `${test.testVersionId}-section-listening` ? (
                             <>
@@ -362,7 +399,11 @@ function TestCatalog() {
                       {/* Writing Section Card */}
                       <div
                         className={`rounded-2xl border border-white/5 bg-surface-2/60 p-4 space-y-3 transition-all hover:border-purple-500/30 hover:bg-surface-2 ${
-                          !hasWriting ? "opacity-30" : activeTab !== "all" && activeTab !== "writing" ? "opacity-50" : ""
+                          !hasWriting
+                            ? "opacity-30"
+                            : activeTab !== "all" && activeTab !== "writing"
+                              ? "opacity-50"
+                              : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -378,12 +419,16 @@ function TestCatalog() {
                               : "N/A"}
                           </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">Email & academic discussion</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Email & academic discussion
+                        </p>
                         <Button
                           size="xs"
                           variant="outline"
                           className="w-full text-xs font-bold border-purple-500/30 text-purple-400 bg-purple-500/5 hover:bg-purple-500/15 hover:border-purple-400"
-                          disabled={!hasWriting || startingId === `${test.testVersionId}-section-writing`}
+                          disabled={
+                            !hasWriting || startingId === `${test.testVersionId}-section-writing`
+                          }
                           onClick={() => handleStartTest(test.testVersionId, "section", "writing")}
                         >
                           {startingId === `${test.testVersionId}-section-writing` ? (
@@ -399,7 +444,11 @@ function TestCatalog() {
                       {/* Speaking Section Card */}
                       <div
                         className={`rounded-2xl border border-white/5 bg-surface-2/60 p-4 space-y-3 transition-all hover:border-amber-500/30 hover:bg-surface-2 ${
-                          !hasSpeaking ? "opacity-30" : activeTab !== "all" && activeTab !== "speaking" ? "opacity-50" : ""
+                          !hasSpeaking
+                            ? "opacity-30"
+                            : activeTab !== "all" && activeTab !== "speaking"
+                              ? "opacity-50"
+                              : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -415,12 +464,16 @@ function TestCatalog() {
                               : "N/A"}
                           </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">Repetition & interview speech</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Repetition & interview speech
+                        </p>
                         <Button
                           size="xs"
                           variant="outline"
                           className="w-full text-xs font-bold border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/15 hover:border-amber-400"
-                          disabled={!hasSpeaking || startingId === `${test.testVersionId}-section-speaking`}
+                          disabled={
+                            !hasSpeaking || startingId === `${test.testVersionId}-section-speaking`
+                          }
                           onClick={() => handleStartTest(test.testVersionId, "section", "speaking")}
                         >
                           {startingId === `${test.testVersionId}-section-speaking` ? (

@@ -207,7 +207,9 @@
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   background-color: var(--color-surface);
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.04),
+    0 1px 2px -1px rgb(0 0 0 / 0.04);
 }
 
 @utility panel-quiet {
@@ -234,9 +236,21 @@
 @utility grid-backdrop {
   background-color: var(--color-background);
   background-image:
-    radial-gradient(ellipse 70% 45% at 50% -5%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 70%),
-    linear-gradient(to right, color-mix(in srgb, var(--color-border) 40%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--color-border) 40%, transparent) 1px, transparent 1px);
+    radial-gradient(
+      ellipse 70% 45% at 50% -5%,
+      color-mix(in srgb, var(--color-primary) 12%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-border) 40%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-border) 40%, transparent) 1px,
+      transparent 1px
+    );
   background-size:
     100% 100%,
     56px 56px,

@@ -19,4 +19,3 @@
    - NEVER silently degrade a production assessment into a fallback blueprint. Missing production data must fail closed with an explicit error.
    - NEVER claim TOEFL / TestGlider capability parity without actually testing the corresponding workflow end-to-end.
 4. **Fix, Don't Document Around Broken Code**: Whenever an implementation is incomplete or broken, fix the underlying architecture immediately instead of masking it. Functional correctness, data integrity, security, real user behavior, and regression coverage are the ONLY definition of DONE.
-

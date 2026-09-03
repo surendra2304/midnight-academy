@@ -14,7 +14,8 @@ export const Route = createFileRoute("/shadowing")({
       { title: "Shadowing Practice — Midnight Academy" },
       {
         name: "description",
-        content: "Master spoken English pronunciation, rhythm, and intelligibility with sentence-by-sentence oral shadowing and AI feedback.",
+        content:
+          "Master spoken English pronunciation, rhythm, and intelligibility with sentence-by-sentence oral shadowing and AI feedback.",
       },
     ],
   }),
@@ -23,7 +24,9 @@ export const Route = createFileRoute("/shadowing")({
 
 function ShadowingPage() {
   const [items, setItems] = useState<ShadowingItem[]>([]);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<"all" | "lower" | "middle" | "upper">("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<
+    "all" | "lower" | "middle" | "upper"
+  >("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,7 +64,8 @@ function ShadowingPage() {
                 Oral Shadowing Practice
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                Listen to native speech models, repeat sentence-by-sentence, and receive instant 4-trait scoring on pronunciation, rhythm, and word accuracy.
+                Listen to native speech models, repeat sentence-by-sentence, and receive instant
+                4-trait scoring on pronunciation, rhythm, and word accuracy.
               </p>
             </div>
 

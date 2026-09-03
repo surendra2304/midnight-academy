@@ -3,7 +3,7 @@
  * Handles server-side audio validation, checksum calculation, and Supabase storage persistence.
  */
 
-import { supabaseAdmin } from '@/integrations/supabase/client.server';
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export interface UploadAudioPayload {
   attemptId: string;
@@ -41,26 +41,35 @@ export class SpeakingUploadService {
    * Persists recorded audio into Supabase Storage under 'toefl_recordings' bucket.
    */
   async processAudioUpload(payload: UploadAudioPayload): Promise<UploadAudioResult> {
-    const { attemptId, contentItemId, studentId, audioBase64, mimeType = 'audio/webm', clientChecksum } = payload;
+    const {
+      attemptId,
+      contentItemId,
+      studentId,
+      audioBase64,
+      mimeType = "audio/webm",
+      clientChecksum,
+    } = payload;
 
     const serverChecksum = calculateAudioChecksum(audioBase64);
 
     // If client supplied a checksum, verify integrity
     if (clientChecksum && clientChecksum !== serverChecksum) {
-      console.warn(`[SpeakingUploadService] Checksum mismatch! Client: ${clientChecksum}, Server: ${serverChecksum}`);
+      console.warn(
+        `[SpeakingUploadService] Checksum mismatch! Client: ${clientChecksum}, Server: ${serverChecksum}`,
+      );
     }
 
-    const buffer = Buffer.from(audioBase64.replace(/^data:audio\/\w+;base64,/, ''), 'base64');
+    const buffer = Buffer.from(audioBase64.replace(/^data:audio\/\w+;base64,/, ""), "base64");
     const filename = `${studentId}/${attemptId}/${contentItemId}_${Date.now()}.webm`;
 
     // Attempt upload to Supabase storage bucket 'toefl_recordings'
     let uploadSuccess = false;
     let storagePath = filename;
-    let publicUrl = '';
+    let publicUrl = "";
 
     try {
       const { error: uploadError } = await supabaseAdmin.storage
-        .from('toefl_recordings')
+        .from("toefl_recordings")
         .upload(filename, buffer, {
           contentType: mimeType,
           upsert: true,
@@ -69,12 +78,15 @@ export class SpeakingUploadService {
       if (!uploadError) {
         uploadSuccess = true;
         const { data: urlData } = supabaseAdmin.storage
-          .from('toefl_recordings')
+          .from("toefl_recordings")
           .getPublicUrl(filename);
         publicUrl = urlData.publicUrl;
       }
     } catch (err) {
-      console.warn('[SpeakingUploadService] Storage bucket upload failed or unconfigured, using fallback path:', err);
+      console.warn(
+        "[SpeakingUploadService] Storage bucket upload failed or unconfigured, using fallback path:",
+        err,
+      );
     }
 
     if (!uploadSuccess) {

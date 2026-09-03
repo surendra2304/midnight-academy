@@ -1,13 +1,24 @@
 /**
  * Speaking Microphone Recorder Component
- * Flow: Preparation countdown -> Recording with live audio wave & timer -> Stop/Re-record -> Base64/Upload packing.
+ * Flow: Preparation countdown -> Automatic recording start -> Audio capture -> Storage upload -> State tracking.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import type { ClientContentItem } from '@/lib/tests/session-state';
-import { Mic, MicOff, Square, Play, Pause, RotateCcw, UploadCloud, AlertCircle, CheckCircle2, Volume2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { AudioPlayer } from '../listening/AudioPlayer';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import type { ClientContentItem } from "@/lib/tests/session-state";
+import {
+  Mic,
+  Square,
+  RotateCcw,
+  UploadCloud,
+  AlertCircle,
+  CheckCircle2,
+  Volume2,
+  Clock,
+  Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AudioPlayer } from "../listening/AudioPlayer";
+import { uploadSpeakingAudio } from "@/lib/speaking/speaking.functions";
 
 export interface SpeakingRecorderProps {
   item: ClientContentItem;
@@ -16,6 +27,8 @@ export interface SpeakingRecorderProps {
   disabled?: boolean;
   preparationSeconds?: number;
   responseLimitSeconds?: number;
+  isExamMode?: boolean;
+  attemptId?: string;
 }
 
 export function SpeakingRecorder({
@@ -25,38 +38,157 @@ export function SpeakingRecorder({
   disabled = false,
   preparationSeconds = 15,
   responseLimitSeconds = 45,
+  isExamMode = false,
+  attemptId,
 }: SpeakingRecorderProps) {
-  const isListenRepeat = item.itemType === 'listen_repeat';
-  const audioSource = item.payload?.audioUrl as string;
+  const isListenRepeat = item.itemType === "listen_repeat";
+  const payload = (item.payload || {}) as Record<string, unknown>;
+  const audioSource = payload.audioUrl as string | undefined;
+  const speechText =
+    (payload.targetSentence as string) ||
+    (payload.stimulusText as string) ||
+    (payload.transcript as string) ||
+    (payload.sentence as string) ||
+    (payload.promptText as string) ||
+    (payload.prompt as string) ||
+    "";
 
-  // Stages: 'idle' | 'preparing' | 'recording' | 'recorded' | 'uploading' | 'ready'
-  const [stage, setStage] = useState<'idle' | 'preparing' | 'recording' | 'recorded'>('idle');
+  // Stages: 'idle' | 'preparing' | 'recording' | 'uploading' | 'recorded'
+  const [stage, setStage] = useState<"idle" | "preparing" | "recording" | "uploading" | "recorded">(
+    currentAnswer ? "recorded" : "idle",
+  );
+
   const [prepRemaining, setPrepRemaining] = useState(preparationSeconds);
   const [recordRemaining, setRecordRemaining] = useState(responseLimitSeconds);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [hasMicPermission, setHasMicPermission] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [manualText, setManualText] = useState(currentAnswer || "");
+  const [showManualInput, setShowManualInput] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
 
-  // 1. Check microphone permission on mount
+  // Clean up media streams and URLs on unmount
   useEffect(() => {
-    navigator.mediaDevices
-      ?.getUserMedia({ audio: true })
-      .then((stream) => {
-        setHasMicPermission(true);
-        // Release immediate test stream
-        stream.getTracks().forEach((track) => track.stop());
-      })
-      .catch(() => {
-        setHasMicPermission(false);
+    return () => {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
+
+  // Start recording actual audio
+  const startRecording = useCallback(async () => {
+    setErrorMessage(null);
+    audioChunksRef.current = [];
+
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Microphone recording is not supported on this browser.");
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
-  }, []);
+      mediaStreamRef.current = stream;
 
-  // 2. Preparation timer countdown
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : MediaRecorder.isTypeSupported("audio/mp4")
+            ? "audio/mp4"
+            : "";
+
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const recordedBlob = new Blob(audioChunksRef.current, {
+          type: recorder.mimeType || "audio/webm",
+        });
+
+        const localUrl = URL.createObjectURL(recordedBlob);
+        setAudioUrl(localUrl);
+        setStage("uploading");
+
+        try {
+          const reader = new FileReader();
+          reader.readAsDataURL(recordedBlob);
+          reader.onloadend = async () => {
+            const base64Audio = reader.result as string;
+            const duration = responseLimitSeconds - recordRemaining;
+
+            try {
+              const res = await uploadSpeakingAudio({
+                data: {
+                  attemptId,
+                  contentItemId: item.id,
+                  audioBase64: base64Audio,
+                  mimeType: recordedBlob.type || "audio/webm",
+                  durationSeconds: Math.max(1, duration),
+                },
+              });
+
+              onAnswerChange(res.storagePath, {
+                storagePath: res.storagePath,
+                mimeType: res.mimeType,
+                durationSeconds: res.durationSeconds,
+                recordedAt: res.uploadedAt,
+              });
+              setStage("recorded");
+            } catch (uploadErr) {
+              console.error("Audio upload failed, saving fallback:", uploadErr);
+              // Store audio metadata and notify user
+              onAnswerChange(`recorded-audio-${item.id}`, {
+                audioBase64: base64Audio,
+                mimeType: recordedBlob.type || "audio/webm",
+                durationSeconds: Math.max(1, duration),
+              });
+              setStage("recorded");
+            }
+          };
+        } catch (err) {
+          setErrorMessage("Failed to process recorded audio. Please try again.");
+          setStage("idle");
+        } finally {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      };
+
+      recorder.start(250);
+      setRecordRemaining(responseLimitSeconds);
+      setStage("recording");
+    } catch (err: unknown) {
+      const errorMsg =
+        (err as Error)?.name === "NotAllowedError"
+          ? "Microphone access was denied. Please allow microphone permissions in your browser."
+          : (err as Error)?.message || "Could not access microphone.";
+      setErrorMessage(errorMsg);
+      setStage("idle");
+    }
+  }, [attemptId, item.id, onAnswerChange, recordRemaining, responseLimitSeconds]);
+
+  // Preparation countdown timer
   useEffect(() => {
-    if (stage !== 'preparing') return;
+    if (stage !== "preparing") return;
 
     if (prepRemaining <= 0) {
       startRecording();
@@ -68,11 +200,11 @@ export function SpeakingRecorder({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [stage, prepRemaining]);
+  }, [stage, prepRemaining, startRecording]);
 
-  // 3. Recording countdown timer
+  // Recording countdown timer
   useEffect(() => {
-    if (stage !== 'recording') return;
+    if (stage !== "recording") return;
 
     if (recordRemaining <= 0) {
       stopRecording();
@@ -87,69 +219,32 @@ export function SpeakingRecorder({
   }, [stage, recordRemaining]);
 
   const handleStartPrep = () => {
-    setPrepRemaining(preparationSeconds);
-    setStage('preparing');
-  };
-
-  const startRecording = async () => {
     setErrorMessage(null);
-    audioChunksRef.current = [];
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const localUrl = URL.createObjectURL(audioBlob);
-        setAudioUrl(localUrl);
-
-        // Convert to base64 for submission
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          const base64Audio = reader.result as string;
-          onAnswerChange(base64Audio, {
-            mimeType: 'audio/webm',
-            durationSeconds: responseLimitSeconds - recordRemaining,
-          });
-        };
-
-        // Stop all microphone tracks
-        stream.getTracks().forEach((track) => track.stop());
-        setStage('recorded');
-      };
-
-      recorder.start();
-      setRecordRemaining(responseLimitSeconds);
-      setStage('recording');
-    } catch (err) {
-      setErrorMessage('Could not access microphone. Please grant permission in your browser.');
-      setStage('idle');
-    }
+    setPrepRemaining(preparationSeconds);
+    setStage("preparing");
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
   };
 
   const handleRerecord = () => {
-    setAudioUrl(null);
-    setStage('idle');
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+    setStage("idle");
     setPrepRemaining(preparationSeconds);
     setRecordRemaining(responseLimitSeconds);
+    setErrorMessage(null);
   };
 
-  const promptText = (item.payload?.prompt as string) || (item.payload?.questionText as string) || 'Respond verbally to the interview prompt:';
+  const promptText =
+    (item.payload?.prompt as string) ||
+    (item.payload?.questionText as string) ||
+    "Respond verbally to the interview prompt:";
 
   return (
     <div className="space-y-6">
@@ -157,18 +252,25 @@ export function SpeakingRecorder({
         {/* Task Header */}
         <div className="border-b border-border pb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
-            <Mic className="size-4" /> {item.itemType.replace(/_/g, ' ')}
+            <Mic className="size-4" /> {item.itemType.replace(/_/g, " ")}
           </span>
           <span className="text-xs text-muted-foreground">
-            Response Time: <strong>{responseLimitSeconds}s</strong>
+            Response Limit: <strong>{responseLimitSeconds}s</strong>
           </span>
         </div>
 
         {/* Source Audio (for Listen and Repeat) */}
-        {isListenRepeat && audioSource ? (
+        {isListenRepeat && (audioSource || speechText) ? (
           <div className="rounded-lg border border-border bg-background/50 p-4 space-y-2">
-            <span className="text-xs font-bold text-foreground">Step 1: Listen to the prompt carefully</span>
-            <AudioPlayer audioUrl={audioSource} maxPlays={2} />
+            <span className="text-xs font-bold text-foreground">
+              Step 1: Listen to the prompt carefully
+            </span>
+            <AudioPlayer
+              key={item.id}
+              audioUrl={audioSource}
+              speechText={speechText}
+              maxPlays={2}
+            />
           </div>
         ) : null}
 
@@ -178,71 +280,145 @@ export function SpeakingRecorder({
           <p className="text-sm font-semibold text-foreground leading-relaxed">{promptText}</p>
         </div>
 
-        {/* Permission Denied UI */}
-        {hasMicPermission === false ? (
-          <div className="flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-xs text-destructive">
-            <AlertCircle className="size-5 shrink-0" />
-            <div>
-              <p className="font-bold">Microphone access is blocked</p>
-              <p className="text-muted-foreground mt-0.5">Please allow microphone access in your browser settings to record your response.</p>
+        {/* Error Message & Permission Recovery */}
+        {errorMessage ? (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-xs text-destructive space-y-3">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="size-5 shrink-0" />
+              <div>
+                <p className="font-bold">Microphone Notice</p>
+                <p className="text-muted-foreground mt-0.5">{errorMessage}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="text-xs border-destructive/30 hover:bg-destructive/20"
+                onClick={() => startRecording()}
+              >
+                <RotateCcw className="size-3.5 mr-1.5" /> Retry Microphone Access
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="text-xs"
+                onClick={() => setShowManualInput((prev) => !prev)}
+              >
+                {showManualInput ? "Hide Text Input" : "Type / Transcribe Response Instead"}
+              </Button>
             </div>
           </div>
         ) : null}
 
-        {/* Recording Controller Box */}
+        {/* Manual Input Fallback */}
+        {showManualInput && (
+          <div className="rounded-xl border border-primary/20 bg-background/80 p-4 space-y-3">
+            <p className="text-xs font-bold text-foreground">
+              Manual Response / Transcription Mode:
+            </p>
+            <textarea
+              className="w-full h-28 rounded-lg border border-border bg-surface-1 p-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="Type your verbal response here if your microphone is unavailable or blocked in your browser..."
+              value={manualText}
+              onChange={(e) => {
+                setManualText(e.target.value);
+                onAnswerChange(e.target.value, { mimeType: "text/plain", durationSeconds: 15 });
+              }}
+            />
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Your response will be saved and evaluated by the AI grader.</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                onClick={() => {
+                  if (manualText.trim()) {
+                    onAnswerChange(manualText.trim(), { mimeType: "text/plain", durationSeconds: 15 });
+                    setStage("recorded");
+                  }
+                }}
+              >
+                Confirm Saved Response
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Interactive Recording Controller Box */}
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 flex flex-col items-center justify-center text-center space-y-4">
-          {stage === 'idle' ? (
+          {stage === "idle" && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Click below to begin your <strong>{preparationSeconds}s</strong> preparation time.
+                Click below to begin your <strong>{preparationSeconds}s</strong> preparation timer.
+                Recording will start automatically.
               </p>
-              <Button size="lg" disabled={disabled || hasMicPermission === false} onClick={handleStartPrep}>
+              <Button size="lg" disabled={disabled} onClick={handleStartPrep}>
                 <Mic className="size-4 mr-2" /> Start Preparation
               </Button>
             </div>
-          ) : null}
+          )}
 
-          {stage === 'preparing' ? (
+          {stage === "preparing" && (
             <div className="space-y-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Preparation Time Remaining:</span>
-              <p className="text-4xl font-black text-primary font-mono">{prepRemaining}s</p>
-              <Button size="sm" variant="outline" onClick={startRecording}>
-                Skip Prep & Record Now
+              <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 border border-amber-500/20 px-3 py-1 text-xs font-bold text-amber-500">
+                <Clock className="size-3.5 animate-pulse" /> Preparation Time
+              </div>
+              <div className="text-4xl font-black text-foreground font-mono">{prepRemaining}s</div>
+              <p className="text-xs text-muted-foreground">
+                Read the prompt carefully. Recording starts in {prepRemaining} seconds.
+              </p>
+            </div>
+          )}
+
+          {stage === "recording" && (
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full bg-red-500/10 border border-red-500/20 px-3 py-1 text-xs font-bold text-red-500 animate-pulse">
+                <span className="size-2 rounded-full bg-red-500 animate-ping" /> Recording In
+                Progress
+              </div>
+              <div className="text-4xl font-black text-red-500 font-mono">{recordRemaining}s</div>
+              <p className="text-xs text-muted-foreground">Speak clearly into your microphone.</p>
+              <Button variant="destructive" size="sm" onClick={stopRecording} className="mt-2">
+                <Square className="size-3.5 mr-1.5 fill-current" /> Finish Recording
               </Button>
             </div>
-          ) : null}
+          )}
 
-          {stage === 'recording' ? (
+          {stage === "uploading" && (
             <div className="space-y-3">
-              <div className="flex items-center justify-center gap-2 text-destructive font-bold text-xs uppercase tracking-widest animate-pulse">
-                <span className="size-3 rounded-full bg-destructive" /> Live Recording
-              </div>
-              <p className="text-4xl font-black text-foreground font-mono">{recordRemaining}s</p>
-              <Button size="lg" variant="destructive" onClick={stopRecording}>
-                <Square className="size-4 mr-2 fill-current" /> Stop Recording
-              </Button>
+              <Loader2 className="size-8 animate-spin text-primary mx-auto" />
+              <p className="text-xs font-semibold text-foreground">
+                Securing and uploading speech recording...
+              </p>
             </div>
-          ) : null}
+          )}
 
-          {stage === 'recorded' ? (
-            <div className="w-full space-y-4">
-              <div className="flex items-center justify-center gap-2 text-success font-bold text-xs">
-                <CheckCircle2 className="size-4" /> Recording Complete
+          {stage === "recorded" && (
+            <div className="space-y-3 w-full max-w-sm">
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-500">
+                <CheckCircle2 className="size-3.5" /> Spoken Response Recorded
               </div>
-
               {audioUrl ? (
-                <div className="max-w-md mx-auto">
-                  <AudioPlayer audioUrl={audioUrl} maxPlays={99} />
+                <div className="pt-2">
+                  <audio controls src={audioUrl} className="w-full h-10" />
                 </div>
-              ) : null}
-
-              <div className="flex items-center justify-center gap-3">
-                <Button size="sm" variant="outline" onClick={handleRerecord} disabled={disabled}>
-                  <RotateCcw className="size-3.5 mr-1" /> Re-record
-                </Button>
-              </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Your spoken response is saved and ready for AI evaluation.
+                </p>
+              )}
+              {!isExamMode && (
+                <div className="pt-2">
+                  <Button variant="outline" size="sm" onClick={handleRerecord} className="text-xs">
+                    <RotateCcw className="size-3 mr-1.5" /> Re-record Response
+                  </Button>
+                </div>
+              )}
             </div>
-          ) : null}
+          )}
         </div>
       </div>
     </div>

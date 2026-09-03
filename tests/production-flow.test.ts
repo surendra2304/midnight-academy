@@ -10,10 +10,7 @@ describe("Production Flow Verification (No Mock-Data Dependencies in Live Flows)
   });
 
   it("verifies /test.index.tsx uses getPublishedTests RPC", () => {
-    const content = readFileSync(
-      resolve(__dirname, "../src/routes/test.index.tsx"),
-      "utf-8",
-    );
+    const content = readFileSync(resolve(__dirname, "../src/routes/test.index.tsx"), "utf-8");
     expect(content).toContain("getPublishedTests");
     expect(content).toContain("startToeflAttempt");
   });

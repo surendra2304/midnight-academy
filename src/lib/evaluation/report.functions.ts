@@ -1,14 +1,15 @@
 /**
  * TOEFL Unified Score Report Data Loader (Server-Side)
  * Aggregates published score reports, section breakdowns, error patterns, and practice recommendations.
+ * Strictly verifies attempt ownership against student session.
  */
 
-import { createServerFn } from '@tanstack/react-start';
-import { z } from 'zod';
-import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
-import { supabaseAdmin } from '@/integrations/supabase/client.server';
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const getToeflScoreReport = createServerFn({ method: 'GET' })
+export const getToeflScoreReport = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
@@ -16,45 +17,56 @@ export const getToeflScoreReport = createServerFn({ method: 'GET' })
 
     // 1. Fetch Attempt & Parent Test
     const { data: attempt, error: aErr } = await supabaseAdmin
-      .from('attempts')
-      .select('id, test_id, test_version_id, student_id, status, score, percentage_score, started_at, completed_at, tests(id, name, category, difficulty, code)')
-      .eq('id', attemptId)
+      .from("attempts")
+      .select(
+        "id, test_id, test_version_id, student_id, status, evaluation_status, score, started_at, completed_at, tests(id, name, category, difficulty, code)",
+      )
+      .eq("id", attemptId)
       .single();
 
     if (aErr || !attempt) {
-      throw new Error('Attempt not found');
+      throw new Error("Attempt not found");
+    }
+
+    // Ownership check
+    if (attempt.student_id !== context.userId) {
+      throw new Error("Unauthorized: You do not have access to this score report.");
     }
 
     // 2. Fetch Score Report
     const { data: report } = await supabaseAdmin
-      .from('score_reports')
-      .select('*')
-      .eq('attempt_id', attemptId)
+      .from("score_reports")
+      .select("*")
+      .eq("attempt_id", attemptId)
       .maybeSingle();
 
     // 3. Fetch Attempt Sections
     const { data: attemptSections } = await supabaseAdmin
-      .from('attempt_sections')
-      .select('id, section_id, status, raw_score, section_band, time_spent_seconds, sections(id, section_type, timing_seconds, section_order)')
-      .eq('attempt_id', attemptId)
-      .order('created_at', { ascending: true });
+      .from("attempt_sections")
+      .select(
+        "id, section_id, status, raw_score, section_band, time_spent_seconds, sections(id, section_type, timing_seconds, section_order)",
+      )
+      .eq("attempt_id", attemptId)
+      .order("created_at", { ascending: true });
 
     // 4. Fetch Responses, Items, and Evaluations
     const attemptSecIds = (attemptSections || []).map((s) => s.id);
 
     const { data: responses } = await supabaseAdmin
-      .from('responses')
-      .select('id, attempt_section_id, content_item_id, raw_answer, normalized_answer, is_correct, score, time_spent_ms, flagged, answered_at, content_items(id, section_type, item_type, difficulty, skill_tags, payload)')
-      .in('attempt_section_id', attemptSecIds);
+      .from("responses")
+      .select(
+        "id, attempt_section_id, content_item_id, raw_answer, normalized_answer, is_correct, score, time_spent_ms, flagged, answered_at, content_items(id, section_type, item_type, difficulty, skill_tags, payload)",
+      )
+      .in("attempt_section_id", attemptSecIds);
 
     const respIds = (responses || []).map((r) => r.id);
 
     const { data: evaluations } = await supabaseAdmin
-      .from('evaluations')
-      .select('*')
-      .in('response_id', respIds);
+      .from("evaluations")
+      .select("*")
+      .in("response_id", respIds.length > 0 ? respIds : ["00000000-0000-0000-0000-000000000000"]);
 
-    const evalByResp = new Map<string, (typeof evaluations)[0]>();
+    const evalByResp = new Map<string, NonNullable<typeof evaluations>[number]>();
     for (const ev of evaluations || []) {
       evalByResp.set(ev.response_id, ev);
     }
@@ -62,35 +74,31 @@ export const getToeflScoreReport = createServerFn({ method: 'GET' })
     // 5. Fetch Question Options for Objective Items
     const contentItemIds = (responses || []).map((r) => r.content_item_id);
     const { data: options } = await supabaseAdmin
-      .from('question_options')
-      .select('id, content_item_id, option_key, option_text, is_correct, distractor_rationale')
-      .in('content_item_id', contentItemIds);
+      .from("question_options")
+      .select("id, content_item_id, option_key, option_text, is_correct, distractor_rationale")
+      .in(
+        "content_item_id",
+        contentItemIds.length > 0 ? contentItemIds : ["00000000-0000-0000-0000-000000000000"],
+      );
 
-    const optionsByItem = new Map<string, typeof options>();
+    const optionsByItem = new Map<string, NonNullable<typeof options>>();
     for (const opt of options || []) {
       const list = optionsByItem.get(opt.content_item_id) || [];
       list.push(opt);
       optionsByItem.set(opt.content_item_id, list);
     }
 
-    // 6. Fetch Student Target Score from Profile or Study Plans
-    const { data: studyPlan } = await supabaseAdmin
-      .from('study_plans')
-      .select('target_overall_band')
-      .eq('student_id', context.userId)
-      .maybeSingle();
-
-    // 7. Fetch Practice Recommendations
+    // 6. Fetch Practice Recommendations
     const { data: recommendations } = await supabaseAdmin
-      .from('recommendations')
-      .select('*')
-      .eq('student_id', context.userId)
+      .from("recommendations")
+      .select("*")
+      .eq("student_id", context.userId)
       .limit(6);
 
     return {
       attempt,
       report,
-      targetScore: studyPlan?.target_overall_band || 5.0,
+      targetScore: report?.target_score || 5.0,
       attemptSections: attemptSections || [],
       responses: (responses || []).map((r) => ({
         ...r,

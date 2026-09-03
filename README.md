@@ -96,9 +96,11 @@ Detailed technical and engineering guides are available under the `/docs` direct
 
 ## ⚠️ Current Project Status
 
-- **TOEFL iBT 2026 Release**: Fully deployed and active at [midnight-academy-one.vercel.app](https://midnight-academy-one.vercel.app).
-- **Database & Migrations**: Additive TOEFL domain schema synchronized on Supabase (`test_versions`, `sections`, `modules`, `content_items`, `rubrics`, etc.).
-- **Multi-Modal Examination Suite**: 4-Section Full Mocks (Reading → Listening → Writing → Speaking) and single-skill tests operational.
-- **AI Rubric Evaluations**: Gemini-assisted writing and speaking trait evaluations running with structured JSON validation and prompt injection defenses.
-- **Unified Score Reporting**: 1.0–6.0 official band scores, estimated 0–120 score, diagnostic error reviews, and personalized weakness practice queues live.
-- **Live OTP Registration**: **RESOLVED** ([AUTH-OTP-PROD-001](docs/AUTH_OTP_PROD_RESOLUTION.md)) with dual-port STARTTLS/SSL failover and native OTP fallback.
+- **TOEFL iBT 2026 Release**: Fully deployed, verified, and hardened.
+- **Strict Production Database Authority**: Completely removed all synthetic hardcoded fallback blueprints and dummy IDs; test attempts strictly query real PostgreSQL state with fail-closed validation.
+- **Atomic Session Engine**: RPC `advance_attempt_section` guarantees atomic, single-flight section advances, strictly validating timers, ownership, and module item mapping.
+- **End-to-End Speaking Pipeline**: Real browser audio recording -> private Supabase storage bucket (`speaking-recordings`) -> Gemini STT transcription -> multi-trait rubric evaluation.
+- **Direct Task Practice**: Dedicated interactive practice runner at `/practice/$taskType` supporting all 12 TOEFL tasks with instant scoring and explanations.
+- **Original Content Bank**: 61 original academic and campus life items across all 12 task types, powering 2 Full Mocks and 4 individual section tests. All 6 pass 100% of blueprint integrity checks.
+- **Zero Fake Data Policy**: Removed all synthetic evaluator fallback scores; evaluations fail closed into explicit, retryable states with user retry buttons.
+- **Automated Verification**: 219 tests passing with 100% green coverage across 27 test files, 0 TypeScript errors (`npx tsc --noEmit`), and clean production SSR bundle (`npm run build`).

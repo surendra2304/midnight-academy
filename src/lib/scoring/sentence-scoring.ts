@@ -19,6 +19,25 @@ export interface SentenceScoreResult {
 
 export class SentenceScoringService {
   /**
+   * Scores raw student answer string or token array against accepted sequences.
+   */
+  scoreResponse(
+    response: string | string[] | null | undefined,
+    rule: { acceptedSequences: string[][]; wordBank?: string[]; tokenList?: string[] },
+  ): SentenceScoreResult {
+    let tokens: string[] = [];
+    if (Array.isArray(response)) {
+      tokens = response;
+    } else if (typeof response === "string") {
+      tokens = response.trim().split(/\s+/).filter(Boolean);
+    }
+    return this.scoreSentence(tokens, {
+      acceptedSequences: rule.acceptedSequences,
+      tokenList: rule.wordBank ?? rule.tokenList ?? [],
+    });
+  }
+
+  /**
    * Scores a student's ordered tokens against accepted syntactic sequences.
    */
   scoreSentence(studentOrder: string[], rule: SentenceScoringRule): SentenceScoreResult {
@@ -28,14 +47,14 @@ export class SentenceScoringService {
         score: 0,
         earnedPoints: 0,
         maxPoints: 1,
-        feedback: 'No sentence words were selected or ordered.',
+        feedback: "No sentence words were selected or ordered.",
       };
     }
 
-    const studentStr = studentOrder.map((s) => s.trim().toLowerCase()).join(' ');
+    const studentStr = studentOrder.map((s) => s.trim().toLowerCase()).join(" ");
 
     const isMatch = rule.acceptedSequences.some((seq) => {
-      const targetStr = seq.map((s) => s.trim().toLowerCase()).join(' ');
+      const targetStr = seq.map((s) => s.trim().toLowerCase()).join(" ");
       return targetStr === studentStr;
     });
 
@@ -46,7 +65,7 @@ export class SentenceScoringService {
         earnedPoints: 1,
         maxPoints: 1,
         matchedSequence: studentOrder,
-        feedback: 'Correct sentence syntax and structure.',
+        feedback: "Correct sentence syntax and structure.",
       };
     }
 
@@ -55,8 +74,10 @@ export class SentenceScoringService {
     for (const seq of rule.acceptedSequences) {
       let pairsCount = 0;
       for (let i = 0; i < studentOrder.length - 1; i++) {
-        const pair = `${studentOrder[i].toLowerCase()} ${studentOrder[i + 1].toLowerCase()}`;
-        const seqStr = seq.map((s) => s.toLowerCase()).join(' ');
+        const first = studentOrder[i]?.toLowerCase() || "";
+        const second = studentOrder[i + 1]?.toLowerCase() || "";
+        const pair = `${first} ${second}`;
+        const seqStr = seq.map((s) => s.toLowerCase()).join(" ");
         if (seqStr.includes(pair)) {
           pairsCount += 1;
         }
@@ -72,7 +93,7 @@ export class SentenceScoringService {
       score: partialScore >= 0.75 ? 0.5 : 0.0, // Partial credit threshold
       earnedPoints: partialScore >= 0.75 ? 0.5 : 0,
       maxPoints: 1,
-      feedback: 'The word order contains grammatical or syntactic errors.',
+      feedback: "The word order contains grammatical or syntactic errors.",
     };
   }
 }

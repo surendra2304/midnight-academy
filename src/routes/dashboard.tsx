@@ -22,7 +22,8 @@ export const Route = createFileRoute("/dashboard")({
       { title: "English Proficiency Dashboard — Midnight Academy" },
       {
         name: "description",
-        content: "Track your standardized band score, 4-section performance, diagnostic weakness areas, and personalized practice queue.",
+        content:
+          "Track your standardized band score, 4-section performance, diagnostic weakness areas, and personalized practice queue.",
       },
     ],
   }),
@@ -71,7 +72,9 @@ function Dashboard() {
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading your examination dashboard & analytics...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading your examination dashboard & analytics...
+            </p>
           </div>
         </PageShell>
       </div>
@@ -97,12 +100,15 @@ function Dashboard() {
           {/* Quick Start Card Banner */}
           <section className="rounded-2xl border border-border bg-gradient-to-r from-card/80 via-card/50 to-card/80 p-8 shadow-lg flex flex-wrap items-center justify-between gap-6">
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-primary">Standardized Examination Hub</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-primary">
+                Standardized Examination Hub
+              </span>
               <h1 className="text-2xl font-black text-foreground lg:text-3xl mt-1">
                 Student Learning Center
               </h1>
               <p className="mt-1 text-xs text-muted-foreground max-w-xl leading-relaxed">
-                Take full-length adaptive mocks, target section exams, or strengthen specific weak skills with diagnostic instant feedback.
+                Take full-length adaptive mocks, target section exams, or strengthen specific weak
+                skills with diagnostic instant feedback.
               </p>
             </div>
 
@@ -117,16 +123,11 @@ function Dashboard() {
 
           {/* 1. Personalized Weakness-Driven Practice Queue */}
           {queue.length > 0 ? (
-            <PracticeQueueView
-              queue={queue}
-              onLaunchPractice={() => navigate({ to: "/test" })}
-            />
+            <PracticeQueueView queue={queue} onLaunchPractice={() => navigate({ to: "/test" })} />
           ) : null}
 
           {/* 2. Deterministic Analytics & Weakness Diagnostics */}
-          {profile ? (
-            <AnalyticsDashboardView profile={profile} targetBand={targetBand} />
-          ) : null}
+          {profile ? <AnalyticsDashboardView profile={profile} targetBand={targetBand} /> : null}
         </div>
       </PageShell>
     </div>

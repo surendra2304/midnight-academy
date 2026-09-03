@@ -3,17 +3,20 @@
  * Generates explainable, reproducible practice queues based on deterministic skill weakness profiles and content banks.
  */
 
-import type { StudentWeaknessProfile, SkillPerformanceMetric } from '@/lib/analytics/analytics-engine';
-import type { ToeflSectionType, ToeflItemType } from '@/types/toefl';
+import type {
+  StudentWeaknessProfile,
+  SkillPerformanceMetric,
+} from "@/lib/analytics/analytics-engine";
+import type { ToeflSectionType, ToeflItemType } from "@/types/toefl";
 
 export interface CandidateContentItem {
   id: string;
   sectionType: ToeflSectionType;
   itemType: ToeflItemType;
-  difficulty: 'Easy' | 'Medium' | 'Hard' | string;
+  difficulty: "Easy" | "Medium" | "Hard" | string;
   skillTags: string[];
-  title?: string;
-  promptSnippet?: string;
+  title?: string | undefined;
+  promptSnippet?: string | undefined;
 }
 
 export interface RecommendationItem {
@@ -48,7 +51,7 @@ export class RecommendationEngine {
     contentPool: CandidateContentItem[],
     config: RecommendationEngineConfig = {},
   ): RecommendationItem[] {
-    const ruleVersion = config.ruleVersion || '2026.1';
+    const ruleVersion = config.ruleVersion || "2026.1";
     const maxQueueSize = config.maxQueueSize || 6;
     const recentIds = new Set(config.recentAttemptedItemIds || []);
 
@@ -96,13 +99,14 @@ export class RecommendationEngine {
     // 2. Fallback / Cold Start: If pool is empty or user has no weak items yet, provide balanced starter items
     if (recommendations.length < maxQueueSize) {
       const remainingItems = contentPool.filter(
-        (item) => !recentIds.has(item.id) && !recommendations.some((r) => r.contentItemId === item.id),
+        (item) =>
+          !recentIds.has(item.id) && !recommendations.some((r) => r.contentItemId === item.id),
       );
 
       for (const item of remainingItems) {
         if (recommendations.length >= maxQueueSize) break;
 
-        const fallbackSkill = item.skillTags[0] || 'General Proficiency';
+        const fallbackSkill = item.skillTags[0] || "General Proficiency";
         recommendations.push({
           id: `rec_fallback_${item.id.slice(0, 8)}`,
           contentItemId: item.id,
@@ -111,7 +115,7 @@ export class RecommendationEngine {
           difficulty: item.difficulty,
           targetSkill: fallbackSkill,
           priority: 3,
-          reason: `Recommended practice item for ${item.sectionType} (${item.itemType.replace(/_/g, ' ')}) to build foundational competency.`,
+          reason: `Recommended practice item for ${item.sectionType} (${item.itemType.replace(/_/g, " ")}) to build foundational competency.`,
           evidence: {
             skillAccuracyPercent: 100,
             skillAttempts: 0,
@@ -123,7 +127,9 @@ export class RecommendationEngine {
     }
 
     // Sort deterministically by priority (1 to 5) then by weakness score descending
-    return recommendations.sort((a, b) => a.priority - b.priority || b.evidence.weaknessScore - a.evidence.weaknessScore);
+    return recommendations.sort(
+      (a, b) => a.priority - b.priority || b.evidence.weaknessScore - a.evidence.weaknessScore,
+    );
   }
 }
 

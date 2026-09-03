@@ -24,7 +24,8 @@ export const Route = createFileRoute("/")({
       { title: "Midnight Academy — Standardized Academic English Assessment" },
       {
         name: "description",
-        content: "Master standardized English proficiency with multistage adaptive mocks, deterministic answer analytics, and rubric-calibrated AI speaking & writing evaluations.",
+        content:
+          "Master standardized English proficiency with multistage adaptive mocks, deterministic answer analytics, and rubric-calibrated AI speaking & writing evaluations.",
       },
     ],
   }),
@@ -51,11 +52,17 @@ function Landing() {
           </h1>
 
           <p className="mx-auto max-w-2xl text-sm md:text-base text-muted-foreground leading-relaxed">
-            Experience complete full-length adaptive mocks across Reading, Listening, Writing, and Speaking with instant deterministic scoring, rubric-calibrated AI evaluation, and actionable weakness diagnostics.
+            Experience complete full-length adaptive mocks across Reading, Listening, Writing, and
+            Speaking with instant deterministic scoring, rubric-calibrated AI evaluation, and
+            actionable weakness diagnostics.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-            <Button asChild size="lg" className="font-bold text-sm px-8 shadow-xl shadow-primary/20">
+            <Button
+              asChild
+              size="lg"
+              className="font-bold text-sm px-8 shadow-xl shadow-primary/20"
+            >
               <Link to="/test">
                 <Play className="size-4 mr-2 fill-current" /> Start Assessment
               </Link>
@@ -76,7 +83,9 @@ function Landing() {
             <h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
               Comprehensive 4-Section Preparation
             </h2>
-            <p className="text-xs text-muted-foreground">Every task type modeled strictly on official 2026 ETS benchmarks.</p>
+            <p className="text-xs text-muted-foreground">
+              Every task type modeled strictly on official 2026 ETS benchmarks.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -86,7 +95,8 @@ function Landing() {
               </div>
               <h3 className="text-base font-bold text-foreground">Reading</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Adaptive cloze passages, daily life practical comprehension, and academic synthesis questions with distractor rationales.
+                Adaptive cloze passages, daily life practical comprehension, and academic synthesis
+                questions with distractor rationales.
               </p>
             </div>
 
@@ -96,7 +106,8 @@ function Landing() {
               </div>
               <h3 className="text-base font-bold text-foreground">Listening</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Audio-first campus conversations, institutional announcements, and academic lectures with sealed active transcripts.
+                Audio-first campus conversations, institutional announcements, and academic lectures
+                with sealed active transcripts.
               </p>
             </div>
 
@@ -106,7 +117,8 @@ function Landing() {
               </div>
               <h3 className="text-base font-bold text-foreground">Writing</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Deterministic syntax ordering, email register fulfillment, and academic discussion contributions evaluated via versioned rubrics.
+                Deterministic syntax ordering, email register fulfillment, and academic discussion
+                contributions evaluated via versioned rubrics.
               </p>
             </div>
 
@@ -116,7 +128,8 @@ function Landing() {
               </div>
               <h3 className="text-base font-bold text-foreground">Speaking</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Real-time microphone recording, repetition fluency, and spoken interview evaluation across 5 traits with coaching feedback.
+                Real-time microphone recording, repetition fluency, and spoken interview evaluation
+                across 5 traits with coaching feedback.
               </p>
             </div>
           </div>

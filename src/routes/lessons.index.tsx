@@ -1,4 +1,4 @@
-﻿import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth } from "@/lib/auth-guard";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
@@ -24,7 +24,8 @@ export const Route = createFileRoute("/lessons/")({
       { title: "TOEFL Strategy Guides & Lessons — Midnight Academy" },
       {
         name: "description",
-        content: "Master all 12 TOEFL 2026 task types with in-depth strategy guides, timing benchmarks, scoring secrets, and masterclasses.",
+        content:
+          "Master all 12 TOEFL 2026 task types with in-depth strategy guides, timing benchmarks, scoring secrets, and masterclasses.",
       },
     ],
   }),
@@ -33,7 +34,9 @@ export const Route = createFileRoute("/lessons/")({
 
 function LessonsIndexPage() {
   const [lessons, setLessons] = useState<(LessonItem & { isCompleted: boolean })[]>([]);
-  const [selectedSection, setSelectedSection] = useState<"all" | "reading" | "listening" | "writing" | "speaking">("all");
+  const [selectedSection, setSelectedSection] = useState<
+    "all" | "reading" | "listening" | "writing" | "speaking"
+  >("all");
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -55,7 +58,7 @@ function LessonsIndexPage() {
   const filteredLessons = lessons.filter(
     (l) =>
       l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.summary.toLowerCase().includes(searchQuery.toLowerCase())
+      l.summary.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const completedCount = lessons.filter((l) => l.isCompleted).length;
@@ -75,18 +78,25 @@ function LessonsIndexPage() {
                 TOEFL Task Strategy Guides
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                Step-by-step masterclasses covering every 2026 task type, time management formulas, scoring rubrics, and high-frequency distractor traps.
+                Step-by-step masterclasses covering every 2026 task type, time management formulas,
+                scoring rubrics, and high-frequency distractor traps.
               </p>
             </div>
 
             {/* Completion Stat */}
             <div className="rounded-2xl border border-border bg-background/80 p-5 text-center min-w-[180px]">
-              <span className="text-[10px] font-bold uppercase text-muted-foreground">Guides Completed</span>
-              <p className="text-2xl font-black text-primary mt-0.5">{completedCount} / {lessons.length}</p>
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                Guides Completed
+              </span>
+              <p className="text-2xl font-black text-primary mt-0.5">
+                {completedCount} / {lessons.length}
+              </p>
               <div className="w-full bg-surface-2 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div
                   className="bg-primary h-full transition-all"
-                  style={{ width: `${lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0}%` }}
+                  style={{
+                    width: `${lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0}%`,
+                  }}
                 />
               </div>
             </div>
@@ -137,9 +147,8 @@ function LessonsIndexPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredLessons.map((lesson) => (
-                <Link
+                <div
                   key={lesson.id}
-                  to={`/lessons/${lesson.slug}`}
                   className="rounded-3xl border border-border bg-card/50 p-6 shadow-sm flex flex-col justify-between space-y-4 hover:border-primary/40 hover:scale-[1.01] transition-all group"
                 >
                   <div className="space-y-3">
@@ -162,14 +171,16 @@ function LessonsIndexPage() {
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t border-border/60 text-xs font-semibold">
-                    <span className="text-primary group-hover:underline">Read Strategy Guide →</span>
+                    <span className="text-primary group-hover:underline">
+                      Explore Practice Set →
+                    </span>
                     {lesson.isCompleted ? (
                       <span className="inline-flex items-center gap-1 text-emerald-400 font-bold text-[11px]">
                         <CheckCircle2 className="size-3.5" /> Completed
                       </span>
                     ) : null}
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}

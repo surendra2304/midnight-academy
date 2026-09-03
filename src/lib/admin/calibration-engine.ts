@@ -5,7 +5,7 @@
 
 export interface ItemAttemptStats {
   contentItemId: string;
-  declaredDifficulty: 'Easy' | 'Medium' | 'Hard' | string;
+  declaredDifficulty: "Easy" | "Medium" | "Hard" | string;
   totalAttempts: number;
   correctAttempts: number;
   optionSelectionCounts?: Record<string, number>; // e.g. { A: 12, B: 0, C: 2 }
@@ -16,11 +16,11 @@ export interface CalibrationItemReport {
   contentItemId: string;
   declaredDifficulty: string;
   empiricalAccuracyPercent: number;
-  calibratedDifficulty: 'Easy' | 'Medium' | 'Hard';
+  calibratedDifficulty: "Easy" | "Medium" | "Hard";
   hasDifficultyMismatch: boolean;
   deadDistractors: string[]; // Options with 0 selections
   isAmbiguous: boolean; // Distractor selected more often than correct key
-  recommendedAction: 'keep' | 'recalibrate_difficulty' | 'review_distractors';
+  recommendedAction: "keep" | "recalibrate_difficulty" | "review_distractors";
 }
 
 export class CalibrationEngine {
@@ -30,10 +30,10 @@ export class CalibrationEngine {
    * - Medium: Accuracy between 40% and 74%
    * - Hard: Accuracy < 40%
    */
-  deriveCalibratedDifficulty(accuracyPercent: number): 'Easy' | 'Medium' | 'Hard' {
-    if (accuracyPercent >= 75) return 'Easy';
-    if (accuracyPercent >= 40) return 'Medium';
-    return 'Hard';
+  deriveCalibratedDifficulty(accuracyPercent: number): "Easy" | "Medium" | "Hard" {
+    if (accuracyPercent >= 75) return "Easy";
+    if (accuracyPercent >= 40) return "Medium";
+    return "Hard";
   }
 
   /**
@@ -47,15 +47,17 @@ export class CalibrationEngine {
     // Mismatch if difference is more than 1 band or >= 35% difference from expectation
     const hasMismatch =
       total >= 5 &&
-      ((stats.declaredDifficulty === 'Easy' && accuracy < 50) ||
-        (stats.declaredDifficulty === 'Hard' && accuracy > 75));
+      ((stats.declaredDifficulty === "Easy" && accuracy < 50) ||
+        (stats.declaredDifficulty === "Hard" && accuracy > 75));
 
     // Distractor analysis
     const deadDistractors: string[] = [];
     let isAmbiguous = false;
 
     if (stats.optionSelectionCounts && total >= 5) {
-      const correctCount = stats.correctOptionKey ? stats.optionSelectionCounts[stats.correctOptionKey] || 0 : 0;
+      const correctCount = stats.correctOptionKey
+        ? stats.optionSelectionCounts[stats.correctOptionKey] || 0
+        : 0;
 
       for (const [key, count] of Object.entries(stats.optionSelectionCounts)) {
         if (key === stats.correctOptionKey) continue;
@@ -64,11 +66,11 @@ export class CalibrationEngine {
       }
     }
 
-    let recommendedAction: 'keep' | 'recalibrate_difficulty' | 'review_distractors' = 'keep';
+    let recommendedAction: "keep" | "recalibrate_difficulty" | "review_distractors" = "keep";
     if (isAmbiguous || deadDistractors.length >= 2) {
-      recommendedAction = 'review_distractors';
+      recommendedAction = "review_distractors";
     } else if (hasMismatch) {
-      recommendedAction = 'recalibrate_difficulty';
+      recommendedAction = "recalibrate_difficulty";
     }
 
     return {

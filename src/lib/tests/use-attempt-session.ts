@@ -3,14 +3,14 @@
  * Manages client-side state machine, tick interval, autosave debouncing, and navigation.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   sessionReducer,
   type SessionSnapshot,
   type ClientTestBlueprint,
   type SessionEvent,
-} from './session-state';
-import { saveToeflResponse, advanceToeflSection, finalizeToeflAttempt } from './engine.functions';
+} from "./session-state";
+import { saveToeflResponse, advanceToeflSection, finalizeToeflAttempt } from "./engine.functions";
 
 export interface UseAttemptSessionProps {
   initialBlueprint: ClientTestBlueprint;
@@ -39,7 +39,7 @@ export function useAttemptSession({
 
   // 1. Countdown timer interval (ticks every 1 second)
   useEffect(() => {
-    if (state.status !== 'in_progress' || state.isSectionLocked) return;
+    if (state.status !== "in_progress" || state.isSectionLocked) return;
 
     const currentSection = blueprint.sections[state.currentSectionIndex];
     if (!currentSection || !currentSection.isTimed) return;
@@ -48,7 +48,11 @@ export function useAttemptSession({
       setState((prev) => {
         if (prev.sectionRemainingSeconds <= 1) {
           clearInterval(timer);
-          return sessionReducer(prev, { type: 'SECTION_TIMEOUT', timestamp: new Date().toISOString() }, blueprint);
+          return sessionReducer(
+            prev,
+            { type: "SECTION_TIMEOUT", timestamp: new Date().toISOString() },
+            blueprint,
+          );
         }
         return {
           ...prev,
@@ -71,7 +75,7 @@ export function useAttemptSession({
 
       // Local optimistic dispatch
       dispatch({
-        type: 'SAVE_RESPONSE',
+        type: "SAVE_RESPONSE",
         contentItemId: currentItem.id,
         rawAnswer,
         ...(normalizedAnswer ? { normalizedAnswer } : {}),
@@ -90,7 +94,7 @@ export function useAttemptSession({
           },
         });
       } catch (err) {
-        console.error('Failed to autosave response:', err);
+        console.error("Failed to autosave response:", err);
       } finally {
         setIsSaving(false);
       }
@@ -104,13 +108,13 @@ export function useAttemptSession({
     const currentItem = currentSec?.items[stateRef.current.currentItemIndex];
     if (!currentItem) return;
 
-    dispatch({ type: 'TOGGLE_FLAG', contentItemId: currentItem.id });
+    dispatch({ type: "TOGGLE_FLAG", contentItemId: currentItem.id });
   }, [blueprint, dispatch]);
 
   // 4. Action: Navigate Item
   const handleNavigateItem = useCallback(
     (itemIndex: number) => {
-      dispatch({ type: 'NAVIGATE_ITEM', itemIndex });
+      dispatch({ type: "NAVIGATE_ITEM", itemIndex });
     },
     [dispatch],
   );
@@ -130,7 +134,7 @@ export function useAttemptSession({
       });
 
       dispatch({
-        type: 'ADVANCE_SECTION',
+        type: "ADVANCE_SECTION",
         nextSectionIndex: res.nextSectionIndex,
         timestamp: nowIso,
       });
@@ -139,7 +143,7 @@ export function useAttemptSession({
         onFinalized(stateRef.current.attemptId);
       }
     } catch (err) {
-      console.error('Failed to advance section:', err);
+      console.error("Failed to advance section:", err);
     } finally {
       setIsSaving(false);
     }
@@ -148,7 +152,7 @@ export function useAttemptSession({
   // 6. Action: Finalize Attempt
   const handleFinalize = useCallback(async () => {
     const nowIso = new Date().toISOString();
-    dispatch({ type: 'FINALIZE', timestamp: nowIso });
+    dispatch({ type: "FINALIZE", timestamp: nowIso });
 
     try {
       setIsSaving(true);
@@ -159,7 +163,7 @@ export function useAttemptSession({
         onFinalized(stateRef.current.attemptId);
       }
     } catch (err) {
-      console.error('Failed to finalize attempt:', err);
+      console.error("Failed to finalize attempt:", err);
     } finally {
       setIsSaving(false);
     }

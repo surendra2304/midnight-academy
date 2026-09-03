@@ -3,10 +3,10 @@
  * Demonstrates the UI-independent engine with reading-style items, navigation, timer, and autosave.
  */
 
-import React from 'react';
-import { useAttemptSession, type UseAttemptSessionProps } from '@/lib/tests/use-attempt-session';
-import { Clock, Flag, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { useAttemptSession, type UseAttemptSessionProps } from "@/lib/tests/use-attempt-session";
+import { Clock, Flag, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function TestRunnerShell(props: UseAttemptSessionProps) {
   const {
@@ -26,11 +26,13 @@ export function TestRunnerShell(props: UseAttemptSessionProps) {
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
   const isLastSection = state.currentSectionIndex >= blueprint.sections.length - 1;
-  const isLastItem = currentSection ? state.currentItemIndex >= currentSection.items.length - 1 : false;
+  const isLastItem = currentSection
+    ? state.currentItemIndex >= currentSection.items.length - 1
+    : false;
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -39,19 +41,24 @@ export function TestRunnerShell(props: UseAttemptSessionProps) {
         <div>
           <h1 className="text-base font-bold text-foreground">{blueprint.name}</h1>
           <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Section {state.currentSectionIndex + 1} of {blueprint.sections.length}: {currentSection?.sectionType}
+            Section {state.currentSectionIndex + 1} of {blueprint.sections.length}:{" "}
+            {currentSection?.sectionType}
           </p>
         </div>
 
         <div className="flex items-center gap-4">
-          {isSaving ? <span className="text-xs text-muted-foreground animate-pulse">Saving...</span> : null}
+          {isSaving ? (
+            <span className="text-xs text-muted-foreground animate-pulse">Saving...</span>
+          ) : null}
 
           {currentSection?.isTimed ? (
-            <div className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold ${
-              state.sectionRemainingSeconds < 120
-                ? 'border-destructive/40 bg-destructive/10 text-destructive'
-                : 'border-border bg-surface-2/40 text-foreground'
-            }`}>
+            <div
+              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+                state.sectionRemainingSeconds < 120
+                  ? "border-destructive/40 bg-destructive/10 text-destructive"
+                  : "border-border bg-surface-2/40 text-foreground"
+              }`}
+            >
               <Clock className="size-4" />
               <span>{formatTimer(state.sectionRemainingSeconds)}</span>
             </div>
@@ -66,7 +73,7 @@ export function TestRunnerShell(props: UseAttemptSessionProps) {
             variant="outline"
             onClick={isLastSection ? handleFinalize : handleAdvanceSection}
           >
-            {isLastSection ? 'Submit Test' : 'Next Section'}
+            {isLastSection ? "Submit Test" : "Next Section"}
           </Button>
         </div>
       </header>
@@ -77,17 +84,19 @@ export function TestRunnerShell(props: UseAttemptSessionProps) {
         <section className="flex-1 rounded-xl border border-border bg-card/30 p-6 overflow-y-auto max-h-[calc(100vh-140px)]">
           <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
             <span className="text-xs font-bold uppercase tracking-wider text-primary">
-              {currentItem?.itemType?.replace(/_/g, ' ')}
+              {currentItem?.itemType?.replace(/_/g, " ")}
             </span>
             <button
               type="button"
               onClick={handleToggleFlag}
               className={`flex items-center gap-1 text-xs font-semibold ${
-                currentResponse?.isFlagged ? 'text-warning' : 'text-muted-foreground hover:text-foreground'
+                currentResponse?.isFlagged
+                  ? "text-warning"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Flag className="size-3.5" />
-              {currentResponse?.isFlagged ? 'Flagged for Review' : 'Flag Question'}
+              {currentResponse?.isFlagged ? "Flagged for Review" : "Flag Question"}
             </button>
           </div>
 
@@ -96,7 +105,7 @@ export function TestRunnerShell(props: UseAttemptSessionProps) {
               {(currentItem?.payload?.passage as string) ||
                 (currentItem?.payload?.prompt as string) ||
                 (currentItem?.payload?.questionText as string) ||
-                'Reading passage content.'}
+                "Reading passage content."}
             </p>
           </div>
         </section>
@@ -104,9 +113,11 @@ export function TestRunnerShell(props: UseAttemptSessionProps) {
         {/* Right Side: Options / Response Input */}
         <section className="flex w-full max-w-md flex-col justify-between rounded-xl border border-border bg-card/30 p-6">
           <div>
-            <h2 className="text-sm font-bold text-foreground">Question {state.currentItemIndex + 1}</h2>
+            <h2 className="text-sm font-bold text-foreground">
+              Question {state.currentItemIndex + 1}
+            </h2>
             <p className="mt-2 text-sm text-foreground/80">
-              {(currentItem?.payload?.prompt as string) || 'Select the correct option below:'}
+              {(currentItem?.payload?.prompt as string) || "Select the correct option below:"}
             </p>
 
             {/* Render Multiple Choice Options */}
@@ -121,13 +132,17 @@ export function TestRunnerShell(props: UseAttemptSessionProps) {
                       onClick={() => handleAnswerChange(opt.optionKey)}
                       className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left text-sm transition-all ${
                         isSelected
-                          ? 'border-primary bg-primary/10 text-primary font-medium'
-                          : 'border-border hover:border-primary/40 text-foreground'
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border hover:border-primary/40 text-foreground"
                       }`}
                     >
-                      <span className={`flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                        isSelected ? 'bg-primary text-primary-foreground' : 'border border-border bg-surface-2'
-                      }`}>
+                      <span
+                        className={`flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground"
+                            : "border border-border bg-surface-2"
+                        }`}
+                      >
                         {opt.optionKey}
                       </span>
                       <span>{opt.optionText}</span>
@@ -137,7 +152,7 @@ export function TestRunnerShell(props: UseAttemptSessionProps) {
               </div>
             ) : (
               <textarea
-                value={currentResponse?.rawAnswer || ''}
+                value={currentResponse?.rawAnswer || ""}
                 onChange={(e) => handleAnswerChange(e.target.value)}
                 placeholder="Write your response here..."
                 rows={6}
@@ -162,10 +177,10 @@ export function TestRunnerShell(props: UseAttemptSessionProps) {
                     onClick={() => handleNavigateItem(idx)}
                     className={`relative flex size-7 items-center justify-center rounded text-xs font-semibold transition-all ${
                       isCurrent
-                        ? 'border-2 border-primary bg-primary text-primary-foreground'
+                        ? "border-2 border-primary bg-primary text-primary-foreground"
                         : isAnswered
-                        ? 'border border-primary/40 bg-primary/15 text-primary'
-                        : 'border border-border bg-surface-2 text-muted-foreground'
+                          ? "border border-primary/40 bg-primary/15 text-primary"
+                          : "border border-border bg-surface-2 text-muted-foreground"
                     }`}
                   >
                     {idx + 1}

@@ -3,7 +3,7 @@
  * Reads data-driven routing_rule JSON from module definitions and computes stage-2 routing.
  */
 
-import type { ToeflDifficultyBand } from '@/types/toefl';
+import type { ToeflDifficultyBand } from "@/types/toefl";
 
 export interface StagePerformanceMetrics {
   totalItems: number;
@@ -20,15 +20,15 @@ export interface AdaptiveRoutingRule {
     lowerMaxScorePercent: number; // e.g. 50 (%)
   };
   targetModules: {
-    upperModuleId?: string;
-    middleModuleId?: string;
-    lowerModuleId?: string;
+    upperModuleId?: string | undefined;
+    middleModuleId?: string | undefined;
+    lowerModuleId?: string | undefined;
   };
-  fallbackBand?: ToeflDifficultyBand;
+  fallbackBand?: ToeflDifficultyBand | undefined;
 }
 
 export interface RoutingDecisionResult {
-  nextModuleId?: string;
+  nextModuleId?: string | undefined;
   selectedBand: ToeflDifficultyBand;
   reason: string;
   metricsUsed: StagePerformanceMetrics;
@@ -54,7 +54,7 @@ export class AdaptiveRouter {
     if (score >= upperThreshold) {
       return {
         nextModuleId: rule.targetModules?.upperModuleId,
-        selectedBand: 'upper',
+        selectedBand: "upper",
         reason: `Performance (${score.toFixed(1)}%) met or exceeded upper threshold (${upperThreshold}%). Routed to Upper difficulty module.`,
         metricsUsed: metrics,
         ruleEvaluated: rule,
@@ -66,7 +66,7 @@ export class AdaptiveRouter {
     if (score < lowerThreshold) {
       return {
         nextModuleId: rule.targetModules?.lowerModuleId,
-        selectedBand: 'lower',
+        selectedBand: "lower",
         reason: `Performance (${score.toFixed(1)}%) fell below lower threshold (${lowerThreshold}%). Routed to Lower difficulty module.`,
         metricsUsed: metrics,
         ruleEvaluated: rule,
@@ -75,7 +75,7 @@ export class AdaptiveRouter {
     }
 
     // 3. Moderate Performance -> Route to Middle / Configured Fallback Band
-    const fallback = rule.fallbackBand || 'middle';
+    const fallback = rule.fallbackBand || "middle";
     return {
       nextModuleId: rule.targetModules?.middleModuleId,
       selectedBand: fallback,

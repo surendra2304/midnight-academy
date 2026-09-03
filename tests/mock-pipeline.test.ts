@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { bandToComparable120 } from '../src/types/toefl';
+import { describe, it, expect } from "vitest";
+import { bandToComparable120 } from "../src/types/toefl";
 
-describe('TOEFL Full Mock Orchestration & Pipeline Suite', () => {
-  it('verifies 4-section sequence logic and band score calculation', () => {
+describe("TOEFL Full Mock Orchestration & Pipeline Suite", () => {
+  it("verifies 4-section sequence logic and band score calculation", () => {
     const readingBand = 5.0;
     const listeningBand = 5.5;
     const writingBand = 5.0;
@@ -16,7 +16,7 @@ describe('TOEFL Full Mock Orchestration & Pipeline Suite', () => {
     expect(bandToComparable120(overallBand)).toBe(100);
   });
 
-  it('verifies reproducible score report calculation across all band thresholds', () => {
+  it("verifies reproducible score report calculation across all band thresholds", () => {
     expect(bandToComparable120(6.0)).toBe(120);
     expect(bandToComparable120(5.5)).toBe(110);
     expect(bandToComparable120(5.0)).toBe(100);

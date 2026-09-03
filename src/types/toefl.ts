@@ -7,35 +7,35 @@
 // 1. Core Enums
 // ============================================================================
 
-export type ToeflSectionType = 'reading' | 'listening' | 'writing' | 'speaking';
+export type ToeflSectionType = "reading" | "listening" | "writing" | "speaking";
 
-export type ToeflBlueprintStatus = 'draft' | 'review' | 'published' | 'retired';
+export type ToeflBlueprintStatus = "draft" | "review" | "published" | "retired";
 
-export type ToeflDifficultyBand = 'lower' | 'middle' | 'upper';
+export type ToeflDifficultyBand = "lower" | "middle" | "upper";
 
-export type ToeflExamMode = 'full' | 'section' | 'practice' | 'diagnostic';
+export type ToeflExamMode = "full" | "section" | "practice" | "diagnostic";
 
-export type ToeflAttemptSectionStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped';
+export type ToeflAttemptSectionStatus = "not_started" | "in_progress" | "completed" | "skipped";
 
 export type ToeflItemType =
   // Reading
-  | 'complete_words'
-  | 'read_daily_life'
-  | 'read_academic'
+  | "complete_words"
+  | "read_daily_life"
+  | "read_academic"
   // Listening
-  | 'listen_choose_response'
-  | 'listen_conversation'
-  | 'listen_announcement'
-  | 'listen_academic_talk'
-  | 'dictation'
+  | "listen_choose_response"
+  | "listen_conversation"
+  | "listen_announcement"
+  | "listen_academic_talk"
+  | "dictation"
   // Writing
-  | 'build_sentence'
-  | 'write_email'
-  | 'academic_discussion'
+  | "build_sentence"
+  | "write_email"
+  | "academic_discussion"
   // Speaking
-  | 'listen_repeat'
-  | 'take_interview'
-  | 'shadowing';
+  | "listen_repeat"
+  | "take_interview"
+  | "shadowing";
 
 // ============================================================================
 // 2. Blueprint & Content Entities
@@ -86,7 +86,7 @@ export interface ContentItem {
   moduleId: string | null;
   sectionType: ToeflSectionType;
   itemType: ToeflItemType;
-  difficulty: 'Easy' | 'Medium' | 'Hard' | string;
+  difficulty: "Easy" | "Medium" | "Hard" | string;
   skillTags: string[];
   payload: {
     prompt?: string;
@@ -107,7 +107,7 @@ export interface ContentItem {
 export interface ContentAsset {
   id: string;
   contentItemId: string | null;
-  assetType: 'audio' | 'image' | 'transcript' | string;
+  assetType: "audio" | "image" | "transcript" | string;
   storagePath: string;
   mimeType: string;
   durationMs: number | null;
@@ -288,7 +288,7 @@ export interface StudyPlan {
 export interface ContentTag {
   id: string;
   name: string;
-  tagType: 'topic' | 'difficulty' | 'domain' | 'skill';
+  tagType: "topic" | "difficulty" | "domain" | "skill";
   createdAt: string;
 }
 

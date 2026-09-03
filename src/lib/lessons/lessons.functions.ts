@@ -4,19 +4,19 @@
  * and weakness-driven lesson recommendations.
  */
 
-import { createServerFn } from '@tanstack/react-start';
-import { z } from 'zod';
-import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
-import type { ToeflSectionType, ToeflItemType } from '@/types/toefl';
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { ToeflSectionType, ToeflItemType } from "@/types/toefl";
 
 export interface LessonItem {
   id: string;
   slug: string;
   title: string;
   section: ToeflSectionType;
-  taskType?: ToeflItemType | 'overview';
+  taskType?: ToeflItemType | "overview";
   estimatedMinutes: number;
-  format: 'text' | 'video' | 'interactive';
+  format: "text" | "video" | "interactive";
   summary: string;
   contentMarkdown: string;
   order: number;
@@ -36,14 +36,15 @@ const userLessonStore: Map<string, Set<string>> = new Map();
 export const SEEDED_LESSONS: LessonItem[] = [
   // Section 1: Reading Overviews & Task Types
   {
-    id: 'les-read-overview',
-    slug: 'reading-section-masterclass',
-    title: 'Reading Section Masterclass: Structure, Pacing & Scoring',
-    section: 'reading',
-    taskType: 'overview',
+    id: "les-read-overview",
+    slug: "reading-section-masterclass",
+    title: "Reading Section Masterclass: Structure, Pacing & Scoring",
+    section: "reading",
+    taskType: "overview",
     estimatedMinutes: 15,
-    format: 'text',
-    summary: 'Comprehensive overview of the adaptive reading section, scoring bands, and time management strategies.',
+    format: "text",
+    summary:
+      "Comprehensive overview of the adaptive reading section, scoring bands, and time management strategies.",
     contentMarkdown: `## Reading Section Overview
 The Reading section tests your ability to comprehend authentic university-level texts across physical sciences, social sciences, arts, and daily campus announcements.
 
@@ -60,14 +61,15 @@ The Reading section tests your ability to comprehend authentic university-level 
     published: true,
   },
   {
-    id: 'les-task-complete-words',
-    slug: 'complete-the-words-strategy',
-    title: 'Complete the Words: Contextual Morphology & Syntax',
-    section: 'reading',
-    taskType: 'complete_words',
+    id: "les-task-complete-words",
+    slug: "complete-the-words-strategy",
+    title: "Complete the Words: Contextual Morphology & Syntax",
+    section: "reading",
+    taskType: "complete_words",
     estimatedMinutes: 10,
-    format: 'text',
-    summary: 'Step-by-step strategy for identifying missing word roots, prefixes, and suffixes in paragraph blanks.',
+    format: "text",
+    summary:
+      "Step-by-step strategy for identifying missing word roots, prefixes, and suffixes in paragraph blanks.",
     contentMarkdown: `## Strategy: Complete the Words
 This task type measures your vocabulary breadth and syntactic intuition by having you fill in partial word roots.
 
@@ -80,14 +82,15 @@ This task type measures your vocabulary breadth and syntactic intuition by havin
     published: true,
   },
   {
-    id: 'les-task-read-daily-life',
-    slug: 'read-daily-life-strategy',
-    title: 'Read in Daily Life: Notices, Schedules & Pragmatics',
-    section: 'reading',
-    taskType: 'read_daily_life',
+    id: "les-task-read-daily-life",
+    slug: "read-daily-life-strategy",
+    title: "Read in Daily Life: Notices, Schedules & Pragmatics",
+    section: "reading",
+    taskType: "read_daily_life",
     estimatedMinutes: 12,
-    format: 'text',
-    summary: 'How to quickly parse bulletin boards, policy updates, and email notices with 100% accuracy.',
+    format: "text",
+    summary:
+      "How to quickly parse bulletin boards, policy updates, and email notices with 100% accuracy.",
     contentMarkdown: `## Strategy: Read in Daily Life
 Daily Life reading items present campus announcements, facility hours, and club flyers.
 
@@ -99,14 +102,15 @@ Daily Life reading items present campus announcements, facility hours, and club 
     published: true,
   },
   {
-    id: 'les-task-read-academic',
-    slug: 'read-academic-passage-strategy',
-    title: 'Read an Academic Passage: Paragraph Mapping & Inferences',
-    section: 'reading',
-    taskType: 'read_academic',
+    id: "les-task-read-academic",
+    slug: "read-academic-passage-strategy",
+    title: "Read an Academic Passage: Paragraph Mapping & Inferences",
+    section: "reading",
+    taskType: "read_academic",
     estimatedMinutes: 15,
-    format: 'text',
-    summary: 'Mastering dense multi-paragraph academic texts with fast paragraph mapping and topic sentence tracking.',
+    format: "text",
+    summary:
+      "Mastering dense multi-paragraph academic texts with fast paragraph mapping and topic sentence tracking.",
     contentMarkdown: `## Strategy: Academic Reading Passages
 Academic passages cover scientific history, biology, geology, and sociology.
 
@@ -120,14 +124,14 @@ Academic passages cover scientific history, biology, geology, and sociology.
 
   // Section 2: Listening Overviews & Task Types
   {
-    id: 'les-list-overview',
-    slug: 'listening-section-masterclass',
-    title: 'Listening Section Masterclass: Acoustic Cues & Note-Taking',
-    section: 'listening',
-    taskType: 'overview',
+    id: "les-list-overview",
+    slug: "listening-section-masterclass",
+    title: "Listening Section Masterclass: Acoustic Cues & Note-Taking",
+    section: "listening",
+    taskType: "overview",
     estimatedMinutes: 15,
-    format: 'text',
-    summary: 'Master conversational turn-taking, lecture hierarchy, and note-taking abbreviations.',
+    format: "text",
+    summary: "Master conversational turn-taking, lecture hierarchy, and note-taking abbreviations.",
     contentMarkdown: `## Listening Section Overview
 Listening evaluates your comprehension of spoken English in academic lectures, campus conversations, and public announcements.
 
@@ -139,14 +143,15 @@ Listening evaluates your comprehension of spoken English in academic lectures, c
     published: true,
   },
   {
-    id: 'les-task-listen-choose',
-    slug: 'listen-and-choose-response-strategy',
-    title: 'Listen and Choose Response: Conversational Pragmatics',
-    section: 'listening',
-    taskType: 'listen_choose_response',
+    id: "les-task-listen-choose",
+    slug: "listen-and-choose-response-strategy",
+    title: "Listen and Choose Response: Conversational Pragmatics",
+    section: "listening",
+    taskType: "listen_choose_response",
     estimatedMinutes: 10,
-    format: 'text',
-    summary: 'Predicting natural, idiomatic conversational replies in rapid student-professor exchanges.',
+    format: "text",
+    summary:
+      "Predicting natural, idiomatic conversational replies in rapid student-professor exchanges.",
     contentMarkdown: `## Strategy: Listen & Choose Response
 You hear a short conversational prompt and must pick the most socially appropriate and direct response.
 
@@ -158,14 +163,14 @@ You hear a short conversational prompt and must pick the most socially appropria
     published: true,
   },
   {
-    id: 'les-task-listen-conversation',
-    slug: 'listen-conversation-strategy',
-    title: 'Campus Conversations: Problem-Solution Dynamics',
-    section: 'listening',
-    taskType: 'listen_conversation',
+    id: "les-task-listen-conversation",
+    slug: "listen-conversation-strategy",
+    title: "Campus Conversations: Problem-Solution Dynamics",
+    section: "listening",
+    taskType: "listen_conversation",
     estimatedMinutes: 12,
-    format: 'text',
-    summary: 'Tracking the student problem, advisor recommendations, and final action items.',
+    format: "text",
+    summary: "Tracking the student problem, advisor recommendations, and final action items.",
     contentMarkdown: `## Strategy: Campus Conversations
 Conversations typically involve a student consulting a professor, housing director, or registrar.
 
@@ -177,14 +182,14 @@ Conversations typically involve a student consulting a professor, housing direct
     published: true,
   },
   {
-    id: 'les-task-listen-announcement',
-    slug: 'listen-announcement-strategy',
-    title: 'Campus Announcements: Key Event Information',
-    section: 'listening',
-    taskType: 'listen_announcement',
+    id: "les-task-listen-announcement",
+    slug: "listen-announcement-strategy",
+    title: "Campus Announcements: Key Event Information",
+    section: "listening",
+    taskType: "listen_announcement",
     estimatedMinutes: 10,
-    format: 'text',
-    summary: 'Extracting times, locations, eligibility rules, and procedural instructions.',
+    format: "text",
+    summary: "Extracting times, locations, eligibility rules, and procedural instructions.",
     contentMarkdown: `## Strategy: Public Campus Announcements
 Short audio broadcasts regarding library maintenance, exam room changes, or guest lecture cancellations.
 
@@ -196,14 +201,15 @@ Short audio broadcasts regarding library maintenance, exam room changes, or gues
     published: true,
   },
   {
-    id: 'les-task-listen-academic-talk',
-    slug: 'listen-academic-talk-strategy',
-    title: 'Academic Lectures: Main Idea, Organization & Attitude',
-    section: 'listening',
-    taskType: 'listen_academic_talk',
+    id: "les-task-listen-academic-talk",
+    slug: "listen-academic-talk-strategy",
+    title: "Academic Lectures: Main Idea, Organization & Attitude",
+    section: "listening",
+    taskType: "listen_academic_talk",
     estimatedMinutes: 15,
-    format: 'text',
-    summary: 'Deconstructing complex 4-minute university lectures across astronomy, history, and botany.',
+    format: "text",
+    summary:
+      "Deconstructing complex 4-minute university lectures across astronomy, history, and botany.",
     contentMarkdown: `## Strategy: Academic Lectures
 Lectures require tracking technical concepts, comparative theories, and professor opinions.
 
@@ -217,14 +223,15 @@ Lectures require tracking technical concepts, comparative theories, and professo
 
   // Section 3: Writing Overviews & Task Types
   {
-    id: 'les-write-overview',
-    slug: 'writing-section-masterclass',
-    title: 'Writing Section Masterclass: Cohesion, Grammar & Band 6.0 Rubrics',
-    section: 'writing',
-    taskType: 'overview',
+    id: "les-write-overview",
+    slug: "writing-section-masterclass",
+    title: "Writing Section Masterclass: Cohesion, Grammar & Band 6.0 Rubrics",
+    section: "writing",
+    taskType: "overview",
     estimatedMinutes: 15,
-    format: 'text',
-    summary: 'The criteria required to achieve a top band 5.5–6.0 on email correspondence and academic discussions.',
+    format: "text",
+    summary:
+      "The criteria required to achieve a top band 5.5–6.0 on email correspondence and academic discussions.",
     contentMarkdown: `## Writing Section Overview
 The Writing section measures sentence construction, email etiquette, and academic argumentative debate.
 
@@ -236,14 +243,14 @@ The Writing section measures sentence construction, email etiquette, and academi
     published: true,
   },
   {
-    id: 'les-task-build-sentence',
-    slug: 'build-a-sentence-strategy',
-    title: 'Build a Sentence: Word Order & Clause Syntax',
-    section: 'writing',
-    taskType: 'build_sentence',
+    id: "les-task-build-sentence",
+    slug: "build-a-sentence-strategy",
+    title: "Build a Sentence: Word Order & Clause Syntax",
+    section: "writing",
+    taskType: "build_sentence",
     estimatedMinutes: 10,
-    format: 'text',
-    summary: 'Fast rearrangement of scrambled words into grammatically impeccable clauses.',
+    format: "text",
+    summary: "Fast rearrangement of scrambled words into grammatically impeccable clauses.",
     contentMarkdown: `## Strategy: Build a Sentence
 Rearrange scrambled word tokens into a logical sentence.
 
@@ -255,14 +262,14 @@ Rearrange scrambled word tokens into a logical sentence.
     published: true,
   },
   {
-    id: 'les-task-write-email',
-    slug: 'write-an-email-strategy',
-    title: 'Write an Email: Professional Register & Purpose',
-    section: 'writing',
-    taskType: 'write_email',
+    id: "les-task-write-email",
+    slug: "write-an-email-strategy",
+    title: "Write an Email: Professional Register & Purpose",
+    section: "writing",
+    taskType: "write_email",
     estimatedMinutes: 12,
-    format: 'text',
-    summary: 'Crafting concise, polite, and effective administrative and academic emails.',
+    format: "text",
+    summary: "Crafting concise, polite, and effective administrative and academic emails.",
     contentMarkdown: `## Strategy: Write an Email
 You receive a scenario (e.g. asking a professor for an extension) and must write an email addressing all requirements.
 
@@ -276,14 +283,15 @@ You receive a scenario (e.g. asking a professor for an extension) and must write
     published: true,
   },
   {
-    id: 'les-task-academic-discussion',
-    slug: 'write-for-academic-discussion-strategy',
-    title: 'Write for Academic Discussion: Developing Original Arguments',
-    section: 'writing',
-    taskType: 'academic_discussion',
+    id: "les-task-academic-discussion",
+    slug: "write-for-academic-discussion-strategy",
+    title: "Write for Academic Discussion: Developing Original Arguments",
+    section: "writing",
+    taskType: "academic_discussion",
     estimatedMinutes: 15,
-    format: 'text',
-    summary: 'Contributing original points to an online university discussion board with peer responses.',
+    format: "text",
+    summary:
+      "Contributing original points to an online university discussion board with peer responses.",
     contentMarkdown: `## Strategy: Academic Discussion
 Read a professor prompt and two student posts, then write your 100+ word contribution.
 
@@ -297,14 +305,14 @@ Read a professor prompt and two student posts, then write your 100+ word contrib
 
   // Section 4: Speaking Overviews & Task Types
   {
-    id: 'les-speak-overview',
-    slug: 'speaking-section-masterclass',
-    title: 'Speaking Section Masterclass: Intonation, Fluency & Clarity',
-    section: 'speaking',
-    taskType: 'overview',
+    id: "les-speak-overview",
+    slug: "speaking-section-masterclass",
+    title: "Speaking Section Masterclass: Intonation, Fluency & Clarity",
+    section: "speaking",
+    taskType: "overview",
     estimatedMinutes: 15,
-    format: 'text',
-    summary: 'The ETS Speaking Rubric: Delivery, Language Use, and Topic Fulfillment.',
+    format: "text",
+    summary: "The ETS Speaking Rubric: Delivery, Language Use, and Topic Fulfillment.",
     contentMarkdown: `## Speaking Section Overview
 Evaluates your ability to speak clearly, coherently, and spontaneously in English.
 
@@ -316,14 +324,14 @@ Evaluates your ability to speak clearly, coherently, and spontaneously in Englis
     published: true,
   },
   {
-    id: 'les-task-listen-repeat',
-    slug: 'listen-and-repeat-strategy',
-    title: 'Listen and Repeat: Acoustic Memory & Phoneme Fidelity',
-    section: 'speaking',
-    taskType: 'listen_repeat',
+    id: "les-task-listen-repeat",
+    slug: "listen-and-repeat-strategy",
+    title: "Listen and Repeat: Acoustic Memory & Phoneme Fidelity",
+    section: "speaking",
+    taskType: "listen_repeat",
     estimatedMinutes: 10,
-    format: 'text',
-    summary: 'Techniques for retaining short sentences and shadowing pitch variations.',
+    format: "text",
+    summary: "Techniques for retaining short sentences and shadowing pitch variations.",
     contentMarkdown: `## Strategy: Listen and Repeat
 Listen to a native sentence and repeat it immediately into your microphone.
 
@@ -335,14 +343,14 @@ Listen to a native sentence and repeat it immediately into your microphone.
     published: true,
   },
   {
-    id: 'les-task-take-interview',
-    slug: 'take-an-interview-strategy',
-    title: 'Take an Interview: Structured Answers on the Fly',
-    section: 'speaking',
-    taskType: 'take_interview',
+    id: "les-task-take-interview",
+    slug: "take-an-interview-strategy",
+    title: "Take an Interview: Structured Answers on the Fly",
+    section: "speaking",
+    taskType: "take_interview",
     estimatedMinutes: 15,
-    format: 'text',
-    summary: 'Answering spontaneous multi-part interview questions with the PEEL structure.',
+    format: "text",
+    summary: "Answering spontaneous multi-part interview questions with the PEEL structure.",
     contentMarkdown: `## Strategy: Take an Interview
 Participate in an interactive interview with spontaneous university life questions.
 
@@ -359,14 +367,21 @@ Participate in an interactive interview with spontaneous university life questio
 /**
  * Fetch All Lessons
  */
-export const getLessons = createServerFn({ method: 'GET' })
+export const getLessons = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((data) => z.object({ section: z.enum(['all', 'reading', 'listening', 'writing', 'speaking']).optional() }).optional().parse(data || {}))
+  .validator((data) =>
+    z
+      .object({
+        section: z.enum(["all", "reading", "listening", "writing", "speaking"]).optional(),
+      })
+      .optional()
+      .parse(data || {}),
+  )
   .handler(async ({ data, context }) => {
     const userCompleted = userLessonStore.get(context.userId) || new Set();
     let items = [...SEEDED_LESSONS];
 
-    if (data?.section && data.section !== 'all') {
+    if (data?.section && data.section !== "all") {
       items = items.filter((l) => l.section === data.section);
     }
 
@@ -379,7 +394,7 @@ export const getLessons = createServerFn({ method: 'GET' })
 /**
  * Get Lesson by Slug
  */
-export const getLessonBySlug = createServerFn({ method: 'GET' })
+export const getLessonBySlug = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => z.object({ slug: z.string() }).parse(data))
   .handler(async ({ data, context }) => {
@@ -396,7 +411,7 @@ export const getLessonBySlug = createServerFn({ method: 'GET' })
 /**
  * Mark Lesson Completed
  */
-export const markLessonCompleted = createServerFn({ method: 'POST' })
+export const markLessonCompleted = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data) => z.object({ lessonId: z.string() }).parse(data))
   .handler(async ({ data, context }) => {

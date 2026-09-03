@@ -15,7 +15,8 @@ export const Route = createFileRoute("/progress")({
       { title: "Skill Analytics & Progress — Midnight Academy" },
       {
         name: "description",
-        content: "Detailed 4-section performance breakdown, task-type timing efficiency, and weakness diagnostics.",
+        content:
+          "Detailed 4-section performance breakdown, task-type timing efficiency, and weakness diagnostics.",
       },
     ],
   }),
@@ -51,7 +52,9 @@ function ProgressPage() {
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading your TOEFL skill analytics & trends...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading your TOEFL skill analytics & trends...
+            </p>
           </div>
         </PageShell>
       </div>
@@ -64,16 +67,19 @@ function ProgressPage() {
       <PageShell>
         <div className="space-y-6 pb-16">
           <div className="border-b border-border pb-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-primary">Diagnostic Performance Analytics</span>
-            <h1 className="text-2xl font-black text-foreground lg:text-3xl mt-1">TOEFL Skill Radar & Longitudinal Trends</h1>
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">
+              Diagnostic Performance Analytics
+            </span>
+            <h1 className="text-2xl font-black text-foreground lg:text-3xl mt-1">
+              TOEFL Skill Radar & Longitudinal Trends
+            </h1>
             <p className="text-xs text-muted-foreground mt-1">
-              Rule-based skill accuracy metrics, error pattern classifications, and ETS benchmark diagnostics.
+              Rule-based skill accuracy metrics, error pattern classifications, and ETS benchmark
+              diagnostics.
             </p>
           </div>
 
-          {profile ? (
-            <AnalyticsDashboardView profile={profile} targetBand={targetBand} />
-          ) : null}
+          {profile ? <AnalyticsDashboardView profile={profile} targetBand={targetBand} /> : null}
         </div>
       </PageShell>
     </div>

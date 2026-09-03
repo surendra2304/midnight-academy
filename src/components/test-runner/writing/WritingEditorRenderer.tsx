@@ -3,9 +3,9 @@
  * Shows scenario/discussion board on left and timed response editor on right with live word count.
  */
 
-import React from 'react';
-import type { ClientContentItem } from '@/lib/tests/session-state';
-import { Mail, MessageSquare, AlertCircle } from 'lucide-react';
+import React from "react";
+import type { ClientContentItem } from "@/lib/tests/session-state";
+import { Mail, MessageSquare, AlertCircle } from "lucide-react";
 
 export interface WritingEditorRendererProps {
   item: ClientContentItem;
@@ -20,16 +20,20 @@ export function WritingEditorRenderer({
   onAnswerChange,
   disabled = false,
 }: WritingEditorRendererProps) {
-  const isEmail = item.itemType === 'write_email';
-  const title = (item.payload?.title as string) || (isEmail ? 'Write an Email' : 'Academic Discussion');
-  const prompt = (item.payload?.prompt as string) || '';
-  const context = (item.payload?.context as string) || '';
-  const recipient = (item.payload?.recipient as string) || (isEmail ? 'Professor / Campus Office' : '');
+  const isEmail = item.itemType === "write_email";
+  const title =
+    (item.payload?.title as string) || (isEmail ? "Write an Email" : "Academic Discussion");
+  const prompt = (item.payload?.prompt as string) || "";
+  const context = (item.payload?.context as string) || "";
+  const recipient =
+    (item.payload?.recipient as string) || (isEmail ? "Professor / Campus Office" : "");
 
   // Discussion posts (if Academic Discussion)
-  const discussionPosts = (item.payload?.discussionPosts as Array<{ author: string; avatar?: string; text: string }>) || [];
+  const discussionPosts =
+    (item.payload?.discussionPosts as Array<{ author: string; avatar?: string; text: string }>) ||
+    [];
 
-  const wordCount = (currentAnswer || '').trim().split(/\s+/).filter(Boolean).length;
+  const wordCount = (currentAnswer || "").trim().split(/\s+/).filter(Boolean).length;
 
   const handleChange = (text: string) => {
     onAnswerChange(text, {
@@ -45,9 +49,13 @@ export function WritingEditorRenderer({
         <div className="border-b border-border pb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
             {isEmail ? <Mail className="size-4" /> : <MessageSquare className="size-4" />}
-            {item.itemType.replace(/_/g, ' ')}
+            {item.itemType.replace(/_/g, " ")}
           </span>
-          {recipient ? <span className="text-xs text-muted-foreground">To: <strong>{recipient}</strong></span> : null}
+          {recipient ? (
+            <span className="text-xs text-muted-foreground">
+              To: <strong>{recipient}</strong>
+            </span>
+          ) : null}
         </div>
 
         <h3 className="text-base font-bold text-foreground">{title}</h3>
@@ -61,9 +69,14 @@ export function WritingEditorRenderer({
         {/* Academic Discussion Classmate Posts */}
         {discussionPosts.length > 0 ? (
           <div className="space-y-3 pt-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Class Discussion:</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Class Discussion:
+            </span>
             {discussionPosts.map((post, idx) => (
-              <div key={idx} className="rounded-lg border border-border/80 bg-background/50 p-4 space-y-1">
+              <div
+                key={idx}
+                className="rounded-lg border border-border/80 bg-background/50 p-4 space-y-1"
+              >
                 <p className="text-xs font-bold text-primary">{post.author}</p>
                 <p className="text-xs text-foreground/90 leading-relaxed">{post.text}</p>
               </div>
@@ -84,23 +97,25 @@ export function WritingEditorRenderer({
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Your Response
             </span>
-            <span className={`text-xs font-semibold ${wordCount < 50 ? 'text-muted-foreground' : 'text-primary'}`}>
+            <span
+              className={`text-xs font-semibold ${wordCount < 50 ? "text-muted-foreground" : "text-primary"}`}
+            >
               Word Count: <strong>{wordCount}</strong>
             </span>
           </div>
 
           <textarea
-            value={currentAnswer || ''}
+            value={currentAnswer || ""}
             disabled={disabled}
             onChange={(e) => handleChange(e.target.value)}
-            placeholder={isEmail ? 'Dear Professor...\n\nI am writing to...' : 'In my opinion, ...'}
+            placeholder={isEmail ? "Dear Professor...\n\nI am writing to..." : "In my opinion, ..."}
             rows={14}
             className="w-full flex-1 rounded-lg border border-border bg-background p-4 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
           />
         </div>
 
         <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>Target length: {isEmail ? '80–120 words' : '100+ words'}</span>
+          <span>Target length: {isEmail ? "80–120 words" : "100+ words"}</span>
           <span>Autosaves continuously</span>
         </div>
       </section>

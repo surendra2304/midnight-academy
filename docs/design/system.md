@@ -1,13 +1,14 @@
 ﻿# Midnight Academy — Cohesive Visual Design System
 
 **Brand**: Midnight Academy  
-**Philosophy**: Crisp, Focused, Dark Academic & Precision-Calibrated.  
+**Philosophy**: Crisp, Focused, Dark Academic & Precision-Calibrated.
 
 ---
 
 ## 🎨 Color Palette & Semantic Tokens
 
 ### 1. Dark Midnight Spectrum
+
 - `--background`: `#070a12` (Deepest Navy-Charcoal Canvas)
 - `--card`: `#0d121f` (Elevated Indigo-Navy Surface)
 - `--surface-2`: `#141c2e` (Secondary Container / Card Sub-surfaces)
@@ -15,6 +16,7 @@
 - `--border-strong`: `rgba(255, 255, 255, 0.16)` (Emphasized borders)
 
 ### 2. Accents & Feedback
+
 - `--primary`: `#38bdf8` (Electric Sky Blue — high contrast CTA & focus ring)
 - `--primary-foreground`: `#030712` (Deep Charcoal for buttons)
 - `--accent`: `#6366f1` (Indigo — auxiliary indicators)
@@ -25,6 +27,7 @@
 ---
 
 ## 📐 Radii & Elevation Scale
+
 - `rounded-xl`: `0.75rem` (Buttons, inputs, compact badges)
 - `rounded-2xl`: `1rem` (Sub-cards, item containers)
 - `rounded-3xl`: `1.5rem` (Hero banners, primary feature panels)
@@ -34,6 +37,7 @@
 ---
 
 ## 🔠 Typography & Tabular Numerals
+
 - **Headings**: `font-black` & `font-extrabold` with tight letter spacing (`tracking-tight`).
 - **Numerals**: `tabular-nums` throughout countdown timers, band badges, and scaled scores (`~100/120`).
 - **Body Text**: `leading-relaxed text-muted-foreground` for maximum legibility during lengthy reading passages.

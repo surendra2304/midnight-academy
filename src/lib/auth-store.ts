@@ -32,7 +32,11 @@ function loadCachedUser(): User | null {
     const raw = localStorage.getItem(CACHED_USER_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed.id === "string" && (parsed.role === "ADMIN" || parsed.role === "STUDENT")) {
+    if (
+      parsed &&
+      typeof parsed.id === "string" &&
+      (parsed.role === "ADMIN" || parsed.role === "STUDENT")
+    ) {
       return parsed as User;
     }
   } catch {

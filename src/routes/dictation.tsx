@@ -14,7 +14,8 @@ export const Route = createFileRoute("/dictation")({
       { title: "Dictation Practice — Midnight Academy" },
       {
         name: "description",
-        content: "Enhance your English listening comprehension and transcription accuracy with word-by-word diffs and AI phonetic coaching.",
+        content:
+          "Enhance your English listening comprehension and transcription accuracy with word-by-word diffs and AI phonetic coaching.",
       },
     ],
   }),
@@ -23,7 +24,9 @@ export const Route = createFileRoute("/dictation")({
 
 function DictationPage() {
   const [items, setItems] = useState<DictationItem[]>([]);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<"all" | "lower" | "middle" | "upper">("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<
+    "all" | "lower" | "middle" | "upper"
+  >("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,7 +64,8 @@ function DictationPage() {
                 Sentence Dictation Practice
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                Listen to academic lectures and campus announcements, transcribe verbatim, and receive instant word-level diff analysis with AI phonetic insights.
+                Listen to academic lectures and campus announcements, transcribe verbatim, and
+                receive instant word-level diff analysis with AI phonetic insights.
               </p>
             </div>
 

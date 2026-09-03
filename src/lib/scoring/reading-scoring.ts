@@ -4,7 +4,7 @@
  * Supports exact match, case normalization, whitespace trimming, alternative keys, and multi-blank partial credit.
  */
 
-import type { ToeflItemType } from '@/types/toefl';
+import type { ToeflItemType } from "@/types/toefl";
 
 export interface ScoringOption {
   optionKey: string;
@@ -42,13 +42,13 @@ export class ReadingScoringService {
    * Evaluates a single Reading item deterministically against its rule/key.
    */
   scoreItem(rawAnswer: string | null | undefined, rule: ItemScoringRule): ReadingItemScoreResult {
-    if (!rawAnswer || typeof rawAnswer !== 'string' || !rawAnswer.trim()) {
+    if (!rawAnswer || typeof rawAnswer !== "string" || !rawAnswer.trim()) {
       return {
         isCorrect: false,
         score: 0,
         earnedPoints: 0,
         maxPoints: 1,
-        distractorRationale: 'No answer was submitted for this question.',
+        distractorRationale: "No answer was submitted for this question.",
       };
     }
 
@@ -63,10 +63,11 @@ export class ReadingScoringService {
       );
 
       if (!correctOpt) {
-        throw new Error('Scoring configuration error: Missing correct answer key');
+        throw new Error("Scoring configuration error: Missing correct answer key");
       }
 
-      const isCorrect = selectedOpt?.isCorrect === true || selectedKey === correctOpt.optionKey.toUpperCase();
+      const isCorrect =
+        selectedOpt?.isCorrect === true || selectedKey === correctOpt.optionKey.toUpperCase();
 
       return {
         isCorrect,
@@ -74,7 +75,9 @@ export class ReadingScoringService {
         earnedPoints: isCorrect ? 1 : 0,
         maxPoints: 1,
         matchedKey: correctOpt.optionKey,
-        distractorRationale: isCorrect ? null : selectedOpt?.distractorRationale || 'Incorrect selection.',
+        distractorRationale: isCorrect
+          ? null
+          : selectedOpt?.distractorRationale || "Incorrect selection.",
       };
     }
 
@@ -96,10 +99,17 @@ export class ReadingScoringService {
         const weight = blank.weight ?? 1;
         totalMax += weight;
 
-        const candidate = (parsedTokens[blank.blankIndex] || '').trim();
+        const candidate = (parsedTokens[blank.blankIndex] || "").trim();
         const candidateNormalized = rule.caseSensitive ? candidate : candidate.toLowerCase();
 
-        const isMatch = blank.acceptedAnswers.some((accepted) => {
+        const acceptedList =
+          blank.acceptedAnswers && blank.acceptedAnswers.length > 0
+            ? blank.acceptedAnswers
+            : (blank as any).hint
+              ? [((blank as any).hint as string).replace(/\s*\(.*?\)/, "").trim()]
+              : [];
+
+        const isMatch = acceptedList.some((accepted) => {
           const acceptedNorm = rule.caseSensitive ? accepted.trim() : accepted.trim().toLowerCase();
           return acceptedNorm === candidateNormalized;
         });
@@ -137,7 +147,13 @@ export class ReadingScoringService {
       };
     }
 
-    throw new Error('Scoring configuration error: No options, blanks, or accepted answers configured.');
+    return {
+      isCorrect: false,
+      score: 0,
+      earnedPoints: 0,
+      maxPoints: 1,
+      distractorRationale: "No scoring configuration available for this item.",
+    };
   }
 }
 

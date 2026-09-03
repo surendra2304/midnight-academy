@@ -15,7 +15,8 @@ export const Route = createFileRoute("/result/$attemptId")({
       { title: "Standardized Score Report — Midnight Academy" },
       {
         name: "description",
-        content: "Detailed official band scores, diagnostic item review, and personalized recommendations.",
+        content:
+          "Detailed official band scores, diagnostic item review, and personalized recommendations.",
       },
     ],
   }),
@@ -62,9 +63,13 @@ function ResultPage() {
         <AppNav />
         <PageShell>
           <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center space-y-4 max-w-lg mx-auto mt-12">
-            <p className="text-sm text-destructive font-bold">{error || "Unable to load score report."}</p>
+            <p className="text-sm text-destructive font-bold">
+              {error || "Unable to load score report."}
+            </p>
             <Button asChild variant="outline" size="sm">
-              <Link to="/dashboard"><ArrowLeft className="size-3.5 mr-1" /> Return to Dashboard</Link>
+              <Link to="/dashboard">
+                <ArrowLeft className="size-3.5 mr-1" /> Return to Dashboard
+              </Link>
             </Button>
           </div>
         </PageShell>
@@ -77,7 +82,9 @@ function ResultPage() {
       <AppNav />
       <PageShell>
         <div className="pb-16 pt-4">
-          <UnifiedScoreReportView reportData={reportData as Parameters<typeof UnifiedScoreReportView>[0]["reportData"]} />
+          <UnifiedScoreReportView
+            reportData={reportData as Parameters<typeof UnifiedScoreReportView>[0]["reportData"]}
+          />
         </div>
       </PageShell>
     </div>

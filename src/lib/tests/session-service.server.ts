@@ -1,203 +1,254 @@
-/**
- * Server-Side Attempt Session Service
- * Handles start, resume, save, advance, and finalize lifecycle against Supabase.
- */
-
-import { supabaseAdmin } from '@/integrations/supabase/client.server';
-import { loadTestBlueprint } from './blueprint-loader';
-import { calculateRemainingSeconds, type SessionSnapshot, type ItemResponseState } from './session-state';
-import type { ToeflExamMode, ToeflSectionType } from '@/types/toefl';
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { loadTestBlueprint } from "./blueprint-loader";
+import {
+  calculateRemainingSeconds,
+  type SessionSnapshot,
+  type ItemResponseState,
+} from "./session-state";
+import type { ToeflExamMode, ToeflSectionType } from "@/types/toefl";
 
 export interface StartAttemptOptions {
   testVersionId: string;
   studentId: string;
   examMode?: ToeflExamMode;
-  sectionTypeFilter?: ToeflSectionType;
+  sectionTypeFilter?: ToeflSectionType | undefined;
   allowRetake?: boolean;
 }
 
 export class AttemptSessionService {
-  /**
-   * Start a new test attempt or resume an active in-progress one.
-   */
   async startAttempt(options: StartAttemptOptions) {
-    const { testVersionId, studentId, examMode = 'practice', sectionTypeFilter, allowRetake = true } = options;
+    const {
+      testVersionId,
+      studentId,
+      examMode = "practice",
+      sectionTypeFilter,
+      allowRetake = true,
+    } = options;
 
-    // 1. Check if an active in-progress attempt already exists for this student & version
-    const { data: existing } = await supabaseAdmin
-      .from('attempts')
-      .select('id, status, test_version_id')
-      .eq('test_version_id', testVersionId)
-      .eq('student_id', studentId)
-      .eq('status', 'in_progress')
-      .maybeSingle();
+    const { data: version, error: versionErr } = await supabaseAdmin
+      .from("test_versions")
+      .select("id, test_id, status")
+      .eq("id", testVersionId)
+      .single();
 
-    if (existing && !allowRetake) {
-      return this.resumeAttempt(existing.id, studentId);
+    if (versionErr || !version) {
+      throw new Error("Selected test version does not exist.");
+    }
+    if (version.status !== "published") {
+      throw new Error("Selected test version is not published.");
     }
 
-    // 2. Fetch test version to get parent test_id
-    let resolvedTestId = 'f1000000-0000-0000-0000-000000000000';
-    let resolvedVersionId = testVersionId;
+    // Verify requested section exists before creating the attempt.
+    if (sectionTypeFilter) {
+      const { data: matchingSection, error: sectionCheckErr } = await supabaseAdmin
+        .from("sections")
+        .select("id")
+        .eq("test_version_id", testVersionId)
+        .eq("section_type", sectionTypeFilter)
+        .maybeSingle();
 
-    const { data: version } = await supabaseAdmin
-      .from('test_versions')
-      .select('id, test_id, status')
-      .eq('id', testVersionId)
-      .maybeSingle();
-
-    if (version) {
-      resolvedTestId = version.test_id;
-      resolvedVersionId = version.id;
+      if (sectionCheckErr) {
+        throw new Error(`Failed to validate selected section: ${sectionCheckErr.message}`);
+      }
+      if (!matchingSection) {
+        throw new Error(`This test has no ${sectionTypeFilter} section.`);
+      }
     }
 
-    // 3. Create new attempt
-    const { data: attempt, error: aErr } = await supabaseAdmin
-      .from('attempts')
+    if (!allowRetake) {
+      const { data: existing, error: existingErr } = await supabaseAdmin
+        .from("attempts")
+        .select("id, status")
+        .eq("test_version_id", testVersionId)
+        .eq("student_id", studentId)
+        .eq("status", "in_progress")
+        .maybeSingle();
+
+      if (existingErr) {
+        throw new Error(`Failed to check existing attempt: ${existingErr.message}`);
+      }
+      if (existing) {
+        return this.resumeAttempt(existing.id, studentId);
+      }
+    }
+
+    const { data: attempt, error: attemptErr } = await supabaseAdmin
+      .from("attempts")
       .insert({
-        test_id: resolvedTestId,
-        test_version_id: resolvedVersionId,
-        student_id: studentId,
+        test_id: version.test_id ?? version.id,
+        test_version_id: version.id,
         exam_mode: examMode,
-        status: 'in_progress',
+        student_id: studentId,
+        status: "in_progress",
         started_at: new Date().toISOString(),
+        ...(sectionTypeFilter ? { selected_section_type: sectionTypeFilter } : {}),
+        evaluation_status: "not_started",
       })
-      .select('id')
-      .maybeSingle();
+      .select("id")
+      .single();
 
-    const finalAttemptId = attempt?.id || `att-${Date.now()}`;
+    if (attemptErr || !attempt) {
+      throw new Error(
+        `Failed to create attempt: ${attemptErr?.message ?? "unknown database error"}`,
+      );
+    }
 
-    // 4. Create attempt_sections for each section in the test_version (filtered if sectionTypeFilter is given)
     let sectionQuery = supabaseAdmin
-      .from('sections')
-      .select('id, section_order, section_type')
-      .eq('test_version_id', resolvedVersionId)
-      .order('section_order', { ascending: true });
+      .from("sections")
+      .select("id, section_order")
+      .eq("test_version_id", version.id)
+      .order("section_order", { ascending: true });
 
     if (sectionTypeFilter) {
-      sectionQuery = sectionQuery.eq('section_type', sectionTypeFilter);
+      sectionQuery = sectionQuery.eq("section_type", sectionTypeFilter);
     }
 
-    const { data: sections } = await sectionQuery;
-
-    if (sections && sections.length > 0 && attempt?.id) {
-      const attemptSectionsPayload = sections.map((sec, idx) => ({
-        attempt_id: attempt.id,
-        section_id: sec.id,
-        status: idx === 0 ? 'in_progress' : 'not_started',
-        started_at: idx === 0 ? new Date().toISOString() : null,
-      }));
-
-      await supabaseAdmin.from('attempt_sections').insert(attemptSectionsPayload);
+    const { data: sections, error: sectionsErr } = await sectionQuery;
+    if (sectionsErr || !sections || sections.length === 0) {
+      await supabaseAdmin.from("attempts").delete().eq("id", attempt.id);
+      throw new Error(
+        `Failed to initialize test sections: ${sectionsErr?.message ?? "none found"}`,
+      );
     }
 
-    const resumed = await this.resumeAttempt(finalAttemptId, studentId, resolvedVersionId, sectionTypeFilter);
-    return {
-      attemptId: finalAttemptId,
-      blueprint: resumed.blueprint,
-      snapshot: resumed.snapshot,
-    };
+    const sectionPayload = sections.map((section, index) => ({
+      attempt_id: attempt.id,
+      section_id: section.id,
+      status: (index === 0 ? "in_progress" : "not_started") as "in_progress" | "not_started",
+      started_at: index === 0 ? new Date().toISOString() : null,
+    }));
+
+    const { error: attemptSectionErr } = await supabaseAdmin
+      .from("attempt_sections")
+      .insert(sectionPayload);
+
+    if (attemptSectionErr) {
+      await supabaseAdmin.from("attempts").delete().eq("id", attempt.id);
+      throw new Error(`Failed to initialize attempt sections: ${attemptSectionErr.message}`);
+    }
+
+    return this.resumeAttempt(attempt.id, studentId);
   }
 
-  /**
-   * Resume an attempt and recompute authoritative server-side timing and state.
-   */
-  async resumeAttempt(attemptId: string, studentId: string, fallbackVersionId?: string, explicitSectionFilter?: ToeflSectionType): Promise<{
-    blueprint: Awaited<ReturnType<typeof loadTestBlueprint>>;
-    snapshot: SessionSnapshot;
-  }> {
-    // 1. Fetch attempt and verify existence & student ownership
-    const { data: attempt, error: aErr } = await supabaseAdmin
-      .from('attempts')
-      .select('id, test_version_id, student_id, status, exam_mode')
-      .eq('id', attemptId)
+  async resumeAttempt(attemptId: string, studentId: string) {
+    const { data: attempt, error: attemptErr } = await supabaseAdmin
+      .from("attempts")
+      .select(
+        "id, test_version_id, student_id, status, exam_mode, selected_section_type, evaluation_status",
+      )
+      .eq("id", attemptId)
       .maybeSingle();
 
-    if (!attempt && !fallbackVersionId && !attemptId.startsWith('att-')) {
-      throw new Error(`Attempt '${attemptId}' not found. Cannot resume nonexistent attempt.`);
+    if (attemptErr) {
+      throw new Error(`Failed to load attempt: ${attemptErr.message}`);
+    }
+    if (!attempt) {
+      throw new Error(`Attempt '${attemptId}' not found.`);
+    }
+    if (attempt.student_id !== studentId) {
+      throw new Error("Unauthorized: you do not have access to this attempt.");
     }
 
-    if (attempt && attempt.student_id && attempt.student_id !== studentId) {
-      throw new Error('Unauthorized: You do not have access to this test attempt');
+    const { data: rawAttemptSections, error: attemptSectionsErr } = await supabaseAdmin
+      .from("attempt_sections")
+      .select(
+        "id, section_id, status, started_at, completed_at, sections(id, section_type, section_order, timing_seconds)",
+      )
+      .eq("attempt_id", attempt.id);
+
+    if (attemptSectionsErr) {
+      throw new Error(`Failed to load attempt sections: ${attemptSectionsErr.message}`);
+    }
+    if (!rawAttemptSections || rawAttemptSections.length === 0) {
+      throw new Error("Attempt contains no sections.");
     }
 
-    const effectiveVersionId = attempt?.test_version_id || fallbackVersionId || 'f2000000-0000-0000-0000-000000000000';
-    const examMode = (attempt?.exam_mode as ToeflExamMode) || 'full';
+    const attemptSections = [...rawAttemptSections].sort((a, b) => {
+      const orderA = (a.sections as { section_order?: number } | null)?.section_order ?? 0;
+      const orderB = (b.sections as { section_order?: number } | null)?.section_order ?? 0;
+      return orderA - orderB;
+    });
 
-    // 2. Fetch attempt_sections to authoritatively determine section-test scope
-    const targetAttemptId = attempt?.id || attemptId;
-    const { data: attemptSections } = await supabaseAdmin
-      .from('attempt_sections')
-      .select('id, section_id, status, started_at, completed_at, sections(section_type)')
-      .eq('attempt_id', targetAttemptId)
-      .order('created_at', { ascending: true });
+    const firstSection = attemptSections[0];
+    const derivedSectionFilter =
+      (attempt.selected_section_type as ToeflSectionType | null) ??
+      (attemptSections.length === 1 && firstSection
+        ? ((firstSection.sections as { section_type?: ToeflSectionType } | null)?.section_type ??
+          undefined)
+        : undefined);
 
-    let derivedSectionFilter: ToeflSectionType | undefined = explicitSectionFilter;
-    if (!derivedSectionFilter && attemptSections && attemptSections.length === 1) {
-      const singleSecType = (attemptSections[0].sections as { section_type?: ToeflSectionType })?.section_type;
-      if (singleSecType) {
-        derivedSectionFilter = singleSecType;
-      }
+    if (!attempt.test_version_id) {
+      throw new Error("Attempt has no test version.");
     }
 
-    // 3. Hydrate client blueprint with authoritative section filter
-    const blueprint = await loadTestBlueprint(effectiveVersionId, examMode, derivedSectionFilter);
-
-    // Determine current active section index
-    let activeSecIndex = (attemptSections || []).findIndex((s) => s.status === 'in_progress');
-    if (activeSecIndex === -1) {
-      activeSecIndex = 0;
-    }
-
-    const currentAttemptSec = attemptSections?.[activeSecIndex];
-    const currentSecBlueprint = blueprint.sections[activeSecIndex];
-
-    // 4. Fetch all existing responses for this attempt
-    const attemptSecIds = (attemptSections || []).map((s) => s.id);
-    let responsesMap: Record<string, ItemResponseState> = {};
-    if (attemptSecIds.length > 0) {
-      const { data: dbResponses } = await supabaseAdmin
-        .from('responses')
-        .select('content_item_id, raw_answer, normalized_answer, time_spent_ms, flagged, answered_at')
-        .in('attempt_section_id', attemptSecIds);
-
-      for (const r of dbResponses || []) {
-        responsesMap[r.content_item_id] = {
-          rawAnswer: r.raw_answer,
-          normalizedAnswer: (r.normalized_answer as Record<string, unknown>) || {},
-          isAnswered: Boolean(r.raw_answer && r.raw_answer.trim().length > 0),
-          isFlagged: Boolean(r.flagged),
-          timeSpentMs: r.time_spent_ms || 0,
-          lastSavedAt: r.answered_at,
-        };
-      }
-    }
-
-    // 5. Compute server timing
-    const { remainingSeconds, isExpired } = calculateRemainingSeconds(
-      currentAttemptSec?.started_at || null,
-      currentSecBlueprint?.timingSeconds || 1800,
-      currentSecBlueprint?.isTimed ?? true,
+    const blueprint = await loadTestBlueprint(
+      attempt.test_version_id,
+      attempt.exam_mode as ToeflExamMode,
+      derivedSectionFilter,
     );
 
-    const snapshot: SessionSnapshot = {
-      attemptId: attempt?.id || attemptId,
-      status: attempt?.status === 'evaluated' ? 'completed' : isExpired ? 'section_transition' : 'in_progress',
-      examMode: (attempt?.exam_mode as ToeflExamMode) || examMode,
-      currentSectionIndex: activeSecIndex,
-      currentItemIndex: 0,
-      sectionStartedAt: currentAttemptSec?.started_at || null,
-      sectionRemainingSeconds: remainingSeconds,
-      isSectionLocked: isExpired || attempt?.status === 'evaluated',
-      responses: responsesMap,
-    };
+    const activeIndex = Math.max(
+      0,
+      attemptSections.findIndex((section) => section.status === "in_progress"),
+    );
 
-    return { blueprint, snapshot };
+    const currentAttemptSection = attemptSections[activeIndex];
+    const currentBlueprintSection = blueprint.sections[activeIndex];
+
+    if (!currentAttemptSection || !currentBlueprintSection) {
+      throw new Error("Attempt state and blueprint are inconsistent.");
+    }
+
+    const attemptSectionIds = attemptSections.map((section) => section.id);
+
+    const { data: dbResponses, error: responseErr } = await supabaseAdmin
+      .from("responses")
+      .select("content_item_id, raw_answer, normalized_answer, time_spent_ms, flagged, answered_at")
+      .in("attempt_section_id", attemptSectionIds);
+
+    if (responseErr) {
+      throw new Error(`Failed to load saved responses: ${responseErr.message}`);
+    }
+
+    const responses: Record<string, ItemResponseState> = {};
+    for (const response of dbResponses ?? []) {
+      responses[response.content_item_id] = {
+        rawAnswer: response.raw_answer,
+        normalizedAnswer: (response.normalized_answer as Record<string, unknown>) ?? {},
+        isAnswered: Boolean(response.raw_answer?.trim()),
+        isFlagged: Boolean(response.flagged),
+        timeSpentMs: response.time_spent_ms ?? 0,
+        lastSavedAt: response.answered_at,
+      };
+    }
+
+    const timing = calculateRemainingSeconds(
+      currentAttemptSection.started_at,
+      currentBlueprintSection.timingSeconds,
+      currentBlueprintSection.isTimed,
+    );
+
+    return {
+      blueprint,
+      snapshot: {
+        attemptId: attempt.id,
+        status:
+          attempt.status === "evaluated"
+            ? "completed"
+            : timing.isExpired
+              ? "section_transition"
+              : "in_progress",
+        examMode: attempt.exam_mode as ToeflExamMode,
+        currentSectionIndex: activeIndex,
+        currentItemIndex: 0,
+        sectionStartedAt: currentAttemptSection.started_at,
+        sectionRemainingSeconds: timing.remainingSeconds,
+        isSectionLocked: timing.isExpired || attempt.status === "evaluated",
+        responses,
+      } satisfies SessionSnapshot,
+    };
   }
 
-  /**
-   * Save / Autosave student response to an item.
-   */
   async saveResponse(params: {
     attemptId: string;
     studentId: string;
@@ -207,167 +258,273 @@ export class AttemptSessionService {
     timeSpentMs?: number;
     flagged?: boolean;
   }) {
-    const { attemptId, studentId, contentItemId, rawAnswer, normalizedAnswer = {}, timeSpentMs = 0, flagged = false } = params;
+    const {
+      attemptId,
+      studentId,
+      contentItemId,
+      rawAnswer,
+      normalizedAnswer = {},
+      timeSpentMs = 0,
+      flagged = false,
+    } = params;
 
-    // 1. Verify attempt ownership & active status
-    const { data: attempt, error: aErr } = await supabaseAdmin
-      .from('attempts')
-      .select('id, student_id, status')
-      .eq('id', attemptId)
+    const { data: attempt, error: attemptErr } = await supabaseAdmin
+      .from("attempts")
+      .select("id, student_id, status, test_version_id")
+      .eq("id", attemptId)
       .maybeSingle();
 
-    if (attempt && attempt.student_id && attempt.student_id !== studentId) {
-      throw new Error('Unauthorized: You cannot modify another student\'s attempt');
+    if (attemptErr) {
+      throw new Error(`Failed to load attempt: ${attemptErr.message}`);
+    }
+    if (!attempt) throw new Error("Attempt not found.");
+    if (attempt.student_id !== studentId) throw new Error("Unauthorized.");
+    if (attempt.status !== "in_progress") {
+      throw new Error("Attempt is not writable.");
     }
 
-    if (attempt && (attempt.status === 'completed' || attempt.status === 'evaluated')) {
-      throw new Error('Attempt is already finalized. Modifications are rejected.');
+    const { data: active, error: activeErr } = await supabaseAdmin
+      .from("attempt_sections")
+      .select("id, section_id, status, started_at, sections(id, section_type, timing_seconds)")
+      .eq("attempt_id", attemptId)
+      .eq("status", "in_progress")
+      .maybeSingle();
+
+    if (activeErr) {
+      throw new Error(`Failed to load active section: ${activeErr.message}`);
+    }
+    if (!active) throw new Error("No active section exists.");
+
+    const section = active.sections as {
+      id: string;
+      section_type: ToeflSectionType;
+      timing_seconds: number;
+    } | null;
+
+    if (!section) throw new Error("Active section metadata is missing.");
+
+    const { isExpired } = calculateRemainingSeconds(
+      active.started_at,
+      section.timing_seconds,
+      true,
+    );
+    if (isExpired) throw new Error("Section time has expired.");
+
+    // AUTHORIZE THE CONTENT ITEM AGAINST THE CURRENT ACTIVE SECTION.
+    const { data: item, error: itemErr } = await supabaseAdmin
+      .from("content_items")
+      .select("id, module_id")
+      .eq("id", contentItemId)
+      .maybeSingle();
+
+    if (itemErr) {
+      throw new Error(`Failed to validate content item: ${itemErr.message}`);
+    }
+    if (!item) throw new Error("Content item does not exist.");
+    if (!item.module_id) throw new Error("Content item is not linked to a valid module.");
+
+    const { data: module, error: moduleErr } = await supabaseAdmin
+      .from("modules")
+      .select("id, section_id")
+      .eq("id", item.module_id)
+      .maybeSingle();
+
+    if (moduleErr || !module) {
+      throw new Error("Content item is not linked to a valid module.");
+    }
+    if (module.section_id !== section.id) {
+      throw new Error("Content item is not part of the active section.");
     }
 
-    // 2. Validate active section for this item and server timing
-    const { data: attemptSec, error: secErr } = await supabaseAdmin
-      .from('attempt_sections')
-      .select('id, status, started_at, sections(id, timing_seconds, section_type)')
-      .eq('attempt_id', attemptId)
-      .eq('status', 'in_progress')
-      .single();
-
-    if (secErr || !attemptSec) {
-      throw new Error('No active section in progress for this attempt');
-    }
-
-    // Server-authoritative timer check: reject writes after expiration
-    const timingSecs = (attemptSec.sections as { timing_seconds?: number })?.timing_seconds || 1800;
-    const { isExpired } = calculateRemainingSeconds(attemptSec.started_at, timingSecs, true);
-    if (isExpired) {
-      throw new Error('Section timing has expired. Responses can no longer be saved for this section.');
-    }
-
-    // 3. Upsert response in database
-    const { data: response, error: respErr } = await supabaseAdmin
-      .from('responses')
+    const { data: response, error: responseErr } = await supabaseAdmin
+      .from("responses")
       .upsert(
         {
-          attempt_section_id: attemptSec.id,
+          attempt_section_id: active.id,
           content_item_id: contentItemId,
           student_id: studentId,
           raw_answer: rawAnswer,
-          normalized_answer: normalizedAnswer,
+          normalized_answer: JSON.parse(JSON.stringify(normalizedAnswer)),
           time_spent_ms: timeSpentMs,
           flagged,
           answered_at: new Date().toISOString(),
         },
-        { onConflict: 'attempt_section_id,content_item_id' },
+        { onConflict: "attempt_section_id,content_item_id" },
       )
-      .select('id')
+      .select("id")
       .single();
 
-    if (respErr) {
-      throw new Error(`Failed to save response: ${respErr.message}`);
+    if (responseErr || !response) {
+      throw new Error(`Failed to save response: ${responseErr?.message ?? "unknown error"}`);
     }
 
     return { responseId: response.id, savedAt: new Date().toISOString() };
   }
 
-  /**
-   * Advance from current section to next section. Locks previous section.
-   */
   async advanceSection(attemptId: string, studentId: string, currentSectionIndex: number) {
-    // Check ownership
-    const { data: attempt } = await supabaseAdmin
-      .from('attempts')
-      .select('id, student_id, status')
-      .eq('id', attemptId)
+    const { data: attempt, error: attemptErr } = await supabaseAdmin
+      .from("attempts")
+      .select("id, student_id, status")
+      .eq("id", attemptId)
       .maybeSingle();
 
-    if (attempt && attempt.student_id && attempt.student_id !== studentId) {
-      throw new Error('Unauthorized: You cannot advance another student\'s attempt');
+    if (attemptErr) throw new Error(`Failed to load attempt: ${attemptErr.message}`);
+    if (!attempt) throw new Error("Attempt not found.");
+    if (attempt.student_id !== studentId) throw new Error("Unauthorized.");
+    if (attempt.status !== "in_progress") throw new Error("Attempt is not active.");
+
+    const { data: rawSections, error: secErr } = await supabaseAdmin
+      .from("attempt_sections")
+      .select("id, status, section_id, sections(id, section_order)")
+      .eq("attempt_id", attemptId);
+
+    if (secErr || !rawSections || rawSections.length === 0) {
+      throw new Error("No attempt sections found.");
     }
 
-    const { data: attemptSections } = await supabaseAdmin
-      .from('attempt_sections')
-      .select('id, status, section_id')
-      .eq('attempt_id', attemptId)
-      .order('created_at', { ascending: true });
+    const sortedSections = [...rawSections].sort((a, b) => {
+      const orderA = (a.sections as { section_order?: number } | null)?.section_order ?? 0;
+      const orderB = (b.sections as { section_order?: number } | null)?.section_order ?? 0;
+      return orderA - orderB;
+    });
 
-    if (!attemptSections || attemptSections.length === 0) {
-      throw new Error('No attempt sections found');
+    if (currentSectionIndex < 0 || currentSectionIndex >= sortedSections.length) {
+      throw new Error(`Invalid section index: ${currentSectionIndex}`);
     }
 
-    const currentSec = attemptSections[currentSectionIndex];
-    if (!currentSec || currentSec.status === 'completed') {
-      throw new Error('Invalid section index or section is already completed');
+    const currentSec = sortedSections[currentSectionIndex];
+    if (!currentSec) {
+      throw new Error(`Current section not found at index ${currentSectionIndex}`);
     }
-
-    // Mark current as completed
     await supabaseAdmin
-      .from('attempt_sections')
+      .from("attempt_sections")
       .update({
-        status: 'completed',
+        status: "completed",
         completed_at: new Date().toISOString(),
       })
-      .eq('id', currentSec.id);
+      .eq("id", currentSec.id);
 
-    const nextIndex = currentSectionIndex + 1;
-    if (nextIndex < attemptSections.length) {
-      const nextSec = attemptSections[nextIndex];
+    const nextSectionIndex = currentSectionIndex + 1;
+
+    if (nextSectionIndex >= sortedSections.length) {
       await supabaseAdmin
-        .from('attempt_sections')
+        .from("attempts")
         .update({
-          status: 'in_progress',
-          started_at: new Date().toISOString(),
+          status: "evaluating",
+          evaluation_status: "pending",
+          completed_at: new Date().toISOString(),
         })
-        .eq('id', nextSec.id);
+        .eq("id", attemptId);
 
-      return { nextSectionIndex: nextIndex, isFinalized: false };
+      return { nextSectionIndex, isFinalized: true };
     }
 
-    // Finished all sections -> finalize attempt
-    await this.finalizeAttempt(attemptId, studentId);
-    return { nextSectionIndex: nextIndex, isFinalized: true };
+    const nextSec = sortedSections[nextSectionIndex];
+    if (!nextSec) {
+      throw new Error(`Next section not found at index ${nextSectionIndex}`);
+    }
+    await supabaseAdmin
+      .from("attempt_sections")
+      .update({
+        status: "in_progress",
+        started_at: new Date().toISOString(),
+      })
+      .eq("id", nextSec.id);
+
+    return { nextSectionIndex, isFinalized: false };
   }
 
-  /**
-   * Finalize attempt and trigger durable evaluation pipeline.
-   */
   async finalizeAttempt(attemptId: string, studentId: string) {
-    // 1. Verify attempt ownership & in-progress state
-    const { data: attempt, error: aErr } = await supabaseAdmin
-      .from('attempts')
-      .select('id, student_id, status')
-      .eq('id', attemptId)
+    const { data: attempt, error: attemptErr } = await supabaseAdmin
+      .from("attempts")
+      .select("id, student_id, status")
+      .eq("id", attemptId)
       .maybeSingle();
 
-    if (attempt && attempt.student_id && attempt.student_id !== studentId) {
-      throw new Error('Unauthorized: You cannot finalize another student\'s attempt');
+    if (attemptErr) throw new Error(`Failed to load attempt: ${attemptErr.message}`);
+    if (!attempt) throw new Error("Attempt not found.");
+    if (attempt.student_id !== studentId) throw new Error("Unauthorized.");
+
+    if (attempt.status === "evaluated") {
+      return { attemptId, status: "evaluated" as const };
+    }
+    if (attempt.status !== "in_progress" && attempt.status !== "evaluating") {
+      throw new Error(`Attempt cannot be finalized from status '${attempt.status}'.`);
     }
 
-    if (attempt && (attempt.status === 'completed' || attempt.status === 'evaluated')) {
-      return { attemptId, status: attempt.status };
+    const { error: updateErr } = await supabaseAdmin
+      .from("attempts")
+      .update({
+        status: "evaluating",
+        evaluation_status: "pending",
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", attemptId)
+      .eq("student_id", studentId)
+      .eq("status", "in_progress");
+
+    if (updateErr) {
+      throw new Error(`Failed to finalize attempt: ${updateErr.message}`);
+    }
+
+    try {
+      const { mockEvaluationPipelineService } = await import("../evaluation/mock-pipeline.server");
+      await mockEvaluationPipelineService.processAttemptEvaluation(attemptId);
+      return { attemptId, status: "evaluated" as const };
+    } catch (error) {
+      await supabaseAdmin
+        .from("attempts")
+        .update({
+          evaluation_status: "failed",
+        })
+        .eq("id", attemptId)
+        .eq("student_id", studentId);
+
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Evaluation failed and is retryable: ${message}`);
+    }
+  }
+
+  async retryEvaluation(attemptId: string, studentId: string) {
+    const { data: attempt, error: attemptErr } = await supabaseAdmin
+      .from("attempts")
+      .select("id, student_id, status, evaluation_status")
+      .eq("id", attemptId)
+      .maybeSingle();
+
+    if (attemptErr) throw new Error(`Failed to load attempt: ${attemptErr.message}`);
+    if (!attempt) throw new Error("Attempt not found.");
+    if (attempt.student_id !== studentId) throw new Error("Unauthorized.");
+
+    if (attempt.status === "evaluated" && attempt.evaluation_status === "completed") {
+      return { attemptId, status: "evaluated" as const };
     }
 
     await supabaseAdmin
-      .from('attempts')
+      .from("attempts")
       .update({
-        status: 'evaluating',
-        completed_at: new Date().toISOString(),
+        status: "evaluating",
+        evaluation_status: "pending",
       })
-      .eq('id', attemptId);
+      .eq("id", attemptId)
+      .eq("student_id", studentId);
 
-    // 2. Execute evaluation pipeline durably (awaited so serverless execution completes reliably)
     try {
-      const { mockEvaluationPipelineService } = await import('../evaluation/mock-pipeline.server');
+      const { mockEvaluationPipelineService } = await import("../evaluation/mock-pipeline.server");
       await mockEvaluationPipelineService.processAttemptEvaluation(attemptId);
-    } catch (err) {
-      console.error('[AttemptSessionService] Evaluation pipeline error:', err);
-      // Ensure failed attempts are flagged rather than stuck indefinitely
+      return { attemptId, status: "evaluated" as const };
+    } catch (error) {
       await supabaseAdmin
-        .from('attempts')
-        .update({ status: 'completed' })
-        .eq('id', attemptId);
-    }
+        .from("attempts")
+        .update({
+          evaluation_status: "failed",
+        })
+        .eq("id", attemptId)
+        .eq("student_id", studentId);
 
-    return { attemptId, status: 'completed' as const };
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Evaluation retry failed: ${message}`);
+    }
   }
 }
 

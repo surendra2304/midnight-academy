@@ -118,9 +118,7 @@ function AdminTests() {
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-semibold leading-snug text-foreground">
-                  {t.name}
-                </h3>
+                <h3 className="text-base font-semibold leading-snug text-foreground">{t.name}</h3>
               </div>
               <p className="mt-1.5 font-mono text-xs text-primary">{t.code || "Draft (No Code)"}</p>
               <div className="mt-4 flex flex-wrap items-center gap-2">

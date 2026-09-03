@@ -75,10 +75,14 @@ export const requestRegistrationOtp = createServerFn({ method: "POST" })
         });
 
         if (nativeOtpErr) {
-          console.error("[requestRegistrationOtp] Supabase Native OTP fallback error:", nativeOtpErr.message);
+          console.error(
+            "[requestRegistrationOtp] Supabase Native OTP fallback error:",
+            nativeOtpErr.message,
+          );
           return {
             error: "delivery_failed" as const,
-            message: "Unable to deliver verification code. Please check your email address and try again.",
+            message:
+              "Unable to deliver verification code. Please check your email address and try again.",
           };
         }
 
@@ -521,10 +525,7 @@ export const requestPasswordResetOtp = createServerFn({ method: "POST" })
     });
 
     if (!emailResult.success) {
-      console.error(
-        "[requestPasswordResetOtp] Failed to deliver reset code:",
-        emailResult.error,
-      );
+      console.error("[requestPasswordResetOtp] Failed to deliver reset code:", emailResult.error);
       return {
         error: "delivery_failed" as const,
         message: "Unable to send password reset email right now. Please try again.",

@@ -4,7 +4,7 @@
  * live typing input, color-coded word-diff highlighting, and AI phonetic explanations.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Volume2,
   Play,
@@ -18,11 +18,11 @@ import {
   Gauge,
   Tag,
   Loader2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import type { DictationItem, DictationSubmissionResult } from '@/lib/dictation/dictation.functions';
-import { submitDictationAttempt } from '@/lib/dictation/dictation.functions';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { DictationItem, DictationSubmissionResult } from "@/lib/dictation/dictation.functions";
+import { submitDictationAttempt } from "@/lib/dictation/dictation.functions";
+import { toast } from "sonner";
 
 export interface DictationPlayerProps {
   items: DictationItem[];
@@ -31,7 +31,7 @@ export interface DictationPlayerProps {
 
 export function DictationPlayer({ items, onCompleteSession }: DictationPlayerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [typedText, setTypedText] = useState('');
+  const [typedText, setTypedText] = useState("");
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [playCount, setPlayCount] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -47,14 +47,14 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
     if (!currentItem) return;
 
     if (!window.speechSynthesis) {
-      toast.error('Web Speech API is not supported in this browser.');
+      toast.error("Web Speech API is not supported in this browser.");
       return;
     }
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(currentItem.sentence);
     utterance.rate = playbackSpeed;
-    utterance.lang = 'en-US';
+    utterance.lang = "en-US";
 
     utterance.onstart = () => setIsPlaying(true);
     utterance.onend = () => {
@@ -68,7 +68,7 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
 
   // Keyboard shortcut: Ctrl+Enter to submit
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (!result) {
         handleSubmit();
@@ -81,7 +81,7 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
   const handleSubmit = async () => {
     if (!currentItem) return;
     if (!typedText.trim()) {
-      toast.error('Please type what you heard before submitting.');
+      toast.error("Please type what you heard before submitting.");
       return;
     }
 
@@ -96,7 +96,7 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
       });
       setResult(res);
     } catch (err: unknown) {
-      toast.error((err as Error)?.message || 'Failed to evaluate response');
+      toast.error((err as Error)?.message || "Failed to evaluate response");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,7 +104,7 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
 
   const handleNextItem = () => {
     setResult(null);
-    setTypedText('');
+    setTypedText("");
     setPlayCount(0);
     if (currentIndex < items.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -119,7 +119,9 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
       <div className="rounded-2xl border border-border bg-card/60 p-8 text-center space-y-4">
         <Sparkles className="size-10 text-primary mx-auto" />
         <h2 className="text-xl font-bold text-foreground">Session Complete!</h2>
-        <p className="text-sm text-muted-foreground">You have finished all dictation practice exercises in this set.</p>
+        <p className="text-sm text-muted-foreground">
+          You have finished all dictation practice exercises in this set.
+        </p>
         <Button onClick={() => setCurrentIndex(0)}>Restart Set</Button>
       </div>
     );
@@ -136,9 +138,13 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
               <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[10px] font-bold text-primary uppercase">
                 Sentence {currentIndex + 1} of {items.length}
               </span>
-              <span className="text-xs font-semibold text-muted-foreground">Topic: {currentItem.topic}</span>
+              <span className="text-xs font-semibold text-muted-foreground">
+                Topic: {currentItem.topic}
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground">{currentItem.contextNote || 'Listen carefully and type verbatim.'}</p>
+            <p className="text-xs text-muted-foreground">
+              {currentItem.contextNote || "Listen carefully and type verbatim."}
+            </p>
           </div>
 
           {/* Speed Selector */}
@@ -152,8 +158,8 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
                 onClick={() => setPlaybackSpeed(spd)}
                 className={`rounded-lg px-2 py-0.5 font-bold transition-all ${
                   playbackSpeed === spd
-                    ? 'bg-primary text-primary-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {spd}x
@@ -170,10 +176,10 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
             disabled={isPlaying || playCount >= maxPlays}
             className={`size-18 rounded-2xl flex items-center justify-center transition-all ${
               isPlaying
-                ? 'bg-primary text-primary-foreground animate-pulse shadow-lg shadow-primary/30'
+                ? "bg-primary text-primary-foreground animate-pulse shadow-lg shadow-primary/30"
                 : playCount >= maxPlays
-                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-primary text-primary-foreground hover:scale-105 shadow-md shadow-primary/25'
+                  ? "bg-muted text-muted-foreground cursor-not-allowed"
+                  : "bg-primary text-primary-foreground hover:scale-105 shadow-md shadow-primary/25"
             }`}
           >
             {isPlaying ? (
@@ -187,7 +193,11 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
 
           <div className="text-center space-y-1">
             <p className="text-sm font-bold text-foreground">
-              {isPlaying ? 'Playing Audio...' : playCount >= maxPlays ? 'Replay Limit Reached' : 'Click to Listen'}
+              {isPlaying
+                ? "Playing Audio..."
+                : playCount >= maxPlays
+                  ? "Replay Limit Reached"
+                  : "Click to Listen"}
             </p>
             <p className="text-xs text-muted-foreground">
               Replays used: <strong>{playCount}</strong> / {maxPlays}
@@ -223,14 +233,23 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
                   <Sparkles className="size-5 text-primary" />
                 )}
                 <h4 className="text-sm font-bold text-foreground">
-                  Accuracy: <span className="text-primary font-black">{result.score.accuracyPercent}%</span>
+                  Accuracy:{" "}
+                  <span className="text-primary font-black">{result.score.accuracyPercent}%</span>
                 </h4>
               </div>
 
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span>Correct: <strong className="text-emerald-500">{result.score.correctWordCount}</strong></span>
-                <span>Missing: <strong className="text-amber-500">{result.score.missingWordCount}</strong></span>
-                <span>Wrong: <strong className="text-rose-500">{result.score.wrongWordCount}</strong></span>
+                <span>
+                  Correct:{" "}
+                  <strong className="text-emerald-500">{result.score.correctWordCount}</strong>
+                </span>
+                <span>
+                  Missing:{" "}
+                  <strong className="text-amber-500">{result.score.missingWordCount}</strong>
+                </span>
+                <span>
+                  Wrong: <strong className="text-rose-500">{result.score.wrongWordCount}</strong>
+                </span>
               </div>
             </div>
 
@@ -241,38 +260,47 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
               </span>
               <div className="flex flex-wrap items-center gap-1.5 p-3 rounded-xl bg-background/80 border border-border/80 text-sm leading-loose">
                 {result.score.tokens.map((tok, tIdx) => {
-                  if (tok.type === 'correct') {
+                  if (tok.type === "correct") {
                     return (
                       <span
                         key={tIdx}
                         className={`rounded px-1.5 py-0.5 font-medium ${
                           tok.isHomophone
-                            ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
-                            : 'bg-emerald-500/15 text-emerald-400'
+                            ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                            : "bg-emerald-500/15 text-emerald-400"
                         }`}
                       >
                         {tok.actual || tok.expected}
                       </span>
                     );
                   }
-                  if (tok.type === 'wrong') {
+                  if (tok.type === "wrong") {
                     return (
-                      <span key={tIdx} className="inline-flex items-center gap-1 rounded bg-rose-500/15 text-rose-400 px-1.5 py-0.5 font-medium">
+                      <span
+                        key={tIdx}
+                        className="inline-flex items-center gap-1 rounded bg-rose-500/15 text-rose-400 px-1.5 py-0.5 font-medium"
+                      >
                         <span className="line-through opacity-70">{tok.actual}</span>
                         <span className="text-emerald-400 underline">{tok.expected}</span>
                       </span>
                     );
                   }
-                  if (tok.type === 'missing') {
+                  if (tok.type === "missing") {
                     return (
-                      <span key={tIdx} className="rounded bg-amber-500/15 text-amber-400 px-1.5 py-0.5 font-medium border border-dashed border-amber-500/40">
+                      <span
+                        key={tIdx}
+                        className="rounded bg-amber-500/15 text-amber-400 px-1.5 py-0.5 font-medium border border-dashed border-amber-500/40"
+                      >
                         +{tok.expected}
                       </span>
                     );
                   }
-                  if (tok.type === 'extra') {
+                  if (tok.type === "extra") {
                     return (
-                      <span key={tIdx} className="rounded bg-rose-500/15 text-rose-400 line-through px-1.5 py-0.5">
+                      <span
+                        key={tIdx}
+                        className="rounded bg-rose-500/15 text-rose-400 line-through px-1.5 py-0.5"
+                      >
                         {tok.actual}
                       </span>
                     );
@@ -284,7 +312,9 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
 
             {/* Reference Sentence */}
             <div className="space-y-1 rounded-xl bg-surface-2/40 border border-border/60 p-3.5 text-xs">
-              <span className="font-bold text-muted-foreground uppercase text-[10px]">Reference Transcript:</span>
+              <span className="font-bold text-muted-foreground uppercase text-[10px]">
+                Reference Transcript:
+              </span>
               <p className="text-foreground font-medium">{result.referenceSentence}</p>
             </div>
 
@@ -305,8 +335,11 @@ export function DictationPlayer({ items, onCompleteSession }: DictationPlayerPro
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
             {currentItem.skillTags.map((tag) => (
-              <span key={tag} className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-surface-2 px-2 py-0.5 rounded-md">
-                <Tag className="size-3" /> {tag.replace(/_/g, ' ')}
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-surface-2 px-2 py-0.5 rounded-md"
+              >
+                <Tag className="size-3" /> {tag.replace(/_/g, " ")}
               </span>
             ))}
           </div>

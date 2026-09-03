@@ -3,7 +3,7 @@
  * Displays remaining monthly/daily quotas, feature comparison, and upgrade CTA.
  */
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Check,
   Crown,
@@ -13,13 +13,13 @@ import {
   ArrowRight,
   Infinity as InfinityIcon,
   Loader2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { requestMembershipUpgrade } from '@/lib/membership/membership.functions';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { requestMembershipUpgrade } from "@/lib/membership/membership.functions";
+import { toast } from "sonner";
 
 export interface MembershipCardProps {
-  currentTier: 'free' | 'member';
+  currentTier: "free" | "member";
   quotas: {
     fullMocks: { remainingQuota: number; maxQuota: number };
     sectionTests: { remainingQuota: number; maxQuota: number };
@@ -36,16 +36,16 @@ export function MembershipCard({ currentTier, quotas, onUpgradeSuccess }: Member
     try {
       setIsUpgrading(true);
       await requestMembershipUpgrade();
-      toast.success('Successfully upgraded to Midnight Academy Member Tier!');
+      toast.success("Successfully upgraded to Midnight Academy Member Tier!");
       if (onUpgradeSuccess) onUpgradeSuccess();
     } catch {
-      toast.error('Failed to process upgrade request.');
+      toast.error("Failed to process upgrade request.");
     } finally {
       setIsUpgrading(false);
     }
   };
 
-  const isMember = currentTier === 'member';
+  const isMember = currentTier === "member";
 
   return (
     <div className="rounded-3xl border border-border bg-card/60 p-6 md:p-8 space-y-6 shadow-sm">
@@ -56,16 +56,16 @@ export function MembershipCard({ currentTier, quotas, onUpgradeSuccess }: Member
             <span
               className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase border ${
                 isMember
-                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                  : 'bg-primary/10 text-primary border-primary/20'
+                  ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                  : "bg-primary/10 text-primary border-primary/20"
               }`}
             >
-              {isMember ? 'Midnight Academy Member' : 'Free Starter Plan'}
+              {isMember ? "Midnight Academy Member" : "Free Starter Plan"}
             </span>
             {isMember ? <Crown className="size-4 text-amber-400" /> : null}
           </div>
           <h3 className="text-xl font-black text-foreground">
-            {isMember ? 'Unlimited Member Access' : 'Monthly Usage & Quotas'}
+            {isMember ? "Unlimited Member Access" : "Monthly Usage & Quotas"}
           </h3>
         </div>
 
@@ -100,7 +100,9 @@ export function MembershipCard({ currentTier, quotas, onUpgradeSuccess }: Member
               `${quotas.fullMocks.remainingQuota} / ${quotas.fullMocks.maxQuota}`
             )}
           </p>
-          <p className="text-[10px] text-muted-foreground">{isMember ? 'Unlimited' : 'per month'}</p>
+          <p className="text-[10px] text-muted-foreground">
+            {isMember ? "Unlimited" : "per month"}
+          </p>
         </div>
 
         <div className="p-4 rounded-2xl bg-surface-2/40 border border-border/80 text-center space-y-1">
@@ -112,7 +114,9 @@ export function MembershipCard({ currentTier, quotas, onUpgradeSuccess }: Member
               `${quotas.sectionTests.remainingQuota} / ${quotas.sectionTests.maxQuota}`
             )}
           </p>
-          <p className="text-[10px] text-muted-foreground">{isMember ? 'Unlimited' : 'per month'}</p>
+          <p className="text-[10px] text-muted-foreground">
+            {isMember ? "Unlimited" : "per month"}
+          </p>
         </div>
 
         <div className="p-4 rounded-2xl bg-surface-2/40 border border-border/80 text-center space-y-1">
@@ -124,7 +128,7 @@ export function MembershipCard({ currentTier, quotas, onUpgradeSuccess }: Member
               `${quotas.practiceQuestions.remainingQuota} / ${quotas.practiceQuestions.maxQuota}`
             )}
           </p>
-          <p className="text-[10px] text-muted-foreground">{isMember ? 'Unlimited' : 'per day'}</p>
+          <p className="text-[10px] text-muted-foreground">{isMember ? "Unlimited" : "per day"}</p>
         </div>
 
         <div className="p-4 rounded-2xl bg-surface-2/40 border border-border/80 text-center space-y-1">
@@ -136,7 +140,7 @@ export function MembershipCard({ currentTier, quotas, onUpgradeSuccess }: Member
               `${quotas.aiEvaluations.remainingQuota} / ${quotas.aiEvaluations.maxQuota}`
             )}
           </p>
-          <p className="text-[10px] text-muted-foreground">{isMember ? 'Unlimited' : 'per day'}</p>
+          <p className="text-[10px] text-muted-foreground">{isMember ? "Unlimited" : "per day"}</p>
         </div>
       </div>
     </div>

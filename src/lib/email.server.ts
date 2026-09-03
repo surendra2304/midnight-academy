@@ -12,7 +12,12 @@ export interface SendEmailOptions {
 
 let cachedTransporter: nodemailer.Transporter | null = null;
 
-function createTransporterForPort(port: number, secure: boolean, user: string, pass: string): nodemailer.Transporter {
+function createTransporterForPort(
+  port: number,
+  secure: boolean,
+  user: string,
+  pass: string,
+): nodemailer.Transporter {
   return nodemailer.createTransport({
     host: process.env["SMTP_HOST"] || "smtp.gmail.com",
     port,
@@ -40,7 +45,9 @@ function getTransporter(): nodemailer.Transporter | null {
 
   if (!cachedTransporter) {
     const port = Number(process.env["SMTP_PORT"] || 587);
-    const secure = process.env["SMTP_SECURE"] ? process.env["SMTP_SECURE"] === "true" : port === 465;
+    const secure = process.env["SMTP_SECURE"]
+      ? process.env["SMTP_SECURE"] === "true"
+      : port === 465;
     cachedTransporter = createTransporterForPort(port, secure, user, pass);
   }
 
@@ -101,9 +108,16 @@ export async function sendEmail({
       const user = (process.env["SMTP_USER"] || "").trim();
       const pass = (process.env["SMTP_APP_PASSWORD"] || "").trim();
 
-      const fallbackTransporter = createTransporterForPort(fallbackPort, fallbackSecure, user, pass);
+      const fallbackTransporter = createTransporterForPort(
+        fallbackPort,
+        fallbackSecure,
+        user,
+        pass,
+      );
       const info = await fallbackTransporter.sendMail(message);
-      console.log(`[email.server] Email sent via fallback port ${fallbackPort}, messageId: ${info.messageId}`);
+      console.log(
+        `[email.server] Email sent via fallback port ${fallbackPort}, messageId: ${info.messageId}`,
+      );
       return { success: true, messageId: info.messageId };
     }
   } catch (err: unknown) {

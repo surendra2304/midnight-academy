@@ -6,17 +6,17 @@ This document details the hardening verification, security controls, and end-to-
 
 ## 1. End-to-End Learner Journey Verification
 
-| Step | Workflow Stage | Status | Verification Detail |
-| :---: | :--- | :---: | :--- |
-| **1** | **Account Creation & Auth** |  VERIFIED | Supabase Auth with custom Nodemailer SMTP / Native OTP fallback. Role assignment (`student`/`admin`) enforced by database triggers and RLS. |
-| **2** | **Test Catalog & Blueprint Loading** |  VERIFIED | Catalog loads published tests (`test_versions.status = 'published'`). Zero answer key or `is_correct` leakage across all network calls. |
-| **3** | **Pre-Test Hardware Checks** |  VERIFIED | `FullMockRunnerOrchestrator` verifies microphone recording and audio playback capabilities prior to test initialization. |
-| **4** | **4-Section Timed Test Execution** |  VERIFIED | Strict sequence: **Reading $\rightarrow$ Listening $\rightarrow$ Writing $\rightarrow$ Speaking**. 1s timer, autosave on answer change, section lockout on expiry. |
-| **5** | **Multi-Modal Scoring Pipeline** |  VERIFIED | Deterministic scoring for MCQ, Cloze, and Syntax Ordering. Gemini AI scoring for Email, Academic Discussion, Repetition, and Interview. |
-| **6** | **Unified Score Report** |  VERIFIED | 1.0–6.0 band scores, estimated 0–120 score, 4 section cards, and target gap calculation against student's goal. |
-| **7** | **Item-by-Item Diagnostic Review** |  VERIFIED | Revisit all questions with selected answers, correct keys, distractor rationales, side-by-side writing corrections, and audio playback. |
-| **8** | **Analytics & Weakness Diagnostics** |  VERIFIED | Deterministic weakness profile ranking, error classifications, task-type time efficiency table, and AI study coach explanation. |
-| **9** | **Personalized Practice Queue** |  VERIFIED | Explainable recommendations queue prioritizing top weak skills with evidence trails. |
+| Step  | Workflow Stage                       |  Status  | Verification Detail                                                                                                                                                |
+| :---: | :----------------------------------- | :------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | **Account Creation & Auth**          | VERIFIED | Supabase Auth with custom Nodemailer SMTP / Native OTP fallback. Role assignment (`student`/`admin`) enforced by database triggers and RLS.                        |
+| **2** | **Test Catalog & Blueprint Loading** | VERIFIED | Catalog loads published tests (`test_versions.status = 'published'`). Zero answer key or `is_correct` leakage across all network calls.                            |
+| **3** | **Pre-Test Hardware Checks**         | VERIFIED | `FullMockRunnerOrchestrator` verifies microphone recording and audio playback capabilities prior to test initialization.                                           |
+| **4** | **4-Section Timed Test Execution**   | VERIFIED | Strict sequence: **Reading $\rightarrow$ Listening $\rightarrow$ Writing $\rightarrow$ Speaking**. 1s timer, autosave on answer change, section lockout on expiry. |
+| **5** | **Multi-Modal Scoring Pipeline**     | VERIFIED | Deterministic scoring for MCQ, Cloze, and Syntax Ordering. Gemini AI scoring for Email, Academic Discussion, Repetition, and Interview.                            |
+| **6** | **Unified Score Report**             | VERIFIED | 1.0–6.0 band scores, estimated 0–120 score, 4 section cards, and target gap calculation against student's goal.                                                    |
+| **7** | **Item-by-Item Diagnostic Review**   | VERIFIED | Revisit all questions with selected answers, correct keys, distractor rationales, side-by-side writing corrections, and audio playback.                            |
+| **8** | **Analytics & Weakness Diagnostics** | VERIFIED | Deterministic weakness profile ranking, error classifications, task-type time efficiency table, and AI study coach explanation.                                    |
+| **9** | **Personalized Practice Queue**      | VERIFIED | Explainable recommendations queue prioritizing top weak skills with evidence trails.                                                                               |
 
 ---
 

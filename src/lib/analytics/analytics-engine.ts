@@ -4,7 +4,7 @@
  * All computations are 100% deterministic and rule-based.
  */
 
-import type { ToeflItemType, ToeflSectionType } from '@/types/toefl';
+import type { ToeflItemType, ToeflSectionType } from "@/types/toefl";
 
 export interface RawAttemptMetricInput {
   attemptId: string;
@@ -52,7 +52,7 @@ export interface ErrorPatternSummary {
   taskType: ToeflItemType;
   skillName: string;
   frequencyCount: number;
-  commonDistractorNote?: string;
+  commonDistractorNote?: string | undefined;
 }
 
 export interface StudentWeaknessProfile {
@@ -120,7 +120,10 @@ export class AnalyticsEngine {
       }
     >();
 
-    const errorMap = new Map<string, { count: number; note?: string; taskType: ToeflItemType; skill: string }>();
+    const errorMap = new Map<
+      string,
+      { count: number; note?: string | undefined; taskType: ToeflItemType; skill: string }
+    >();
 
     for (const item of rawMetrics) {
       const isCorrect = item.isCorrect === true || (item.score !== null && item.score >= 0.75);
@@ -157,7 +160,7 @@ export class AnalyticsEngine {
 
       // 3. Error Classification
       if (!isCorrect) {
-        const primarySkill = item.skillTags?.[0] || 'General';
+        const primarySkill = item.skillTags?.[0] || "General";
         const errKey = `${item.itemType}:${primarySkill}`;
         const errPrev = errorMap.get(errKey) || {
           count: 0,
@@ -173,7 +176,8 @@ export class AnalyticsEngine {
     // Build Skill Metrics
     const skillMetrics: SkillPerformanceMetric[] = Array.from(skillMap.values()).map((s) => {
       const accuracyPercent = s.total > 0 ? Number(((s.correct / s.total) * 100).toFixed(1)) : 0;
-      const averageTimeSpentSeconds = s.total > 0 ? Number((s.totalTimeMs / (s.total * 1000)).toFixed(1)) : 0;
+      const averageTimeSpentSeconds =
+        s.total > 0 ? Number((s.totalTimeMs / (s.total * 1000)).toFixed(1)) : 0;
       const weaknessScore = this.calculateWeaknessScore(accuracyPercent, s.total);
 
       return {
@@ -192,13 +196,15 @@ export class AnalyticsEngine {
     const sortedByStrength = [...skillMetrics].sort((a, b) => a.weaknessScore - b.weaknessScore);
 
     // Build Task Type Breakdown
-    const taskTypeBreakdown: TaskTypePerformanceMetric[] = Array.from(taskMap.values()).map((t) => ({
-      itemType: t.itemType,
-      sectionType: t.sectionType,
-      totalItems: t.total,
-      accuracyPercent: t.total > 0 ? Number(((t.correct / t.total) * 100).toFixed(1)) : 0,
-      averageTimeSeconds: t.total > 0 ? Number((t.totalTimeMs / (t.total * 1000)).toFixed(1)) : 0,
-    }));
+    const taskTypeBreakdown: TaskTypePerformanceMetric[] = Array.from(taskMap.values()).map(
+      (t) => ({
+        itemType: t.itemType,
+        sectionType: t.sectionType,
+        totalItems: t.total,
+        accuracyPercent: t.total > 0 ? Number(((t.correct / t.total) * 100).toFixed(1)) : 0,
+        averageTimeSeconds: t.total > 0 ? Number((t.totalTimeMs / (t.total * 1000)).toFixed(1)) : 0,
+      }),
+    );
 
     // Build Error Patterns
     const errorPatterns: ErrorPatternSummary[] = Array.from(errorMap.values()).map((e) => ({
@@ -221,13 +227,16 @@ export class AnalyticsEngine {
 
     const bands = scoreReports.map((s) => s.overallBand);
     const bestOverallBand = bands.length > 0 ? Math.max(...bands) : 0;
-    const averageOverallBand = bands.length > 0 ? Number((bands.reduce((a, b) => a + b, 0) / bands.length).toFixed(1)) : 0;
-    const latestOverallBand = bands.length > 0 ? bands[bands.length - 1] : 0;
+    const averageOverallBand =
+      bands.length > 0 ? Number((bands.reduce((a, b) => a + b, 0) / bands.length).toFixed(1)) : 0;
+    const latestOverallBand = bands.length > 0 ? (bands[bands.length - 1] ?? 0) : 0;
 
     // Section Averages
-    const secAvg = (key: 'readingBand' | 'listeningBand' | 'writingBand' | 'speakingBand') => {
+    const secAvg = (key: "readingBand" | "listeningBand" | "writingBand" | "speakingBand") => {
       const vals = scoreReports.map((s) => s[key]);
-      return vals.length > 0 ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : 0;
+      return vals.length > 0
+        ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1))
+        : 0;
     };
 
     return {
@@ -238,10 +247,10 @@ export class AnalyticsEngine {
       averageOverallBand,
       latestOverallBand,
       sectionAverages: {
-        reading: secAvg('readingBand'),
-        listening: secAvg('listeningBand'),
-        writing: secAvg('writingBand'),
-        speaking: secAvg('speakingBand'),
+        reading: secAvg("readingBand"),
+        listening: secAvg("listeningBand"),
+        writing: secAvg("writingBand"),
+        speaking: secAvg("speakingBand"),
       },
       topWeakSkills: sortedByWeakness.slice(0, 5),
       topStrongSkills: sortedByStrength.slice(0, 5),

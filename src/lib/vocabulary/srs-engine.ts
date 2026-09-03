@@ -3,7 +3,7 @@
  * Calculates intervals, repetitions, and ease factors for vocabulary flashcard retention.
  */
 
-export type SRSGrade = 'again' | 'hard' | 'good' | 'easy';
+export type SRSGrade = "again" | "hard" | "good" | "easy";
 
 export interface SRSState {
   repetitions: number;
@@ -20,9 +20,9 @@ export interface SRSCalculationResult extends SRSState {
 
 export const GRADE_QUALITY_MAP: Record<SRSGrade, number> = {
   again: 0, // Complete blackout
-  hard: 3,  // Correct response recalled with serious difficulty
-  good: 4,  // Correct response after a hesitation
-  easy: 5,  // Perfect recall
+  hard: 3, // Correct response recalled with serious difficulty
+  good: 4, // Correct response after a hesitation
+  easy: 5, // Perfect recall
 };
 
 /**
@@ -42,9 +42,9 @@ export function calculateNextSRSState(
     if (repetitions === 0) {
       intervalDays = 1;
     } else if (repetitions === 1) {
-      intervalDays = grade === 'hard' ? 3 : 6;
+      intervalDays = grade === "hard" ? 3 : 6;
     } else {
-      const multiplier = grade === 'hard' ? 1.2 : grade === 'easy' ? 1.4 : 1.0;
+      const multiplier = grade === "hard" ? 1.2 : grade === "easy" ? 1.4 : 1.0;
       intervalDays = Math.round(intervalDays * easeFactor * multiplier);
     }
     repetitions += 1;

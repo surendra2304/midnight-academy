@@ -26,6 +26,7 @@ import { Route as AuthIndexRouteImport } from './routes/auth.index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthErrorRouteImport } from './routes/auth.error'
 import { Route as LessonsIndexRouteImport } from './routes/lessons.index'
+import { Route as PracticeTaskTypeRouteImport } from './routes/practice.$taskType'
 import { Route as ResultAttemptIdRouteImport } from './routes/result.$attemptId'
 import { Route as TestIndexRouteImport } from './routes/test.index'
 import { Route as TestRunRouteImport } from './routes/test.run'
@@ -119,6 +120,11 @@ const LessonsIndexRoute = LessonsIndexRouteImport.update({
   path: '/lessons/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PracticeTaskTypeRoute = PracticeTaskTypeRouteImport.update({
+  id: '/$taskType',
+  path: '/$taskType',
+  getParentRoute: () => PracticeRoute,
+} as any)
 const ResultAttemptIdRoute = ResultAttemptIdRouteImport.update({
   id: '/result/$attemptId',
   path: '/result/$attemptId',
@@ -161,7 +167,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/dictation': typeof DictationRoute
   '/history': typeof HistoryRoute
-  '/practice': typeof PracticeRoute
+  '/practice': typeof PracticeRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/shadowing': typeof ShadowingRoute
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/admin/create': typeof AdminCreateRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
+  '/practice/$taskType': typeof PracticeTaskTypeRoute
   '/result/$attemptId': typeof ResultAttemptIdRoute
   '/test/run': typeof TestRunRoute
   '/admin/': typeof AdminIndexRoute
@@ -186,7 +193,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/dictation': typeof DictationRoute
   '/history': typeof HistoryRoute
-  '/practice': typeof PracticeRoute
+  '/practice': typeof PracticeRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/shadowing': typeof ShadowingRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/admin/create': typeof AdminCreateRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
+  '/practice/$taskType': typeof PracticeTaskTypeRoute
   '/result/$attemptId': typeof ResultAttemptIdRoute
   '/test/run': typeof TestRunRoute
   '/admin': typeof AdminIndexRoute
@@ -213,7 +221,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/dictation': typeof DictationRoute
   '/history': typeof HistoryRoute
-  '/practice': typeof PracticeRoute
+  '/practice': typeof PracticeRouteWithChildren
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/shadowing': typeof ShadowingRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/admin/create': typeof AdminCreateRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/error': typeof AuthErrorRoute
+  '/practice/$taskType': typeof PracticeTaskTypeRoute
   '/result/$attemptId': typeof ResultAttemptIdRoute
   '/test/run': typeof TestRunRoute
   '/admin/': typeof AdminIndexRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin/create'
     | '/auth/callback'
     | '/auth/error'
+    | '/practice/$taskType'
     | '/result/$attemptId'
     | '/test/run'
     | '/admin/'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/admin/create'
     | '/auth/callback'
     | '/auth/error'
+    | '/practice/$taskType'
     | '/result/$attemptId'
     | '/test/run'
     | '/admin'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/admin/create'
     | '/auth/callback'
     | '/auth/error'
+    | '/practice/$taskType'
     | '/result/$attemptId'
     | '/test/run'
     | '/admin/'
@@ -319,7 +331,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DictationRoute: typeof DictationRoute
   HistoryRoute: typeof HistoryRoute
-  PracticeRoute: typeof PracticeRoute
+  PracticeRoute: typeof PracticeRouteWithChildren
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   ShadowingRoute: typeof ShadowingRoute
@@ -454,6 +466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/practice/$taskType': {
+      id: '/practice/$taskType'
+      path: '/$taskType'
+      fullPath: '/practice/$taskType'
+      preLoaderRoute: typeof PracticeTaskTypeRouteImport
+      parentRoute: typeof PracticeRoute
+    }
     '/result/$attemptId': {
       id: '/result/$attemptId'
       path: '/result/$attemptId'
@@ -528,13 +547,25 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface PracticeRouteChildren {
+  PracticeTaskTypeRoute: typeof PracticeTaskTypeRoute
+}
+
+const PracticeRouteChildren: PracticeRouteChildren = {
+  PracticeTaskTypeRoute: PracticeTaskTypeRoute,
+}
+
+const PracticeRouteWithChildren = PracticeRoute._addFileChildren(
+  PracticeRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRoute,
   DictationRoute: DictationRoute,
   HistoryRoute: HistoryRoute,
-  PracticeRoute: PracticeRoute,
+  PracticeRoute: PracticeRouteWithChildren,
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   ShadowingRoute: ShadowingRoute,

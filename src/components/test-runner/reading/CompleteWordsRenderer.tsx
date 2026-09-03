@@ -3,8 +3,8 @@
  * Supports per-blank typing and live token array construction.
  */
 
-import React, { useState, useEffect } from 'react';
-import type { ClientContentItem } from '@/lib/tests/session-state';
+import React, { useState, useEffect } from "react";
+import type { ClientContentItem } from "@/lib/tests/session-state";
 
 export interface CompleteWordsRendererProps {
   item: ClientContentItem;
@@ -19,7 +19,8 @@ export function CompleteWordsRenderer({
   onAnswerChange,
   disabled = false,
 }: CompleteWordsRendererProps) {
-  const passageTemplate = (item.payload?.passage as string) || (item.payload?.prompt as string) || '';
+  const passageTemplate =
+    (item.payload?.passage as string) || (item.payload?.prompt as string) || "";
   const blanks = (item.payload?.blanks as Array<{ blankIndex: number; hint?: string }>) || [];
 
   // Parse existing answers if already saved
@@ -60,15 +61,16 @@ export function CompleteWordsRenderer({
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-xs text-primary font-medium">
-        Instructions: Complete the missing words in the passage below by typing your answers in the corresponding numbered fields.
+        Instructions: Complete the missing words in the passage below by typing your answers in the
+        corresponding numbered fields.
       </div>
 
       <div className="leading-relaxed text-sm text-foreground/90 bg-card/40 p-6 rounded-xl border border-border">
         {parts.map((part, i) => {
           const match = part.match(/\[(\d+)\]/);
-          if (match) {
+          if (match && match[1]) {
             const blankIdx = parseInt(match[1], 10);
-            const val = tokens[blankIdx] || '';
+            const val = tokens[blankIdx] ?? "";
             const hint = blanks.find((b) => b.blankIndex === blankIdx)?.hint;
 
             return (

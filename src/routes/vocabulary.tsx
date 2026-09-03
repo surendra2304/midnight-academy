@@ -34,7 +34,8 @@ export const Route = createFileRoute("/vocabulary")({
       { title: "TOEFL Vocabulary Mastery — Midnight Academy" },
       {
         name: "description",
-        content: "Master high-frequency TOEFL academic vocabulary with SM-2 spaced repetition flashcards, contextual quizzes, and daily review queues.",
+        content:
+          "Master high-frequency TOEFL academic vocabulary with SM-2 spaced repetition flashcards, contextual quizzes, and daily review queues.",
       },
     ],
   }),
@@ -93,7 +94,7 @@ function VocabularyPage() {
   const filteredLists = lists.filter(
     (l) =>
       l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.description.toLowerCase().includes(searchQuery.toLowerCase())
+      l.description.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -111,13 +112,16 @@ function VocabularyPage() {
                 TOEFL Academic Word Lists
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                Retain 250+ essential academic, campus, and scientific words using SM-2 spaced repetition flashcards and context fill-in quizzes.
+                Retain 250+ essential academic, campus, and scientific words using SM-2 spaced
+                repetition flashcards and context fill-in quizzes.
               </p>
             </div>
 
             {/* Daily Review Quick Callout */}
             <div className="rounded-2xl border border-border bg-background/80 p-5 space-y-2 text-center min-w-[200px]">
-              <span className="text-[10px] font-bold uppercase text-muted-foreground">Due for Review Today</span>
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                Due for Review Today
+              </span>
               <p className="text-2xl font-black text-primary">{dueCount} Words</p>
               <Button
                 size="sm"
@@ -150,7 +154,10 @@ function VocabularyPage() {
           ) : activeMode === "flashcards" ? (
             <FlashcardPlayer words={words} onComplete={() => setActiveMode("catalog")} />
           ) : activeMode === "quiz" ? (
-            <VocabQuizPlayer questions={quizQuestions} onComplete={() => setActiveMode("catalog")} />
+            <VocabQuizPlayer
+              questions={quizQuestions}
+              onComplete={() => setActiveMode("catalog")}
+            />
           ) : (
             <div className="space-y-6">
               {/* Search & Filter */}
@@ -177,11 +184,15 @@ function VocabularyPage() {
                         <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[10px] font-bold text-primary uppercase">
                           {list.category.replace(/_/g, " ")}
                         </span>
-                        <span className="text-xs text-muted-foreground font-semibold">50 Words</span>
+                        <span className="text-xs text-muted-foreground font-semibold">
+                          50 Words
+                        </span>
                       </div>
 
                       <h3 className="text-base font-bold text-foreground">{list.name}</h3>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{list.description}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {list.description}
+                      </p>
                     </div>
 
                     <div className="space-y-2 pt-2 border-t border-border/60">

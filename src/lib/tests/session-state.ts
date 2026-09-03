@@ -3,17 +3,17 @@
  * UI-Independent, fully unit-testable without database dependencies.
  */
 
-import type { ToeflExamMode, ToeflSectionType, ToeflItemType } from '@/types/toefl';
+import type { ToeflExamMode, ToeflSectionType, ToeflItemType } from "@/types/toefl";
 
 export type SessionStateStatus =
-  | 'idle'
-  | 'in_progress'
-  | 'section_transition'
-  | 'paused'
-  | 'finalized'
-  | 'scoring'
-  | 'completed'
-  | 'error';
+  | "idle"
+  | "in_progress"
+  | "section_transition"
+  | "paused"
+  | "finalized"
+  | "scoring"
+  | "completed"
+  | "error";
 
 export interface ClientContentItem {
   id: string;
@@ -22,7 +22,7 @@ export interface ClientContentItem {
   itemType: ToeflItemType;
   difficulty: string;
   skillTags: string[];
-  payload: Record<string, unknown>;
+  payload: Record<string, any>;
   options: Array<{
     id: string;
     optionKey: string;
@@ -53,7 +53,7 @@ export interface ClientTestBlueprint {
 
 export interface ItemResponseState {
   rawAnswer: string | null;
-  normalizedAnswer: Record<string, unknown>;
+  normalizedAnswer: Record<string, any>;
   isAnswered: boolean;
   isFlagged: boolean;
   timeSpentMs: number;
@@ -74,18 +74,25 @@ export interface SessionSnapshot {
 }
 
 export type SessionEvent =
-  | { type: 'START'; attemptId: string; examMode: ToeflExamMode; timestamp: string }
-  | { type: 'NAVIGATE_ITEM'; itemIndex: number }
-  | { type: 'SAVE_RESPONSE'; contentItemId: string; rawAnswer: string | null; normalizedAnswer?: Record<string, unknown>; timeSpentMs?: number; timestamp: string }
-  | { type: 'TOGGLE_FLAG'; contentItemId: string }
-  | { type: 'ADVANCE_SECTION'; nextSectionIndex: number; timestamp: string }
-  | { type: 'SECTION_TIMEOUT'; timestamp: string }
-  | { type: 'PAUSE' }
-  | { type: 'RESUME'; timestamp: string }
-  | { type: 'FINALIZE'; timestamp: string }
-  | { type: 'MARK_SCORING' }
-  | { type: 'COMPLETE' }
-  | { type: 'FAIL'; error: string };
+  | { type: "START"; attemptId: string; examMode: ToeflExamMode; timestamp: string }
+  | { type: "NAVIGATE_ITEM"; itemIndex: number }
+  | {
+      type: "SAVE_RESPONSE";
+      contentItemId: string;
+      rawAnswer: string | null;
+      normalizedAnswer?: Record<string, unknown>;
+      timeSpentMs?: number;
+      timestamp: string;
+    }
+  | { type: "TOGGLE_FLAG"; contentItemId: string }
+  | { type: "ADVANCE_SECTION"; nextSectionIndex: number; timestamp: string }
+  | { type: "SECTION_TIMEOUT"; timestamp: string }
+  | { type: "PAUSE" }
+  | { type: "RESUME"; timestamp: string }
+  | { type: "FINALIZE"; timestamp: string }
+  | { type: "MARK_SCORING" }
+  | { type: "COMPLETE" }
+  | { type: "FAIL"; error: string };
 
 /**
  * Pure Transition Reducer
@@ -98,14 +105,14 @@ export function sessionReducer(
   const currentSection = blueprint.sections[state.currentSectionIndex];
 
   switch (event.type) {
-    case 'START': {
-      if (state.status !== 'idle') {
+    case "START": {
+      if (state.status !== "idle") {
         throw new Error(`Invalid state transition: Cannot START from status '${state.status}'`);
       }
       return {
         ...state,
         attemptId: event.attemptId,
-        status: 'in_progress',
+        status: "in_progress",
         examMode: event.examMode,
         currentSectionIndex: 0,
         currentItemIndex: 0,
@@ -115,11 +122,17 @@ export function sessionReducer(
       };
     }
 
-    case 'NAVIGATE_ITEM': {
-      if (state.status !== 'in_progress' && state.status !== 'section_transition') {
-        throw new Error(`Invalid state transition: Cannot navigate items in status '${state.status}'`);
+    case "NAVIGATE_ITEM": {
+      if (state.status !== "in_progress" && state.status !== "section_transition") {
+        throw new Error(
+          `Invalid state transition: Cannot navigate items in status '${state.status}'`,
+        );
       }
-      if (!currentSection || event.itemIndex < 0 || event.itemIndex >= currentSection.items.length) {
+      if (
+        !currentSection ||
+        event.itemIndex < 0 ||
+        event.itemIndex >= currentSection.items.length
+      ) {
         throw new Error(`Item index out of bounds: ${event.itemIndex}`);
       }
       return {
@@ -128,12 +141,12 @@ export function sessionReducer(
       };
     }
 
-    case 'SAVE_RESPONSE': {
-      if (state.status !== 'in_progress') {
+    case "SAVE_RESPONSE": {
+      if (state.status !== "in_progress") {
         throw new Error(`Cannot save response when session is '${state.status}'`);
       }
       if (state.isSectionLocked) {
-        throw new Error('Cannot save response for a locked or expired section');
+        throw new Error("Cannot save response for a locked or expired section");
       }
 
       const prev = state.responses[event.contentItemId] || {
@@ -148,7 +161,7 @@ export function sessionReducer(
       const isAnswered = Boolean(
         event.rawAnswer !== null &&
         event.rawAnswer !== undefined &&
-        event.rawAnswer.trim().length > 0
+        event.rawAnswer.trim().length > 0,
       );
 
       return {
@@ -167,7 +180,7 @@ export function sessionReducer(
       };
     }
 
-    case 'TOGGLE_FLAG': {
+    case "TOGGLE_FLAG": {
       const prev = state.responses[event.contentItemId] || {
         rawAnswer: null,
         normalizedAnswer: {},
@@ -189,18 +202,18 @@ export function sessionReducer(
       };
     }
 
-    case 'ADVANCE_SECTION': {
-      if (state.status !== 'in_progress' && state.status !== 'section_transition') {
+    case "ADVANCE_SECTION": {
+      if (state.status !== "in_progress" && state.status !== "section_transition") {
         throw new Error(`Cannot advance section from status '${state.status}'`);
       }
       if (event.nextSectionIndex <= state.currentSectionIndex) {
-        throw new Error('Cannot navigate backward to earlier locked sections in test mode');
+        throw new Error("Cannot navigate backward to earlier locked sections in test mode");
       }
       if (event.nextSectionIndex >= blueprint.sections.length) {
         // Advanced past final section -> proceed to finalize
         return {
           ...state,
-          status: 'finalized',
+          status: "finalized",
           isSectionLocked: true,
           sectionRemainingSeconds: 0,
         };
@@ -209,7 +222,7 @@ export function sessionReducer(
       const nextSec = blueprint.sections[event.nextSectionIndex];
       return {
         ...state,
-        status: 'in_progress',
+        status: "in_progress",
         currentSectionIndex: event.nextSectionIndex,
         currentItemIndex: 0,
         sectionStartedAt: event.timestamp,
@@ -218,73 +231,73 @@ export function sessionReducer(
       };
     }
 
-    case 'SECTION_TIMEOUT': {
-      if (state.status !== 'in_progress') return state;
+    case "SECTION_TIMEOUT": {
+      if (state.status !== "in_progress") return state;
       const isLastSection = state.currentSectionIndex >= blueprint.sections.length - 1;
       if (isLastSection) {
         return {
           ...state,
-          status: 'finalized',
+          status: "finalized",
           isSectionLocked: true,
           sectionRemainingSeconds: 0,
         };
       }
       return {
         ...state,
-        status: 'section_transition',
+        status: "section_transition",
         isSectionLocked: true,
         sectionRemainingSeconds: 0,
       };
     }
 
-    case 'PAUSE': {
-      if (state.status !== 'in_progress') return state;
-      if (state.examMode === 'full') {
-        throw new Error('Full mock tests cannot be paused');
+    case "PAUSE": {
+      if (state.status !== "in_progress") return state;
+      if (state.examMode === "full") {
+        throw new Error("Full mock tests cannot be paused");
       }
       return {
         ...state,
-        status: 'paused',
+        status: "paused",
       };
     }
 
-    case 'RESUME': {
-      if (state.status !== 'paused') return state;
+    case "RESUME": {
+      if (state.status !== "paused") return state;
       return {
         ...state,
-        status: 'in_progress',
+        status: "in_progress",
       };
     }
 
-    case 'FINALIZE': {
-      if (state.status === 'completed' || state.status === 'scoring') {
+    case "FINALIZE": {
+      if (state.status === "completed" || state.status === "scoring") {
         return state;
       }
       return {
         ...state,
-        status: 'finalized',
+        status: "finalized",
         isSectionLocked: true,
       };
     }
 
-    case 'MARK_SCORING': {
+    case "MARK_SCORING": {
       return {
         ...state,
-        status: 'scoring',
+        status: "scoring",
       };
     }
 
-    case 'COMPLETE': {
+    case "COMPLETE": {
       return {
         ...state,
-        status: 'completed',
+        status: "completed",
       };
     }
 
-    case 'FAIL': {
+    case "FAIL": {
       return {
         ...state,
-        status: 'error',
+        status: "error",
         error: event.error,
       };
     }
@@ -310,7 +323,7 @@ export function calculateRemainingSeconds(
 
   const startTimeMs = new Date(sectionStartedAt).getTime();
   const elapsedMs = Math.max(0, serverNowMs - startTimeMs);
-  const totalLimitMs = (totalTimingSeconds * 1000) + gracePeriodMs;
+  const totalLimitMs = totalTimingSeconds * 1000 + gracePeriodMs;
 
   if (elapsedMs >= totalLimitMs) {
     return { remainingSeconds: 0, isExpired: true };

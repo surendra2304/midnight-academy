@@ -631,10 +631,22 @@ describe("Midnight Academy — Comprehensive Production Regression Suite", () =>
         return { isSupported: true, type: resolvedType };
       };
 
-      expect(evaluateItemType({ item_type: "read_academic" })).toEqual({ isSupported: true, type: "read_academic" });
-      expect(evaluateItemType({ itemType: "write_email" })).toEqual({ isSupported: true, type: "write_email" });
-      expect(evaluateItemType({ item_type: "build_sentence" })).toEqual({ isSupported: true, type: "build_sentence" });
-      expect(evaluateItemType({ itemType: "take_interview" })).toEqual({ isSupported: true, type: "take_interview" });
+      expect(evaluateItemType({ item_type: "read_academic" })).toEqual({
+        isSupported: true,
+        type: "read_academic",
+      });
+      expect(evaluateItemType({ itemType: "write_email" })).toEqual({
+        isSupported: true,
+        type: "write_email",
+      });
+      expect(evaluateItemType({ item_type: "build_sentence" })).toEqual({
+        isSupported: true,
+        type: "build_sentence",
+      });
+      expect(evaluateItemType({ itemType: "take_interview" })).toEqual({
+        isSupported: true,
+        type: "take_interview",
+      });
     });
 
     it("P0: filters section tests strictly by sectionTypeFilter without leakage", () => {
@@ -658,17 +670,25 @@ describe("Midnight Academy — Comprehensive Production Regression Suite", () =>
     });
 
     it("P0: rejects saveResponse when section timer has expired", () => {
-      const checkSaveAuthorization = (isExpired: boolean, attemptStudentId: string, currentStudentId: string) => {
+      const checkSaveAuthorization = (
+        isExpired: boolean,
+        attemptStudentId: string,
+        currentStudentId: string,
+      ) => {
         if (attemptStudentId !== currentStudentId) {
           throw new Error("Unauthorized: You cannot modify another student's attempt");
         }
         if (isExpired) {
-          throw new Error("Section timing has expired. Responses can no longer be saved for this section.");
+          throw new Error(
+            "Section timing has expired. Responses can no longer be saved for this section.",
+          );
         }
         return { success: true };
       };
 
-      expect(() => checkSaveAuthorization(true, "student-1", "student-1")).toThrow("Section timing has expired");
+      expect(() => checkSaveAuthorization(true, "student-1", "student-1")).toThrow(
+        "Section timing has expired",
+      );
       expect(() => checkSaveAuthorization(false, "student-1", "student-2")).toThrow("Unauthorized");
       expect(checkSaveAuthorization(false, "student-1", "student-1")).toEqual({ success: true });
     });
@@ -718,7 +738,9 @@ describe("Midnight Academy — Comprehensive Production Regression Suite", () =>
         return { success: true };
       };
 
-      expect(() => resumeAttemptMock("invalid-uuid-999", false)).toThrow("Cannot resume nonexistent attempt");
+      expect(() => resumeAttemptMock("invalid-uuid-999", false)).toThrow(
+        "Cannot resume nonexistent attempt",
+      );
       expect(resumeAttemptMock("att-1788290303722", false).success).toBe(true);
       expect(resumeAttemptMock("valid-uuid-1", true).success).toBe(true);
     });
@@ -731,20 +753,29 @@ describe("Midnight Academy — Comprehensive Production Regression Suite", () =>
         return { status: "completed" };
       };
 
-      expect(() => finalizeAttemptMock("student-owner-1", "student-attacker-2")).toThrow("Unauthorized");
-      expect(finalizeAttemptMock("student-owner-1", "student-owner-1")).toEqual({ status: "completed" });
+      expect(() => finalizeAttemptMock("student-owner-1", "student-attacker-2")).toThrow(
+        "Unauthorized",
+      );
+      expect(finalizeAttemptMock("student-owner-1", "student-owner-1")).toEqual({
+        status: "completed",
+      });
     });
 
     it("P0: derives section-only scope from attempt sections upon refresh/resume", () => {
       const attemptSections = [{ section_type: "writing" }];
-      const deriveSectionScope = (sections: Array<{ section_type: string }>, fallbackFilter?: string) => {
+      const deriveSectionScope = (
+        sections: Array<{ section_type: string }>,
+        fallbackFilter?: string,
+      ) => {
         if (fallbackFilter) return fallbackFilter;
         if (sections.length === 1) return sections[0].section_type;
         return "all";
       };
 
       expect(deriveSectionScope(attemptSections)).toBe("writing");
-      expect(deriveSectionScope([{ section_type: "reading" }, { section_type: "listening" }])).toBe("all");
+      expect(deriveSectionScope([{ section_type: "reading" }, { section_type: "listening" }])).toBe(
+        "all",
+      );
     });
   });
 });

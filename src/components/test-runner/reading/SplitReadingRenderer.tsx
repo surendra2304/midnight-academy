@@ -3,9 +3,9 @@
  * Used for Read in Daily Life & Read an Academic Passage
  */
 
-import React from 'react';
-import type { ClientContentItem } from '@/lib/tests/session-state';
-import { Flag } from 'lucide-react';
+import React from "react";
+import type { ClientContentItem } from "@/lib/tests/session-state";
+import { Flag } from "lucide-react";
 
 export interface SplitReadingRendererProps {
   item: ClientContentItem;
@@ -24,9 +24,14 @@ export function SplitReadingRenderer({
   onToggleFlag,
   disabled = false,
 }: SplitReadingRendererProps) {
-  const passageTitle = (item.payload?.title as string) || (item.sectionType === 'reading' ? 'Reading Passage' : 'Text');
-  const passageBody = (item.payload?.passage as string) || (item.payload?.context as string) || '';
-  const questionPrompt = (item.payload?.prompt as string) || (item.payload?.questionText as string) || 'Choose the best answer:';
+  const passageTitle =
+    (item.payload?.title as string) ||
+    (item.sectionType === "reading" ? "Reading Passage" : "Text");
+  const passageBody = (item.payload?.passage as string) || (item.payload?.context as string) || "";
+  const questionPrompt =
+    (item.payload?.prompt as string) ||
+    (item.payload?.questionText as string) ||
+    "Choose the best answer:";
 
   return (
     <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-2">
@@ -34,7 +39,9 @@ export function SplitReadingRenderer({
       <section className="flex flex-col rounded-xl border border-border bg-card/40 p-6 overflow-y-auto max-h-[calc(100vh-170px)]">
         <div className="mb-4 border-b border-border pb-3">
           <span className="text-xs font-bold uppercase tracking-wider text-primary">
-            {item.itemType === 'read_daily_life' ? 'Read in Daily Life' : 'Academic Reading Passage'}
+            {item.itemType === "read_daily_life"
+              ? "Read in Daily Life"
+              : "Academic Reading Passage"}
           </span>
           <h3 className="mt-1 text-base font-bold text-foreground">{passageTitle}</h3>
         </div>
@@ -57,11 +64,11 @@ export function SplitReadingRenderer({
                 onClick={onToggleFlag}
                 disabled={disabled}
                 className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                  isFlagged ? 'text-warning' : 'text-muted-foreground hover:text-foreground'
+                  isFlagged ? "text-warning" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Flag className="size-3.5" />
-                {isFlagged ? 'Flagged' : 'Flag Question'}
+                {isFlagged ? "Flagged" : "Flag Question"}
               </button>
             ) : null}
           </div>
@@ -71,7 +78,8 @@ export function SplitReadingRenderer({
           {/* Options */}
           <div className="mt-5 space-y-2.5">
             {item.options.map((opt) => {
-              const isSelected = currentAnswer?.trim().toUpperCase() === opt.optionKey.toUpperCase();
+              const isSelected =
+                currentAnswer?.trim().toUpperCase() === opt.optionKey.toUpperCase();
 
               return (
                 <button
@@ -81,15 +89,15 @@ export function SplitReadingRenderer({
                   onClick={() => onAnswerChange(opt.optionKey, { selectedKey: opt.optionKey })}
                   className={`flex w-full items-start gap-3 rounded-lg border p-3.5 text-left text-sm transition-all ${
                     isSelected
-                      ? 'border-primary bg-primary/10 text-primary font-medium shadow-sm'
-                      : 'border-border bg-background/50 hover:border-primary/40 text-foreground'
+                      ? "border-primary bg-primary/10 text-primary font-medium shadow-sm"
+                      : "border-border bg-background/50 hover:border-primary/40 text-foreground"
                   }`}
                 >
                   <span
                     className={`flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                       isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : 'border border-border bg-surface-2 text-muted-foreground'
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border bg-surface-2 text-muted-foreground"
                     }`}
                   >
                     {opt.optionKey}

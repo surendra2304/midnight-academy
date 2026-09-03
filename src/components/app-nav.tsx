@@ -83,13 +83,15 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-2 rounded-lg border border-border bg-card/60 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-surface-2">
             <User className="size-3.5 text-primary" />
-            <span className="max-w-[120px] truncate">{user?.name || "Learner"}</span>
+            <span className="max-w-[120px] truncate">{user?.fullName || "Learner"}</span>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>
             <div className="flex flex-col space-y-1">
-              <p className="text-xs font-semibold leading-none text-foreground">{user?.name}</p>
+              <p className="text-xs font-semibold leading-none text-foreground">
+                {user?.fullName || "Learner"}
+              </p>
               <p className="text-[10px] leading-none text-muted-foreground">{user?.email}</p>
             </div>
           </DropdownMenuLabel>
@@ -107,7 +109,10 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut()} className="flex items-center gap-2 text-destructive cursor-pointer text-xs">
+          <DropdownMenuItem
+            onClick={() => signOut()}
+            className="flex items-center gap-2 text-destructive cursor-pointer text-xs"
+          >
             <LogOut className="size-3.5" /> Sign Out
           </DropdownMenuItem>
         </DropdownMenuContent>

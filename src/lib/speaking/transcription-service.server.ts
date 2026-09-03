@@ -1,8 +1,4 @@
-/**
- * Pluggable Speech-to-Text Transcription Interface & Gemini Implementation
- */
-
-import { chatJson } from '@/lib/ai.server';
+import { GoogleGenAI } from "@google/genai";
 
 export interface TranscriptionRequest {
   audioBase64?: string;
@@ -19,51 +15,73 @@ export interface TranscriptionResult {
   durationSeconds?: number;
 }
 
-export interface SpeechToTextProvider {
-  transcribe(request: TranscriptionRequest): Promise<TranscriptionResult>;
+function requireKey(): string {
+  const key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEYS?.split(",")[0];
+  if (!key) throw new Error("Gemini API key is not configured.");
+  return key.trim();
 }
 
-export class GeminiSpeechToTextProvider implements SpeechToTextProvider {
+export class GeminiSpeechToTextProvider {
   async transcribe(request: TranscriptionRequest): Promise<TranscriptionResult> {
-    // 1. If audio base64 is present, we could use multimodal Gemini audio processing
-    // For reliable text-based evaluation stub / transcribed audio payloads:
-    if (!request.audioBase64 && !request.audioUrl) {
+    if (!request.audioBase64) {
       return {
-        transcript: '',
+        transcript: "",
         confidence: 0,
-        provider: 'gemini',
-        model: 'gemini-2.5-flash',
+        provider: "gemini",
+        model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
       };
     }
 
-    try {
-      const response = await chatJson<{ transcript: string; confidence: number }>([
-        {
-          role: 'system',
-          content: 'You are an accurate English speech-to-text transcriber for TOEFL speaking responses. Return JSON: { "transcript": "<exact words spoken>", "confidence": 0.95 }',
-        },
-        {
-          role: 'user',
-          content: `Transcribe this recorded audio content accurately into clear English text: [Audio Stream Mime: ${request.mimeType || 'audio/webm'}]`,
-        },
-      ]);
+    const base64 = request.audioBase64.includes(",")
+      ? request.audioBase64.split(",", 2)[1]!
+      : request.audioBase64;
 
-      return {
-        transcript: response.transcript || '',
-        confidence: response.confidence || 0.9,
-        provider: 'gemini',
-        model: 'gemini-2.5-flash',
-      };
-    } catch (err) {
-      console.warn('[GeminiSpeechToTextProvider] Transcription fallback triggered:', err);
-      return {
-        transcript: 'Student response recorded successfully.',
-        confidence: 0.8,
-        provider: 'gemini-fallback',
-        model: 'gemini-2.5-flash',
-      };
-    }
+    const ai = new GoogleGenAI({ apiKey: requireKey() });
+
+    const response = await ai.models.generateContent({
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text:
+                "Transcribe the student's spoken English exactly. Return JSON only with keys transcript and confidence. " +
+                "Do not summarize, improve, or invent words.",
+            },
+            {
+              inlineData: {
+                mimeType: request.mimeType || "audio/webm",
+                data: base64,
+              },
+            },
+          ],
+        },
+      ],
+      config: {
+        responseMimeType: "application/json",
+      },
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("Transcription provider returned no text.");
+
+    const parsed = JSON.parse(text) as {
+      transcript?: string;
+      confidence?: number;
+    };
+
+    const transcript = (parsed.transcript || "").trim();
+    if (!transcript) throw new Error("Transcription provider returned an empty transcript.");
+
+    return {
+      transcript,
+      confidence:
+        typeof parsed.confidence === "number" ? Math.max(0, Math.min(1, parsed.confidence)) : 0.5,
+      provider: "gemini",
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    };
   }
 }
 
-export const speechToTextProvider: SpeechToTextProvider = new GeminiSpeechToTextProvider();
+export const speechToTextProvider = new GeminiSpeechToTextProvider();

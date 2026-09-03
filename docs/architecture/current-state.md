@@ -4,7 +4,7 @@
 > **Date**: September 1, 2026  
 > **Repository**: `surendra2304/midnight-academy`  
 > **Production URL**: `https://midnight-academy-one.vercel.app`  
-> **Stack**: TanStack Start / React 19 / TypeScript / Tailwind CSS v4 / Supabase PostgreSQL & Auth / Gemini API / Vercel SSR  
+> **Stack**: TanStack Start / React 19 / TypeScript / Tailwind CSS v4 / Supabase PostgreSQL & Auth / Gemini API / Vercel SSR
 
 ---
 
@@ -12,27 +12,27 @@
 
 Midnight Academy uses file-based routing via **TanStack Router** inside `src/routes/`.
 
-| Route Path | File | Access Level | Purpose & Core Components |
-|:---|:---|:---|:---|
-| `/` | `src/routes/index.tsx` | Public | Landing page explaining technical comprehension philosophy, comparison table, sample problem walkthrough, FAQ, and dynamic CTA depending on session. |
-| `/auth` | `src/routes/auth.index.tsx` | Public | Authentication portal: Student & Instructor tabs, Email OTP login/signup, Google OAuth button, and role-based redirect. |
-| `/auth/callback` | `src/routes/auth.callback.tsx` | Public (OAuth) | Supabase OAuth redirect handler; verifies auth code / token hash and routes user to appropriate dashboard. |
-| `/auth/error` | `src/routes/auth.error.tsx` | Public | Error page for authentication and verification failures. |
-| `/dashboard` | `src/routes/dashboard.tsx` | Student | Student hub: active test entry with test code, recommended practice cards, recent attempts table, and performance statistics. |
-| `/test` | `src/routes/test.index.tsx` | Student | Test launch code entry view: test overview, countdown timer instructions, rules modal, and "Start Test" trigger. |
-| `/test/run` | `src/routes/test.run.tsx` | Student | Live timed exam runner: staged reading timer (45s), staged writing response timer (90s), copy-paste prevention, full auto-submit. |
-| `/result/$attemptId` | `src/routes/result.$attemptId.tsx` | Student / Admin | Comprehensive score report: overall percentage, 5-axis chart, question-by-question review, AI evaluation feedback, and manual review actions. |
-| `/practice` | `src/routes/practice.tsx` | Student | Practice library: curated English comprehension drills (`ENG-PRAC-01`, `ENG-PRAC-02`), unlimited retakes, instant attempt trigger. |
-| `/history` | `src/routes/history.tsx` | Student | Chronological history of all completed and in-progress attempts with score badges and direct links to result reports. |
-| `/progress` | `src/routes/progress.tsx` | Student | Longitudinal analytics: 5-axis spider/radar radar chart, score trends over time, speed vs accuracy breakdown. |
-| `/profile` | `src/routes/profile.tsx` | Student / Admin | User profile view: avatar, full name, email, code number, branch, dark mode toggle, and logout button. |
-| `/admin` | `src/routes/admin.index.tsx` | Admin / Instructor | Instructor control center: KPI metrics (tests created, total submissions, average score, active students), recent submissions table, quick actions. |
-| `/admin/create` | `src/routes/admin.create.tsx` | Admin / Instructor | 4-step test creation wizard: Basic metadata, Question drafting (Manual, Gemini AI Prompt, or PDF extraction via PDF.js/Tesseract), Question Review/Approval, and Test Code generation. |
-| `/admin/tests` | `src/routes/admin.tests.index.tsx` | Admin / Instructor | Test management catalog: list of created tests, status toggles (active/draft/closed), question count, submission count, test codes. |
-| `/admin/tests/$testId` | `src/routes/admin.tests.$testId.tsx` | Admin / Instructor | Test detail & analytics: test metadata, student attempt leaderboard, question-level breakdown, export to CSV. |
-| `/admin/students` | `src/routes/admin.students.index.tsx` | Admin / Instructor | Directory of all registered students with attempt counts, average scores, and last active timestamps. |
-| `/admin/students/$studentId` | `src/routes/admin.students.$studentId.tsx` | Admin / Instructor | Individual student profile & analytics: full attempt history, 5-axis competency profile, and instructor notes. |
-| `/admin/analytics` | `src/routes/admin.analytics.tsx` | Admin / Instructor | Platform-wide analytics: score distributions, question difficulty index, completion rates, and cohort trends. |
+| Route Path                   | File                                       | Access Level       | Purpose & Core Components                                                                                                                                                              |
+| :--------------------------- | :----------------------------------------- | :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                          | `src/routes/index.tsx`                     | Public             | Landing page explaining technical comprehension philosophy, comparison table, sample problem walkthrough, FAQ, and dynamic CTA depending on session.                                   |
+| `/auth`                      | `src/routes/auth.index.tsx`                | Public             | Authentication portal: Student & Instructor tabs, Email OTP login/signup, Google OAuth button, and role-based redirect.                                                                |
+| `/auth/callback`             | `src/routes/auth.callback.tsx`             | Public (OAuth)     | Supabase OAuth redirect handler; verifies auth code / token hash and routes user to appropriate dashboard.                                                                             |
+| `/auth/error`                | `src/routes/auth.error.tsx`                | Public             | Error page for authentication and verification failures.                                                                                                                               |
+| `/dashboard`                 | `src/routes/dashboard.tsx`                 | Student            | Student hub: active test entry with test code, recommended practice cards, recent attempts table, and performance statistics.                                                          |
+| `/test`                      | `src/routes/test.index.tsx`                | Student            | Test launch code entry view: test overview, countdown timer instructions, rules modal, and "Start Test" trigger.                                                                       |
+| `/test/run`                  | `src/routes/test.run.tsx`                  | Student            | Live timed exam runner: staged reading timer (45s), staged writing response timer (90s), copy-paste prevention, full auto-submit.                                                      |
+| `/result/$attemptId`         | `src/routes/result.$attemptId.tsx`         | Student / Admin    | Comprehensive score report: overall percentage, 5-axis chart, question-by-question review, AI evaluation feedback, and manual review actions.                                          |
+| `/practice`                  | `src/routes/practice.tsx`                  | Student            | Practice library: curated English comprehension drills (`ENG-PRAC-01`, `ENG-PRAC-02`), unlimited retakes, instant attempt trigger.                                                     |
+| `/history`                   | `src/routes/history.tsx`                   | Student            | Chronological history of all completed and in-progress attempts with score badges and direct links to result reports.                                                                  |
+| `/progress`                  | `src/routes/progress.tsx`                  | Student            | Longitudinal analytics: 5-axis spider/radar radar chart, score trends over time, speed vs accuracy breakdown.                                                                          |
+| `/profile`                   | `src/routes/profile.tsx`                   | Student / Admin    | User profile view: avatar, full name, email, code number, branch, dark mode toggle, and logout button.                                                                                 |
+| `/admin`                     | `src/routes/admin.index.tsx`               | Admin / Instructor | Instructor control center: KPI metrics (tests created, total submissions, average score, active students), recent submissions table, quick actions.                                    |
+| `/admin/create`              | `src/routes/admin.create.tsx`              | Admin / Instructor | 4-step test creation wizard: Basic metadata, Question drafting (Manual, Gemini AI Prompt, or PDF extraction via PDF.js/Tesseract), Question Review/Approval, and Test Code generation. |
+| `/admin/tests`               | `src/routes/admin.tests.index.tsx`         | Admin / Instructor | Test management catalog: list of created tests, status toggles (active/draft/closed), question count, submission count, test codes.                                                    |
+| `/admin/tests/$testId`       | `src/routes/admin.tests.$testId.tsx`       | Admin / Instructor | Test detail & analytics: test metadata, student attempt leaderboard, question-level breakdown, export to CSV.                                                                          |
+| `/admin/students`            | `src/routes/admin.students.index.tsx`      | Admin / Instructor | Directory of all registered students with attempt counts, average scores, and last active timestamps.                                                                                  |
+| `/admin/students/$studentId` | `src/routes/admin.students.$studentId.tsx` | Admin / Instructor | Individual student profile & analytics: full attempt history, 5-axis competency profile, and instructor notes.                                                                         |
+| `/admin/analytics`           | `src/routes/admin.analytics.tsx`           | Admin / Instructor | Platform-wide analytics: score distributions, question difficulty index, completion rates, and cohort trends.                                                                          |
 
 ---
 
@@ -41,6 +41,7 @@ Midnight Academy uses file-based routing via **TanStack Router** inside `src/rou
 Server functions are built with `@tanstack/react-start` (`createServerFn`) and secured with `requireSupabaseAuth` middleware.
 
 ### 2.1 Authentication & Profile (`src/lib/auth.functions.ts`)
+
 - **`getAuthUser`**: `GET` | Context: Session Cookie | Returns: `{ user: { id, email, name, role, ... } | null }`
 - **`sendOtp`**: `POST` | Input: `{ email, mode: 'login' | 'signup', role? }` | Sends 6-digit OTP via Nodemailer SMTP and stores in `email_verifications`.
 - **`verifyOtp`**: `POST` | Input: `{ email, otp, fullName?, branch?, codeNumber? }` | Verifies OTP against DB, provisions Supabase Auth user if signup, and sets secure auth session.
@@ -48,6 +49,7 @@ Server functions are built with `@tanstack/react-start` (`createServerFn`) and s
 - **`updateProfile`**: `POST` | Input: `{ fullName, branch, codeNumber }` | Updates `profiles` record in Supabase.
 
 ### 2.2 Test Attempt Engine (`src/lib/attempts.functions.ts`)
+
 - **`startAttempt`**: `POST` | Input: `{ code, allowRetake? }` | Validates test code, checks active status and question count, provisions `attempts` row, returns `{ attemptId, test, total }`.
 - **`getAttemptState`**: `GET` | Input: `{ attemptId }` | Fetches active question index, answered positions, and timing configurations.
 - **`revealQuestion`**: `POST` | Input: `{ attemptId, position }` | Marks question as revealed (`revealed_at`), returns question prompt and begins reading countdown.
@@ -59,14 +61,17 @@ Server functions are built with `@tanstack/react-start` (`createServerFn`) and s
 - **`saveManualReview`**: `POST` | Input: `{ attemptAnswerId, score, feedback }` | Instructor override for answer score and feedback.
 
 ### 2.3 Practice Library (`src/lib/practice.functions.ts`)
+
 - **`listPracticeTests`**: `GET` | Returns active English comprehension practice tests (`ENG-PRAC-01`, `ENG-PRAC-02`) with question metadata.
 
 ### 2.4 Student Analytics & History (`src/lib/student.functions.ts`)
+
 - **`getStudentDashboard`**: `GET` | Aggregates recent attempts, average score, total tests completed, and target score gap.
 - **`getStudentHistory`**: `GET` | Returns paginated attempt history with filters.
 - **`getStudentProgress`**: `GET` | Computes 5-axis competency averages and chronological test progress.
 
 ### 2.5 Admin Operations (`src/lib/admin.functions.ts`)
+
 - **`getAdminOverview`**: `GET` | Platform KPIs and recent submission stream.
 - **`listAdminTests`**: `GET` | All tests owned by instructor with status filters.
 - **`getAdminTestDetails`**: `GET` | Input: `{ testId }` | Full test analytics, questions list, and student attempt submissions.
@@ -75,6 +80,7 @@ Server functions are built with `@tanstack/react-start` (`createServerFn`) and s
 - **`aiDraftQuestions`**: `POST` | Input: `{ prompt, count, category, difficulty }` | Calls Gemini to generate structured test questions.
 
 ### 2.6 Notifications (`src/lib/notifications.functions.ts`)
+
 - **`listNotifications`**: `GET` | Returns unread notifications for current user.
 - **`markNotificationRead`**: `POST` | Input: `{ notificationId }` | Marks notification as read.
 
@@ -194,6 +200,7 @@ Database: PostgreSQL on Supabase.
    - `created_at` (timestamptz, default `now()`)
 
 ### Row Level Security (RLS) Policies:
+
 - **`profiles`**: Public read for basic names; update restricted to `auth.uid() = id`.
 - **`tests`**: Instructors read/write own tests; students read tests they attempted or tests where `is_practice = true` / active test code.
 - **`questions`**: Instructors read/write own test questions; students read approved questions for tests they are actively attempting.
@@ -229,6 +236,7 @@ Database: PostgreSQL on Supabase.
 ```
 
 ### The Vercel SMTP Environment Issue Analysis:
+
 - **Root Cause**: On Vercel serverless environments, outbound SMTP on standard port `587` (STARTTLS) can experience connection timeouts or certificate handshakes hangs if serverless cold starts take too long or if Gmail rate-limits the shared Vercel IP ranges.
 - **Current Mitigation in Code**:
   - `src/lib/email.server.ts` configures connection timeout (`connectionTimeout: 10000`, `greetingTimeout: 5000`).
@@ -320,6 +328,7 @@ All AI calls are centralized in server-only modules (`src/lib/ai.server.ts`, `sr
 ## 8. Dependency Inventory (Exact Versions)
 
 ### Production Dependencies (`dependencies`):
+
 - `@google/genai`: `^2.18.0`
 - `@hookform/resolvers`: `^5.2.2`
 - `@radix-ui/react-*`: `^1.1.x` - `^2.2.x` (Full suite of 26 primitive UI components)
@@ -341,6 +350,7 @@ All AI calls are centralized in server-only modules (`src/lib/ai.server.ts`, `sr
 - `zod`: `^3.24.2`
 
 ### Development Dependencies (`devDependencies`):
+
 - `@testing-library/react`: `^16.3.2`
 - `typescript`: `^5.9.3`
 - `vite`: `^8.2.2`
@@ -366,15 +376,15 @@ All AI calls are centralized in server-only modules (`src/lib/ai.server.ts`, `sr
 
 ## 10. Gap Analysis: Current State vs. TOEFL 2026 Target
 
-| Capability | Current Midnight Academy State | TOEFL 2026 Target Architecture | Required Expansion |
-|:---|:---|:---|:---|
-| **Test Structure** | Single-section flat test with reading/writing stages per question | 4 Distinct Sections (Reading, Listening, Writing, Speaking) + Multistage Adaptive | Add `sections`, `modules`, `test_versions` entities |
-| **Content Items** | Single `questions` table with text passage & reference answer | Rich item types: Cloze words, Audio conversation, Announcement, Sentence Builder, Academic Discussion, Interview | Add `content_items`, `question_options`, `content_assets` (audio/transcript) |
-| **Scoring Model** | Single 0–100% score + 5 comprehension axes | 1–6 ETS half-point band per section + overall band + 0–120 transition equivalent | Add deterministic scoring engine + `score_reports` entity |
-| **Audio Pipeline** | None (Text only) | Listening audio playback + Speaking microphone recording & WebAudio stream | Add browser audio recorder + Supabase Storage audio bucket + Gemini audio evaluation |
-| **Adaptive Engine** | Linear fixed question list | Multistage routing (Module A $\rightarrow$ Upper / Lower Module B) | Add `adaptive_router` based on Module A performance threshold |
-| **Analytics & Recommendations** | Basic test history list & 5-axis average | Skill taxonomy, error categorization, target gap, personalized practice queue | Add `skills`, `response_skills`, `recommendations`, `study_plans` |
-| **Admin Lifecycle** | 4-step wizard for text questions | Full test builder with audio asset upload, rubric editor, versioning, draft/publish workflow | Add rich content studio with validation and immutable versioning |
+| Capability                      | Current Midnight Academy State                                    | TOEFL 2026 Target Architecture                                                                                   | Required Expansion                                                                   |
+| :------------------------------ | :---------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------- |
+| **Test Structure**              | Single-section flat test with reading/writing stages per question | 4 Distinct Sections (Reading, Listening, Writing, Speaking) + Multistage Adaptive                                | Add `sections`, `modules`, `test_versions` entities                                  |
+| **Content Items**               | Single `questions` table with text passage & reference answer     | Rich item types: Cloze words, Audio conversation, Announcement, Sentence Builder, Academic Discussion, Interview | Add `content_items`, `question_options`, `content_assets` (audio/transcript)         |
+| **Scoring Model**               | Single 0–100% score + 5 comprehension axes                        | 1–6 ETS half-point band per section + overall band + 0–120 transition equivalent                                 | Add deterministic scoring engine + `score_reports` entity                            |
+| **Audio Pipeline**              | None (Text only)                                                  | Listening audio playback + Speaking microphone recording & WebAudio stream                                       | Add browser audio recorder + Supabase Storage audio bucket + Gemini audio evaluation |
+| **Adaptive Engine**             | Linear fixed question list                                        | Multistage routing (Module A $\rightarrow$ Upper / Lower Module B)                                               | Add `adaptive_router` based on Module A performance threshold                        |
+| **Analytics & Recommendations** | Basic test history list & 5-axis average                          | Skill taxonomy, error categorization, target gap, personalized practice queue                                    | Add `skills`, `response_skills`, `recommendations`, `study_plans`                    |
+| **Admin Lifecycle**             | 4-step wizard for text questions                                  | Full test builder with audio asset upload, rubric editor, versioning, draft/publish workflow                     | Add rich content studio with validation and immutable versioning                     |
 
 ---
 

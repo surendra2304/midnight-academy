@@ -3,7 +3,7 @@
  * Defines the contract for deterministic scoring and AI evaluation orchestration.
  */
 
-import type { ToeflItemType } from '@/types/toefl';
+import type { ToeflItemType } from "@/types/toefl";
 
 export interface ObjectiveEvaluationInput {
   contentItemId: string;
@@ -37,7 +37,8 @@ export class DeterministicScoringService implements ScoringService {
 
     // 1. Multiple Choice / Single selection option matching
     if (input.correctKey) {
-      const isCorrect = input.rawAnswer.trim().toUpperCase() === input.correctKey.trim().toUpperCase();
+      const isCorrect =
+        input.rawAnswer.trim().toUpperCase() === input.correctKey.trim().toUpperCase();
       return { isCorrect, score: isCorrect ? 1.0 : 0.0 };
     }
 

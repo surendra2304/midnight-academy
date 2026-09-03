@@ -5,6 +5,7 @@ This document contains the step-by-step instructions and SQL statements required
 ---
 
 ## 1. Safety & Non-Destructive Standard
+
 - **Zero Impact on Existing Data**: All statements use `CREATE TABLE IF NOT EXISTS`, `DO $$ BEGIN ... END $$`, and additive `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`.
 - **Existing User Data Preserved**: `profiles`, `user_roles`, legacy `tests`, `questions`, `attempts`, and `attempt_answers` remain 100% untouched.
 

@@ -1,11 +1,11 @@
-﻿/**
+/**
  * Cohort Aggregation Service (Server-Side)
  * Computes anonymous, privacy-preserving percentile distributions across platform test attempts.
  * Enforces minimum cohort size (default: 30 attempts) before revealing statistical distribution percentiles.
  * Never outputs individual user rows.
  */
 
-import { ToeflSectionType, ToeflItemType } from '@/types/toefl';
+import { ToeflSectionType, ToeflItemType } from "@/types/toefl";
 
 export interface PercentileDistribution {
   p25: number;
@@ -56,7 +56,9 @@ export function computePercentileRank(value: number, sortedCohortValues: number[
 /**
  * Computes distribution quartiles from a sorted numeric array.
  */
-export function computeDistributionQuartiles(sortedValues: number[]): PercentileDistribution | null {
+export function computeDistributionQuartiles(
+  sortedValues: number[],
+): PercentileDistribution | null {
   const n = sortedValues.length;
   if (n < 5) return null;
 
@@ -65,7 +67,9 @@ export function computeDistributionQuartiles(sortedValues: number[]): Percentile
     const lower = Math.floor(idx);
     const upper = Math.ceil(idx);
     const weight = idx - lower;
-    return Number((sortedValues[lower] * (1 - weight) + sortedValues[upper] * weight).toFixed(1));
+    const lowerVal = sortedValues[lower] ?? 0;
+    const upperVal = sortedValues[upper] ?? 0;
+    return Number((lowerVal * (1 - weight) + upperVal * weight).toFixed(1));
   };
 
   return {
@@ -83,29 +87,29 @@ export function computeDistributionQuartiles(sortedValues: number[]): Percentile
  */
 function getBaselineBenchmarkValues(section: ToeflSectionType): number[] {
   switch (section) {
-    case 'reading':
+    case "reading":
       return [
-        35, 40, 42, 45, 48, 50, 52, 55, 58, 60, 62, 63, 65, 66, 68, 70, 70, 72, 73, 75,
-        75, 76, 78, 80, 80, 82, 83, 85, 85, 86, 88, 89, 90, 90, 91, 92, 93, 94, 95, 95,
-        96, 96, 97, 98, 98, 99, 100, 100, 100, 100
+        35, 40, 42, 45, 48, 50, 52, 55, 58, 60, 62, 63, 65, 66, 68, 70, 70, 72, 73, 75, 75, 76, 78,
+        80, 80, 82, 83, 85, 85, 86, 88, 89, 90, 90, 91, 92, 93, 94, 95, 95, 96, 96, 97, 98, 98, 99,
+        100, 100, 100, 100,
       ];
-    case 'listening':
+    case "listening":
       return [
-        30, 38, 40, 45, 46, 48, 50, 54, 55, 58, 60, 62, 64, 65, 67, 68, 70, 70, 72, 74,
-        75, 75, 76, 78, 79, 80, 82, 82, 84, 85, 86, 87, 88, 89, 90, 91, 92, 92, 93, 94,
-        95, 95, 96, 97, 97, 98, 98, 99, 100, 100
+        30, 38, 40, 45, 46, 48, 50, 54, 55, 58, 60, 62, 64, 65, 67, 68, 70, 70, 72, 74, 75, 75, 76,
+        78, 79, 80, 82, 82, 84, 85, 86, 87, 88, 89, 90, 91, 92, 92, 93, 94, 95, 95, 96, 97, 97, 98,
+        98, 99, 100, 100,
       ];
-    case 'writing':
+    case "writing":
       return [
-        40, 45, 48, 50, 52, 55, 58, 60, 60, 62, 64, 65, 67, 68, 70, 72, 73, 75, 75, 76,
-        77, 78, 80, 80, 82, 83, 84, 85, 86, 87, 88, 88, 89, 90, 91, 92, 92, 93, 94, 94,
-        95, 95, 96, 97, 97, 98, 98, 99, 100, 100
+        40, 45, 48, 50, 52, 55, 58, 60, 60, 62, 64, 65, 67, 68, 70, 72, 73, 75, 75, 76, 77, 78, 80,
+        80, 82, 83, 84, 85, 86, 87, 88, 88, 89, 90, 91, 92, 92, 93, 94, 94, 95, 95, 96, 97, 97, 98,
+        98, 99, 100, 100,
       ];
-    case 'speaking':
+    case "speaking":
       return [
-        30, 35, 40, 42, 45, 48, 50, 52, 55, 58, 60, 62, 63, 65, 66, 68, 70, 72, 72, 74,
-        75, 75, 76, 78, 78, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 90, 91, 92, 93,
-        94, 94, 95, 96, 96, 97, 98, 98, 99, 100
+        30, 35, 40, 42, 45, 48, 50, 52, 55, 58, 60, 62, 63, 65, 66, 68, 70, 72, 72, 74, 75, 75, 76,
+        78, 78, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 90, 91, 92, 93, 94, 94, 95, 96, 96, 97,
+        98, 98, 99, 100,
       ];
   }
 }
@@ -120,7 +124,7 @@ export function aggregatePeerComparison(
 ): PeerComparisonResult {
   const isSufficient = totalRecordedAttempts >= MIN_COHORT_THRESHOLD;
 
-  const sections: ToeflSectionType[] = ['reading', 'listening', 'writing', 'speaking'];
+  const sections: ToeflSectionType[] = ["reading", "listening", "writing", "speaking"];
   const sectionDistributions: Record<ToeflSectionType, PercentileDistribution | null> = {
     reading: null,
     listening: null,
@@ -144,7 +148,7 @@ export function aggregatePeerComparison(
 
   // Generate an explainable natural-language comparison summary
   const bestSection = sections.reduce((a, b) =>
-    (sectionPercentiles[a] || 0) > (sectionPercentiles[b] || 0) ? a : b
+    (sectionPercentiles[a] || 0) > (sectionPercentiles[b] || 0) ? a : b,
   );
   const bestP = sectionPercentiles[bestSection] || 50;
 

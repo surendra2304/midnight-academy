@@ -1,4 +1,4 @@
-﻿import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth } from "@/lib/auth-guard";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
@@ -28,7 +28,8 @@ export const Route = createFileRoute("/history")({
       { title: "Test Records & Score Progression — Midnight Academy" },
       {
         name: "description",
-        content: "Track every completed and in-progress TOEFL mock test attempt, score trajectories, comparable 0-120 scales, and question reviews.",
+        content:
+          "Track every completed and in-progress TOEFL mock test attempt, score trajectories, comparable 0-120 scales, and question reviews.",
       },
     ],
   }),
@@ -40,7 +41,9 @@ function HistoryPage() {
   const [profile, setProfile] = useState<StudentWeaknessProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMode, setSelectedMode] = useState<"all" | "full" | "section" | "practice">("all");
-  const [selectedSection, setSelectedSection] = useState<"all" | "reading" | "listening" | "writing" | "speaking">("all");
+  const [selectedSection, setSelectedSection] = useState<
+    "all" | "reading" | "listening" | "writing" | "speaking"
+  >("all");
 
   useEffect(() => {
     async function loadHistory() {
@@ -65,7 +68,9 @@ function HistoryPage() {
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading your examination records & score trajectories...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading your examination records & score trajectories...
+            </p>
           </div>
         </PageShell>
       </div>
@@ -95,24 +100,33 @@ function HistoryPage() {
                 Test Records & Performance History
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                Review complete attempt histories, revisit question explanations, inspect comparable 0–120 estimated scales, and track longitudinal score growth.
+                Review complete attempt histories, revisit question explanations, inspect comparable
+                0–120 estimated scales, and track longitudinal score growth.
               </p>
             </div>
 
             {/* Quick Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="p-4 rounded-2xl bg-surface-2/50 border border-border/80 text-center min-w-[110px]">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">Latest Band</span>
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                  Latest Band
+                </span>
                 <p className="text-2xl font-black text-primary mt-0.5">{latestBand.toFixed(1)}</p>
-                <span className="text-[10px] text-muted-foreground">~{estimatedScaledScore}/120 (est.)</span>
+                <span className="text-[10px] text-muted-foreground">
+                  ~{estimatedScaledScore}/120 (est.)
+                </span>
               </div>
               <div className="p-4 rounded-2xl bg-surface-2/50 border border-border/80 text-center min-w-[110px]">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">Best Band</span>
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                  Best Band
+                </span>
                 <p className="text-2xl font-black text-emerald-400 mt-0.5">{bestBand.toFixed(1)}</p>
                 <span className="text-[10px] text-muted-foreground">All-Time Peak</span>
               </div>
               <div className="p-4 rounded-2xl bg-surface-2/50 border border-border/80 text-center min-w-[110px]">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">Average</span>
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                  Average
+                </span>
                 <p className="text-2xl font-black text-foreground mt-0.5">{avgBand.toFixed(1)}</p>
                 <span className="text-[10px] text-muted-foreground">Across Attempts</span>
               </div>
@@ -125,14 +139,21 @@ function HistoryPage() {
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="size-4 text-primary" />
-                  <h3 className="text-sm font-bold text-foreground">Score Band Progression Over Time</h3>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Score Band Progression Over Time
+                  </h3>
                 </div>
-                <span className="text-xs text-muted-foreground">{trends.length} Attempts Recorded</span>
+                <span className="text-xs text-muted-foreground">
+                  {trends.length} Attempts Recorded
+                </span>
               </div>
 
               <div className="h-44 w-full flex items-end gap-3 pt-6 border-b border-border/60 pb-3">
                 {trends.map((point, idx) => {
-                  const heightPercent = Math.min(100, Math.max(15, (point.overallBand / 6.0) * 100));
+                  const heightPercent = Math.min(
+                    100,
+                    Math.max(15, (point.overallBand / 6.0) * 100),
+                  );
                   return (
                     <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
                       <span className="text-[10px] font-black text-primary opacity-0 group-hover:opacity-100 transition-opacity">
@@ -185,7 +206,8 @@ function HistoryPage() {
               <HistoryIcon className="mx-auto size-12 text-primary/60" />
               <h3 className="text-lg font-bold text-foreground">No Completed Tests Yet</h3>
               <p className="mx-auto max-w-md text-xs text-muted-foreground leading-relaxed">
-                Take your first official TOEFL mock test or section assessment to build your permanent record and track your score trajectory.
+                Take your first official TOEFL mock test or section assessment to build your
+                permanent record and track your score trajectory.
               </p>
               <Button asChild className="font-bold">
                 <Link to="/test">Browse Mock Test Catalog</Link>
@@ -206,7 +228,11 @@ function HistoryPage() {
                           Attempt #{trends.length - idx} • Full Mock Exam
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          {new Date(t.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
                         </span>
                       </div>
 
@@ -217,16 +243,20 @@ function HistoryPage() {
                       {/* 4 Section Band Chips */}
                       <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
                         <span className="rounded-lg bg-surface-2 px-2.5 py-1 text-muted-foreground">
-                          Reading: <strong className="text-foreground">{t.readingBand.toFixed(1)}</strong>
+                          Reading:{" "}
+                          <strong className="text-foreground">{t.readingBand.toFixed(1)}</strong>
                         </span>
                         <span className="rounded-lg bg-surface-2 px-2.5 py-1 text-muted-foreground">
-                          Listening: <strong className="text-foreground">{t.listeningBand.toFixed(1)}</strong>
+                          Listening:{" "}
+                          <strong className="text-foreground">{t.listeningBand.toFixed(1)}</strong>
                         </span>
                         <span className="rounded-lg bg-surface-2 px-2.5 py-1 text-muted-foreground">
-                          Writing: <strong className="text-foreground">{t.writingBand.toFixed(1)}</strong>
+                          Writing:{" "}
+                          <strong className="text-foreground">{t.writingBand.toFixed(1)}</strong>
                         </span>
                         <span className="rounded-lg bg-surface-2 px-2.5 py-1 text-muted-foreground">
-                          Speaking: <strong className="text-foreground">{t.speakingBand.toFixed(1)}</strong>
+                          Speaking:{" "}
+                          <strong className="text-foreground">{t.speakingBand.toFixed(1)}</strong>
                         </span>
                       </div>
                     </div>
@@ -234,14 +264,20 @@ function HistoryPage() {
                     <div className="flex items-center gap-4">
                       {/* Overall Band & 0-120 Estimated Scale */}
                       <div className="rounded-2xl border border-primary/30 bg-primary/5 px-5 py-3 text-center min-w-[120px]">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Overall Band</p>
-                        <p className="text-2xl font-black text-primary">{t.overallBand.toFixed(1)}</p>
-                        <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">~{scaled}/120 (est.)</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase">
+                          Overall Band
+                        </p>
+                        <p className="text-2xl font-black text-primary">
+                          {t.overallBand.toFixed(1)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">
+                          ~{scaled}/120 (est.)
+                        </p>
                       </div>
 
                       {/* Re-Open Full Report */}
                       <Button asChild size="sm" className="font-bold px-4">
-                        <Link to={`/result/${t.attemptId}`}>
+                        <Link to="/result/$attemptId" params={{ attemptId: t.attemptId }}>
                           View Report <ChevronRight className="size-3.5 ml-1" />
                         </Link>
                       </Button>
