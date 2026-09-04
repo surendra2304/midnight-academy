@@ -61,9 +61,14 @@ function RunTest() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-3">
-        <Loader2 className="size-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading test blueprint & assets...</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-white text-slate-900 select-none">
+        <div className="relative size-20">
+          <div className="size-20 rounded-full border-4 border-slate-200" />
+          <div className="absolute top-0 left-0 size-20 rounded-full border-4 border-transparent border-t-[#204482] animate-spin" />
+        </div>
+        <p className="mt-8 text-2xl font-light tracking-wide text-slate-800">
+          please wait while we load your exam
+        </p>
       </div>
     );
   }
