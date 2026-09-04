@@ -58,8 +58,15 @@ export function SpeakingRecorder({
     currentAnswer ? "recorded" : "idle",
   );
 
-  const [prepRemaining, setPrepRemaining] = useState(preparationSeconds);
-  const [recordRemaining, setRecordRemaining] = useState(responseLimitSeconds);
+  const actualResponseLimit = isListenRepeat
+    ? 7
+    : (payload.responseLimitSeconds as number) || responseLimitSeconds;
+  const actualPrepSeconds = isListenRepeat
+    ? 0
+    : (payload.preparationSeconds as number) || preparationSeconds;
+
+  const [prepRemaining, setPrepRemaining] = useState(actualPrepSeconds);
+  const [recordRemaining, setRecordRemaining] = useState(actualResponseLimit);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -259,53 +266,63 @@ export function SpeakingRecorder({
     setErrorMessage(null);
   };
 
+  const scenarioText =
+    (payload.scenario as string) ||
+    (isListenRepeat
+      ? "You are training to assist visitors to a natural history museum."
+      : "You have agreed to take part in a research study about eating at restaurants. You will have a short online interview with a researcher. The researcher will ask you some questions.");
+
   const promptText =
-    (item.payload?.prompt as string) ||
-    (item.payload?.questionText as string) ||
-    "Respond verbally to the interview prompt:";
+    (payload.prompt as string) ||
+    (isListenRepeat
+      ? "Listen and repeat only once."
+      : "Please answer the interviewer's question.");
+
+  const formatTimerClock = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `00:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-border bg-card/40 p-6 space-y-6">
-        {/* Task Header */}
-        <div className="border-b border-border pb-3 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
-            <Mic className="size-4" /> {item.itemType.replace(/_/g, " ")}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Response Limit: <strong>{responseLimitSeconds}s</strong>
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm space-y-6">
+        {/* Scenario Card */}
+        <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-5 text-sm font-medium text-slate-800 leading-relaxed shadow-xs">
+          {scenarioText}
+        </div>
+
+        {/* Prompt Header */}
+        <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-900">{promptText}</h3>
+          <span className="text-xs font-semibold text-slate-400">
+            {isListenRepeat ? "7s Response Limit" : `${responseLimitSeconds}s Response Limit`}
           </span>
         </div>
 
-        {/* Source Audio (for Listen and Repeat) */}
-        {isListenRepeat && (audioSource || speechText) ? (
-          <div className="rounded-lg border border-border bg-background/50 p-4 space-y-2">
-            <span className="text-xs font-bold text-foreground">
-              Step 1: Listen to the prompt carefully
+        {/* Audio Stimulus Player */}
+        {(audioSource || speechText) && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2">
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+              Audio Stimulus:
             </span>
             <AudioPlayer
               key={item.id}
               audioUrl={audioSource}
               speechText={speechText}
-              maxPlays={2}
+              maxPlays={1}
             />
           </div>
-        ) : null}
+        )}
 
-        {/* Interview Prompt */}
-        <div className="rounded-lg bg-surface-2/40 border border-border/60 p-4 space-y-1">
-          <p className="text-xs font-bold text-muted-foreground uppercase">Prompt:</p>
-          <p className="text-sm font-semibold text-foreground leading-relaxed">{promptText}</p>
-        </div>
-
-        {/* Error Message & Permission Recovery */}
-        {errorMessage ? (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-xs text-destructive space-y-3">
+        {/* Error Notice & Permission Recovery */}
+        {errorMessage && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700 space-y-3">
             <div className="flex items-center gap-3">
-              <AlertCircle className="size-5 shrink-0" />
+              <AlertCircle className="size-5 shrink-0 text-rose-600" />
               <div>
-                <p className="font-bold">Microphone Notice</p>
-                <p className="text-muted-foreground mt-0.5">{errorMessage}</p>
+                <p className="font-bold text-rose-900">Microphone Notice</p>
+                <p className="text-rose-700 mt-0.5">{errorMessage}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
@@ -313,10 +330,10 @@ export function SpeakingRecorder({
                 type="button"
                 size="sm"
                 variant="outline"
-                className="text-xs border-destructive/30 hover:bg-destructive/20"
+                className="text-xs border-rose-300 hover:bg-rose-100"
                 onClick={() => startRecording()}
               >
-                <RotateCcw className="size-3.5 mr-1.5" /> Retry Microphone Access
+                <RotateCcw className="size-3.5 mr-1.5" /> Retry Microphone
               </Button>
               <Button
                 type="button"
@@ -325,112 +342,147 @@ export function SpeakingRecorder({
                 className="text-xs"
                 onClick={() => setShowManualInput((prev) => !prev)}
               >
-                {showManualInput ? "Hide Text Input" : "Type / Transcribe Response Instead"}
-              </Button>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Manual Input Fallback */}
-        {showManualInput && (
-          <div className="rounded-xl border border-primary/20 bg-background/80 p-4 space-y-3">
-            <p className="text-xs font-bold text-foreground">
-              Manual Response / Transcription Mode:
-            </p>
-            <textarea
-              className="w-full h-28 rounded-lg border border-border bg-surface-1 p-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              placeholder="Type your verbal response here if your microphone is unavailable or blocked in your browser..."
-              value={manualText}
-              onChange={(e) => {
-                setManualText(e.target.value);
-                onAnswerChange(e.target.value, { mimeType: "text/plain", durationSeconds: 15 });
-              }}
-            />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Your response will be saved and evaluated by the AI grader.</span>
-              <Button
-                type="button"
-                size="sm"
-                variant="default"
-                onClick={() => {
-                  if (manualText.trim()) {
-                    onAnswerChange(manualText.trim(), { mimeType: "text/plain", durationSeconds: 15 });
-                    setStage("recorded");
-                  }
-                }}
-              >
-                Confirm Saved Response
+                {showManualInput ? "Hide Text Fallback" : "Manual Text Input"}
               </Button>
             </div>
           </div>
         )}
 
-        {/* Interactive Recording Controller Box */}
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 flex flex-col items-center justify-center text-center space-y-4">
+        {/* Manual Input Fallback */}
+        {showManualInput && (
+          <div className="rounded-xl border border-blue-200 bg-white p-4 space-y-3">
+            <p className="text-xs font-bold text-slate-800">
+              Manual Response / Transcription Fallback:
+            </p>
+            <textarea
+              className="w-full h-24 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0f3b82]"
+              placeholder="Type your spoken answer here..."
+              value={manualText}
+              onChange={(e) => {
+                setManualText(e.target.value);
+                onAnswerChange(e.target.value, { mimeType: "text/plain", durationSeconds: 7 });
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                if (manualText.trim()) {
+                  onAnswerChange(manualText.trim(), {
+                    mimeType: "text/plain",
+                    durationSeconds: 7,
+                  });
+                  setStage("recorded");
+                }
+              }}
+            >
+              Save Spoken Answer
+            </Button>
+          </div>
+        )}
+
+        {/* TestGlider Recording Controller */}
+        <div className="flex flex-col items-center justify-center py-6 text-center space-y-5">
           {stage === "idle" && (
-            <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">
-                Click below to begin your <strong>{preparationSeconds}s</strong> preparation timer.
-                Recording will start automatically.
+            <div className="space-y-4">
+              <p className="text-xs text-slate-500">
+                {isListenRepeat
+                  ? "When ready, start your recording and repeat the sentence once."
+                  : `Click to start your ${preparationSeconds}s preparation timer.`}
               </p>
-              <Button size="lg" disabled={disabled} onClick={handleStartPrep}>
-                <Mic className="size-4 mr-2" /> Start Preparation
-              </Button>
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={isListenRepeat ? startRecording : handleStartPrep}
+                className="inline-flex items-center gap-2 rounded-full bg-[#0f3b82] px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#154694] transition-all"
+              >
+                <Mic className="size-4" />
+                {isListenRepeat ? "Start Speaking" : "Start Preparation"}
+              </button>
             </div>
           )}
 
           {stage === "preparing" && (
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 border border-amber-500/20 px-3 py-1 text-xs font-bold text-amber-500">
+              <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-bold text-amber-700">
                 <Clock className="size-3.5 animate-pulse" /> Preparation Time
               </div>
-              <div className="text-4xl font-black text-foreground font-mono">{prepRemaining}s</div>
-              <p className="text-xs text-muted-foreground">
-                Read the prompt carefully. Recording starts in {prepRemaining} seconds.
+              <div className="text-4xl font-black text-slate-900 font-mono">
+                {prepRemaining}s
+              </div>
+              <p className="text-xs text-slate-500">
+                Read carefully. Recording starts in {prepRemaining} seconds.
               </p>
             </div>
           )}
 
           {stage === "recording" && (
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-red-500/10 border border-red-500/20 px-3 py-1 text-xs font-bold text-red-500 animate-pulse">
-                <span className="size-2 rounded-full bg-red-500 animate-ping" /> Recording In
-                Progress
+            <div className="flex flex-col items-center space-y-4 w-full">
+              {/* TestGlider Digital Clock: e.g. 00:00:07 */}
+              <div className="flex items-center gap-2 text-2xl font-mono font-bold text-slate-800">
+                <Clock className="size-5 text-[#0f3b82] animate-pulse" />
+                <span>{formatTimerClock(recordRemaining)}</span>
               </div>
-              <div className="text-4xl font-black text-red-500 font-mono">{recordRemaining}s</div>
-              <p className="text-xs text-muted-foreground">Speak clearly into your microphone.</p>
-              <Button variant="destructive" size="sm" onClick={stopRecording} className="mt-2">
-                <Square className="size-3.5 mr-1.5 fill-current" /> Finish Recording
-              </Button>
+
+              {/* Wave indicator */}
+              <div className="flex items-center gap-1 h-6">
+                {[40, 70, 100, 60, 90, 50, 80, 40].map((h, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-[#0f3b82] rounded-full animate-pulse"
+                    style={{
+                      height: `${h}%`,
+                      animationDelay: `${i * 100}ms`,
+                      animationDuration: "600ms",
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* TestGlider Official [Stop speaking] Button (Screens 36, 39, 45) */}
+              <button
+                type="button"
+                onClick={stopRecording}
+                className="mt-2 inline-flex items-center gap-2.5 rounded-full border-2 border-slate-300 bg-white px-7 py-2.5 text-sm font-bold text-slate-800 shadow-md hover:bg-slate-50 hover:border-slate-400 active:scale-95 transition-all"
+              >
+                <span className="size-3 rounded-full bg-rose-600 animate-ping" />
+                <span className="size-3 rounded-full bg-rose-600 -ml-5 mr-1" />
+                Stop speaking
+              </button>
             </div>
           )}
 
           {stage === "uploading" && (
             <div className="space-y-3">
-              <Loader2 className="size-8 animate-spin text-primary mx-auto" />
-              <p className="text-xs font-semibold text-foreground">
-                Securing and uploading speech recording...
+              <Loader2 className="size-7 animate-spin text-[#0f3b82] mx-auto" />
+              <p className="text-xs font-semibold text-slate-700">
+                Uploading speech recording...
               </p>
             </div>
           )}
 
           {stage === "recorded" && (
             <div className="space-y-3 w-full max-w-sm">
-              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-500">
-                <CheckCircle2 className="size-3.5" /> Spoken Response Recorded
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-200 px-3.5 py-1 text-xs font-bold text-emerald-700">
+                <CheckCircle2 className="size-3.5 text-emerald-600" /> Response Recorded
               </div>
               {audioUrl ? (
                 <div className="pt-2">
                   <audio controls src={audioUrl} className="w-full h-10" />
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground">
-                  Your spoken response is saved and ready for AI evaluation.
+                <p className="text-xs text-slate-500">
+                  Your spoken audio is saved and ready for AI evaluation.
                 </p>
               )}
               {!isExamMode && (
                 <div className="pt-2">
-                  <Button variant="outline" size="sm" onClick={handleRerecord} className="text-xs">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRerecord}
+                    className="text-xs"
+                  >
                     <RotateCcw className="size-3 mr-1.5" /> Re-record Response
                   </Button>
                 </div>

@@ -15,10 +15,17 @@ import {
   Clock,
   CheckCircle2,
   ChevronRight,
+  ChevronLeft,
   Mic,
   Volume2,
   ShieldCheck,
   AlertCircle,
+  BookOpen,
+  Eye,
+  EyeOff,
+  X,
+  Flag,
+  Headphones,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -53,6 +60,12 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
   const [micVolumeLevel, setMicVolumeLevel] = useState<number>(0);
   const [echoStage, setEchoStage] = useState<"idle" | "recording" | "playing">("idle");
   const [echoAudioUrl, setEchoAudioUrl] = useState<string | null>(null);
+
+  // TestGlider UI Navigation and Timer States
+  const [hideTime, setHideTime] = useState(false);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [showSaveExitModal, setShowSaveExitModal] = useState(false);
+  const [isTestEnded, setIsTestEnded] = useState(state.status === "completed");
 
   const micStreamRef = React.useRef<MediaStream | null>(null);
   const audioCtxRef = React.useRef<AudioContext | null>(null);
@@ -253,183 +266,220 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
     }
   };
 
-  // 1. Pre-Test Instructions & Hardware Check Screen
+  // 1. Pre-Test Instructions & Hardware Check Screen (TestGlider Screen 4)
   if (!hasStartedMock) {
     return (
-      <div className="mx-auto flex min-h-[85vh] max-w-4xl flex-col justify-center p-6 space-y-6">
-        <div className="rounded-2xl border border-border bg-card/50 p-8 shadow-xl space-y-6">
-          <div className="border-b border-border pb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">
-              Official 2026 Format Assessment
-            </span>
-            <h1 className="text-2xl font-extrabold text-foreground mt-1">{blueprint.name}</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {blueprint.sections.length > 1
-                ? "4-Section Full Examination (Reading → Listening → Writing → Speaking)"
-                : `${blueprint.sections[0]?.sectionType?.toUpperCase() || "Single"} Section Practice Test`}
-            </p>
+      <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900">
+        {/* Navy Header Bar */}
+        <header className="flex h-12 items-center justify-between bg-[#0f3b82] px-6 text-white shadow-sm">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleTestAudio}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#184896] hover:bg-[#2054a8] px-3 py-1 text-xs font-semibold text-white transition-colors"
+            >
+              <Volume2 className="size-3.5" /> Volume
+            </button>
           </div>
 
-          {/* Section Sequence & Timings */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {blueprint.sections.map((sec, idx) => (
-              <div
-                key={sec.id}
-                className="rounded-xl border border-border bg-surface-2/40 p-4 text-center"
-              >
-                <span className="text-xs font-bold text-primary uppercase">
-                  {idx + 1}. {sec.sectionType}
-                </span>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {Math.round(sec.timingSeconds / 60)} Minutes
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {sec.items.length} Question{sec.items.length === 1 ? "" : "s"}
-                </p>
-              </div>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (micStreamRef.current) {
+                micStreamRef.current.getTracks().forEach((t) => t.stop());
+              }
+              if (animFrameRef.current) {
+                cancelAnimationFrame(animFrameRef.current);
+              }
+              setHasStartedMock(true);
+            }}
+            className="rounded-full bg-white px-5 py-1 text-xs font-bold text-[#0f3b82] shadow-xs hover:bg-slate-100 transition-all"
+          >
+            Continue &gt;
+          </button>
+        </header>
 
-          {/* Hardware Checks */}
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 space-y-5">
-            <h3 className="text-sm font-bold text-foreground">Hardware & Audio Diagnostics</h3>
-
-            {/* Audio Check */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Volume2 className="size-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-foreground">
-                    Audio Playback & Headphone Check
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Plays a spoken spoken test announcement to verify clear output.
-                  </p>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                variant={audioCheckPassed ? "outline" : "secondary"}
-                disabled={isTestingAudio}
-                onClick={handleTestAudio}
-              >
-                {audioCheckPassed ? <CheckCircle2 className="size-3.5 mr-1 text-success" /> : null}
-                {isTestingAudio
-                  ? "Speaking Sample..."
-                  : audioCheckPassed
-                    ? "Sound Verified ✓"
-                    : "Test Audio"}
-              </Button>
+        {/* Hardware Check Main Container */}
+        <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-10 shadow-sm space-y-6">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Hardware Check</h1>
+              <div className="mt-3 border-b border-slate-200" />
             </div>
 
-            {/* Mic Check */}
-            <div className="space-y-3">
+            <p className="text-sm font-semibold text-slate-700">
+              Before the test begins, we will check the microphone and headset volume.
+            </p>
+
+            {/* 3 Bright Green Round Icons */}
+            <div className="flex items-center justify-center gap-12 py-4">
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex size-20 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+                  <Mic className="size-9" />
+                </div>
+                <span className="text-xs font-semibold text-slate-600">Microphone</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex size-20 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+                  <Headphones className="size-9" />
+                </div>
+                <span className="text-xs font-semibold text-slate-600">Headphones</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex size-20 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+                  <Volume2 className="size-9" />
+                </div>
+                <span className="text-xs font-semibold text-slate-600">Speaker</span>
+              </div>
+            </div>
+
+            <p className="text-xs leading-relaxed text-slate-600">
+              Please make sure your headset is on. Follow the instructions on each screen. Be sure that
+              your microphone is properly positioned and adjusted to allow for the best possible
+              recording. Speak directly into the microphone and in your normal speaking voice.
+            </p>
+
+            {/* Diagnostic Controls */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-3">
+                <div className="flex items-center gap-3">
+                  <Volume2 className="size-5 text-[#0f3b82]" />
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">Headphone & Speaker Playback</p>
+                    <p className="text-[11px] text-slate-500">Test audio playback clarity</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant={audioCheckPassed ? "outline" : "secondary"}
+                  disabled={isTestingAudio}
+                  onClick={handleTestAudio}
+                  className="text-xs"
+                >
+                  {isTestingAudio ? "Playing Chime..." : "Test Audio"}
+                </Button>
+              </div>
+
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Mic className="size-5" />
-                  </div>
+                  <Mic className="size-5 text-[#0f3b82]" />
                   <div>
-                    <p className="text-xs font-semibold text-foreground">
-                      Microphone Input & Level Verification
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Required for Speaking section recordings & AI assessment.
-                    </p>
+                    <p className="text-xs font-bold text-slate-800">Live Microphone Input</p>
+                    <p className="text-[11px] text-slate-500">Verify microphone response level</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
-                    <CheckCircle2 className="size-3.5 mr-1 text-emerald-400" />
-                    Input Configured
+                  <span className="inline-flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                    <CheckCircle2 className="size-3 mr-1 text-emerald-600" />
+                    Verified Active
                   </span>
                   <Button
                     size="sm"
                     variant={hasMicStream ? "outline" : "secondary"}
                     disabled={isTestingMic}
                     onClick={handleTestMic}
+                    className="text-xs"
                   >
-                    {isTestingMic
-                      ? "Connecting..."
-                      : hasMicStream
-                        ? "Live Mic Active ✓"
-                        : "Test Live Mic"}
+                    {isTestingMic ? "Connecting..." : hasMicStream ? "Mic Live ✓" : "Test Live Mic"}
                   </Button>
                 </div>
               </div>
 
-              {/* Live VU Volume Meter & Echo Test when mic is actively streaming */}
-              {hasMicStream ? (
-                <div className="rounded-lg border border-border/60 bg-card/60 p-3 space-y-2.5">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-semibold text-muted-foreground">
-                      Live Microphone Input Level:
-                    </span>
-                    <span
-                      className={
-                        micVolumeLevel > 10 ? "font-bold text-success" : "text-muted-foreground"
-                      }
-                    >
-                      {micVolumeLevel > 10 ? "Active Sound Detected" : "Speak to test volume..."}
+              {/* VU Meter */}
+              {hasMicStream && (
+                <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                    <span>Microphone Input Level:</span>
+                    <span className={micVolumeLevel > 10 ? "text-emerald-600 font-bold" : "text-slate-400"}>
+                      {micVolumeLevel > 10 ? "Sound Detected" : "Speak to test..."}
                     </span>
                   </div>
-
-                  {/* Volume bar */}
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted/40">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full bg-gradient-to-r from-emerald-500 via-primary to-amber-500 transition-all duration-75"
+                      className="h-full bg-gradient-to-r from-emerald-500 via-[#0f3b82] to-amber-500 transition-all duration-75"
                       style={{ width: `${Math.max(4, micVolumeLevel)}%` }}
                     />
                   </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <p className="text-[10px] text-muted-foreground">
-                      Test speaking a sentence to confirm the bar responds.
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 text-xs"
-                      disabled={echoStage !== "idle"}
-                      onClick={handleRecordEchoTest}
-                    >
-                      {echoStage === "recording"
-                        ? "🔴 Recording (3s)..."
-                        : echoStage === "playing"
-                          ? "🔊 Playing Echo..."
-                          : "Record 3s Echo Test"}
-                    </Button>
-                  </div>
                 </div>
-              ) : null}
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (micStreamRef.current) {
+                    micStreamRef.current.getTracks().forEach((t) => t.stop());
+                  }
+                  if (animFrameRef.current) {
+                    cancelAnimationFrame(animFrameRef.current);
+                  }
+                  setHasStartedMock(true);
+                }}
+                className="rounded-full bg-[#0f3b82] px-8 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#154694] transition-all"
+              >
+                Continue &gt;
+              </button>
             </div>
           </div>
-
-          <div className="flex justify-end pt-4">
-            <Button
-              size="lg"
-              className="px-8 font-bold shadow-lg"
-              onClick={() => {
-                if (micStreamRef.current) {
-                  micStreamRef.current.getTracks().forEach((t) => t.stop());
-                }
-                if (animFrameRef.current) {
-                  cancelAnimationFrame(animFrameRef.current);
-                }
-                setHasStartedMock(true);
-              }}
-            >
-              Begin Examination <ChevronRight className="ml-2 size-4" />
-            </Button>
-          </div>
-        </div>
+        </main>
       </div>
     );
   }
 
-  // 2. Active Mock Runner
+  // 2. End of Test Screen (TestGlider Screen 46)
+  if (isTestEnded || state.status === "completed") {
+    return (
+      <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900">
+        <header className="flex h-12 items-center justify-between bg-[#0f3b82] px-6 text-white shadow-sm">
+          <span className="text-xs font-bold tracking-wider">{blueprint.name}</span>
+        </header>
+
+        <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-lg space-y-6">
+            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <CheckCircle2 className="size-9" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">
+              You have reached the end of the test.
+            </h2>
+            <p className="text-sm font-semibold text-slate-700">
+              Your test has ended and your answers were successfully submitted.
+            </p>
+            <p className="text-xs text-slate-500">
+              Check your score report and review areas for improvement.
+            </p>
+            <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  if (props.onFinalized) {
+                    props.onFinalized(state.attemptId);
+                  } else {
+                    window.location.href = `/result/${state.attemptId}`;
+                  }
+                }}
+                className="rounded-full bg-[#0f3b82] px-8 py-3 text-sm font-bold text-white shadow-md hover:bg-[#154694] transition-all"
+              >
+                SEE RESULTS &gt;
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = "/test";
+                }}
+                className="rounded-full border-2 border-[#0f3b82] bg-white px-8 py-3 text-sm font-bold text-[#0f3b82] hover:bg-slate-50 transition-all"
+              >
+                TAKE ANOTHER TEST
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // 3. Active Test Runner (TestGlider Layout)
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -440,6 +490,16 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
   const isLastItem = currentSection
     ? state.currentItemIndex >= currentSection.items.length - 1
     : false;
+
+  const handleNextAction = () => {
+    if (currentSection && state.currentItemIndex < currentSection.items.length - 1) {
+      handleNavigateItem(state.currentItemIndex + 1);
+    } else if (isLastSection) {
+      handleFinalize().then(() => setIsTestEnded(true));
+    } else {
+      handleAdvanceSection();
+    }
+  };
 
   // Render Section-specific Item Component
   const renderItemStimulus = () => {
@@ -526,125 +586,204 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* Header */}
-      <header className="flex h-16 items-center justify-between border-b border-border bg-card/60 px-6 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900">
+      {/* 1. TestGlider Top Header Bar (#0f3b82) */}
+      <header className="flex h-12 items-center justify-between bg-[#0f3b82] px-6 text-white shadow-sm select-none">
+        {/* Left: [Save & Exit] Button */}
         <div>
-          <h1 className="text-sm font-bold text-foreground">{blueprint.name}</h1>
-          <p className="text-xs uppercase tracking-wider text-primary font-semibold">
-            Section {state.currentSectionIndex + 1} of {blueprint.sections.length}:{" "}
-            {currentSection?.sectionType}
-          </p>
+          <button
+            type="button"
+            onClick={() => setShowSaveExitModal(true)}
+            className="rounded-full bg-white px-4 py-1 text-xs font-bold text-[#0f3b82] shadow-xs hover:bg-slate-100 transition-all"
+          >
+            Save &amp; Exit
+          </button>
         </div>
 
-        <div className="flex items-center gap-4">
-          {isSaving ? (
-            <span className="text-xs text-muted-foreground animate-pulse">Autosaving...</span>
-          ) : null}
+        {/* Right Action Buttons: [Volume] [Review] [< Back] [Next >] */}
+        <div className="flex items-center gap-2">
+          {isSaving && (
+            <span className="mr-2 text-[11px] text-blue-200 animate-pulse">Autosaving...</span>
+          )}
 
-          {currentSection?.isTimed ? (
-            <div
-              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold ${
-                state.sectionRemainingSeconds < 120
-                  ? "border-destructive/40 bg-destructive/10 text-destructive"
-                  : "border-border bg-surface-2/40 text-foreground"
-              }`}
-            >
-              <Clock className="size-4" />
-              <span>{formatTimer(state.sectionRemainingSeconds)}</span>
-            </div>
-          ) : null}
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={isLastSection ? handleFinalize : handleAdvanceSection}
+          <button
+            type="button"
+            onClick={() => setIsReviewOpen((prev) => !prev)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#184896] hover:bg-[#2054a8] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors"
           >
-            {isLastSection ? "Submit & Finalize Mock" : "Next Section"}
-          </Button>
+            <BookOpen className="size-3.5" /> Review
+          </button>
+
+          <button
+            type="button"
+            disabled={state.currentItemIndex === 0}
+            onClick={() => {
+              if (state.currentItemIndex > 0) {
+                handleNavigateItem(state.currentItemIndex - 1);
+              }
+            }}
+            className="inline-flex items-center gap-1 rounded-lg bg-[#184896] hover:bg-[#2054a8] disabled:opacity-40 disabled:hover:bg-[#184896] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors"
+          >
+            <ChevronLeft className="size-3.5" /> Back
+          </button>
+
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={handleNextAction}
+            className="inline-flex items-center gap-1 rounded-lg bg-[#184896] hover:bg-[#2054a8] px-4 py-1 text-xs font-bold text-white shadow-xs transition-colors"
+          >
+            Next &gt;
+          </button>
         </div>
       </header>
 
-      {/* Main Section Content Area */}
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col p-6 space-y-6">
+      {/* 2. TestGlider Sub-Header Bar (White) */}
+      <div className="flex h-10 items-center justify-between border-b border-slate-200 bg-white px-6 text-xs text-slate-700 select-none">
+        {/* Left: Section & Question Counter */}
+        <div className="font-bold uppercase tracking-wider text-slate-800">
+          {currentSection?.sectionType?.toUpperCase()} | Questions {state.currentItemIndex + 1} of{" "}
+          {currentSection?.items.length || 1}
+        </div>
+
+        {/* Right: Digital Countdown Clock & Hide Time */}
+        <div className="flex items-center gap-2 font-mono">
+          <span className="font-bold text-sm text-slate-900">
+            {hideTime ? "--:--" : formatTimer(state.sectionRemainingSeconds)}
+          </span>
+          <span className="text-slate-300">|</span>
+          <button
+            type="button"
+            onClick={() => setHideTime((prev) => !prev)}
+            className="font-sans font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1 text-xs"
+          >
+            {hideTime ? (
+              <>
+                <Eye className="size-3 text-slate-400" /> Show Time
+              </>
+            ) : (
+              <>
+                <EyeOff className="size-3 text-slate-400" /> Hide Time
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Main Test Canvas Area */}
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col p-6">
         <div className="flex-1">{renderItemStimulus()}</div>
-
-        {/* Item Navigation Footer */}
-        {currentSection ? (
-          <footer className="flex items-center justify-between border-t border-border pt-4">
-            <div className="flex items-center gap-2">
-              {currentSection.items.length > 1 &&
-                currentSection.items.map((it, idx) => {
-                  const resp = state.responses[it.id];
-                  const isCurrent = idx === state.currentItemIndex;
-                  const isAnswered = resp?.isAnswered;
-
-                  return (
-                    <button
-                      key={it.id}
-                      type="button"
-                      onClick={() => handleNavigateItem(idx)}
-                      className={`size-8 rounded-lg text-xs font-bold transition-all ${
-                        isCurrent
-                          ? "border-2 border-primary bg-primary text-primary-foreground"
-                          : isAnswered
-                            ? "border border-primary/40 bg-primary/10 text-primary"
-                            : "border border-border bg-surface-2 text-muted-foreground"
-                      }`}
-                    >
-                      {idx + 1}
-                    </button>
-                  );
-                })}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {currentSection.items.length > 1 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  disabled={state.currentItemIndex === 0}
-                  onClick={() => {
-                    if (state.currentItemIndex > 0) {
-                      handleNavigateItem(state.currentItemIndex - 1);
-                    }
-                  }}
-                >
-                  Previous
-                </Button>
-              )}
-              {isLastItem ? (
-                <Button
-                  size="sm"
-                  type="button"
-                  variant="default"
-                  disabled={isSaving}
-                  onClick={isLastSection ? handleFinalize : handleAdvanceSection}
-                >
-                  {isLastSection ? "Finalize Exam" : "Complete Section"}{" "}
-                  <ChevronRight className="ml-1 size-3.5" />
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  type="button"
-                  onClick={() => {
-                    if (
-                      currentSection &&
-                      state.currentItemIndex < currentSection.items.length - 1
-                    ) {
-                      handleNavigateItem(state.currentItemIndex + 1);
-                    }
-                  }}
-                >
-                  Next Item <ChevronRight className="ml-1 size-3.5" />
-                </Button>
-              )}
-            </div>
-          </footer>
-        ) : null}
       </main>
+
+      {/* 4. Question Review Modal / Drawer */}
+      {isReviewOpen && currentSection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="size-5 text-[#0f3b82]" />
+                <h3 className="text-base font-bold text-slate-900">
+                  Question Review: {currentSection.sectionType.toUpperCase()}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReviewOpen(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 max-h-72 overflow-y-auto p-1">
+              {currentSection.items.map((it, idx) => {
+                const resp = state.responses[it.id];
+                const isCurrent = idx === state.currentItemIndex;
+                const isAnswered = resp?.isAnswered;
+                const isFlagged = resp?.isFlagged;
+
+                return (
+                  <button
+                    key={it.id}
+                    type="button"
+                    onClick={() => {
+                      handleNavigateItem(idx);
+                      setIsReviewOpen(false);
+                    }}
+                    className={`relative flex flex-col items-center justify-center rounded-xl p-3 text-xs font-bold transition-all border ${
+                      isCurrent
+                        ? "border-[#0f3b82] bg-[#0f3b82] text-white shadow-sm"
+                        : isAnswered
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {isFlagged && (
+                      <Flag className="size-2.5 absolute top-1 right-1 text-amber-500 fill-current" />
+                    )}
+                    <span>{idx + 1}</span>
+                    <span className="text-[9px] font-normal opacity-80">
+                      {isAnswered ? "Done" : "Empty"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1">
+                  <span className="size-2 rounded-full bg-[#0f3b82]" /> Current
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-2 rounded-full bg-emerald-500" /> Answered
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-2 rounded-full bg-slate-300" /> Unanswered
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReviewOpen(false)}
+                className="rounded-lg bg-slate-100 px-3 py-1 font-semibold text-slate-700 hover:bg-slate-200"
+              >
+                Close Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Save & Exit Confirmation Modal */}
+      {showSaveExitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-slate-900">Save &amp; Exit Examination</h3>
+            <p className="text-xs leading-relaxed text-slate-600">
+              Your test progress and responses are continuously saved to your account in real-time.
+              You can resume this test at any time from your dashboard without losing your progress.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowSaveExitModal(false)}
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Return to Exam
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = "/dashboard";
+                }}
+                className="rounded-lg bg-[#0f3b82] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#154694]"
+              >
+                Exit to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

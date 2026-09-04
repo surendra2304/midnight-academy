@@ -210,7 +210,7 @@ export async function seedCompleteProductionBank() {
     {
       id: "f1000000-0000-0000-0000-000000000000",
       versionId: "f2000000-0000-0000-0000-000000000000",
-      name: "Midnight Academy TOEFL Mock 1: Benchmark Examination",
+      name: "Moon | Full Test",
       category: "Full Mock",
       difficulty: "Middle",
       code: "TOEFL-MOCK-01",
@@ -219,7 +219,7 @@ export async function seedCompleteProductionBank() {
     {
       id: "b1000000-0000-0000-0000-000000000002",
       versionId: "b2000000-0000-0000-0000-000000000002",
-      name: "Midnight Academy TOEFL Mock 2: Comprehensive Simulation",
+      name: "Moon | Full Test (Simulation 2)",
       category: "Full Mock",
       difficulty: "Hard",
       code: "TOEFL-MOCK-02",
@@ -498,8 +498,245 @@ export async function seedCompleteProductionBank() {
   // 7. Seed Complete Content Items Pool
   console.log("6. Seeding Comprehensive Content Items Pool...");
 
-  // Reading Items Definitions (6 distinct items)
+  // Reading Items Definitions (Exact TestGlider "Moon | Full Test" Items)
   const readingDefinitions = [
+    {
+      item_type: "read_daily_life",
+      difficulty: "Easy",
+      skill_tags: ["Inference", "Email"],
+      payload: {
+        title: "Read an email",
+        format: "email",
+        email: {
+          to: "All tenants of Millhouse Tower",
+          from: "bwrightson@MTowermail.com",
+          date: "15/07/2025",
+          subject: "Elevator Maintenance",
+        },
+        passage:
+          "Greetings Tenants,\n\nThe next elevator maintenance is scheduled for August 9 from 10 AM to 4 PM. None of the elevators will be functional during that window. This is routine maintenance that is conducted annually by the City Safety Board. We recommend that the tenants on higher floors work remotely on that day so you won't have to climb up to 20 flights of stairs. If you must come to your office, you should probably bring your lunch since deliverymen will be unable to deliver ordered food. We will notify you when the work has been completed.\n\nSincerely,\nBernice Wrightson",
+        prompt: "What can be inferred from the passage about Millhouse Tower?",
+      },
+      options: [
+        {
+          key: "A",
+          text: "It is a commercial building.",
+          isCorrect: true,
+          distractor: null,
+        },
+        {
+          key: "B",
+          text: "The building is located downtown.",
+          isCorrect: false,
+          distractor: "The passage does not state that the building is located downtown.",
+        },
+        {
+          key: "C",
+          text: "It has only one elevator.",
+          isCorrect: false,
+          distractor: "The passage states 'None of the elevators', indicating multiple elevators.",
+        },
+        {
+          key: "D",
+          text: "The City Safety Board is in it.",
+          isCorrect: false,
+          distractor: "The City Safety Board conducts the annual inspection; their office is not in the building.",
+        },
+      ],
+    },
+    {
+      item_type: "read_daily_life",
+      difficulty: "Medium",
+      skill_tags: ["Detail", "Text Chain"],
+      payload: {
+        title: "Read a text chain.",
+        format: "chat",
+        chatMessages: [
+          {
+            sender: "Sara Torsten",
+            time: "09:45 AM",
+            text: "Good morning, everyone. I wanted to check in with everyone since the Innovation Convention is fast approaching. Everything for our booth needs to be ready by Wednesday.",
+          },
+          {
+            sender: "Paulina Echeverria",
+            time: "09:51 AM",
+            text: "I am happy to report that the product catalogs will arrive from the printer this afternoon.",
+          },
+          {
+            sender: "Gerald Kingman",
+            time: "09:57 AM",
+            text: "That is good to know. The redone displays and backdrops were delivered yesterday evening. And the company agreed not to charge us since it was their spelling error, and not ours.",
+          },
+          {
+            sender: "Kathy McDermott",
+            time: "10:02 AM",
+            text: "That is a relief. I will review both the catalogs and the displays to make sure that they are perfect.",
+          },
+          {
+            sender: "Sara Torsten",
+            time: "10:08 AM",
+            text: "Fantastic. Make sure to give copies to the employees that will work our booth as soon as you finish. We don't need a repeat of last year.",
+          },
+          {
+            sender: "Kathy McDermott",
+            time: "10:12 AM",
+            text: "I assure you that won't happen again. Our representatives will have ample time to study the catalog this time.",
+          },
+          {
+            sender: "Sara Torsten",
+            time: "10:15 AM",
+            text: "Great work, guys! I look forward to seeing all of you in person at the convention.",
+          },
+        ],
+        passage:
+          "Sara Torsten (09:45 AM): Good morning, everyone. I wanted to check in with everyone since the Innovation Convention is fast approaching. Everything for our booth needs to be ready by Wednesday.\n\nPaulina Echeverria (09:51 AM): I am happy to report that the product catalogs will arrive from the printer this afternoon.\n\nGerald Kingman (09:57 AM): That is good to know. The redone displays and backdrops were delivered yesterday evening. And the company agreed not to charge us since it was their spelling error, and not ours.\n\nKathy McDermott (10:02 AM): That is a relief. I will review both the catalogs and the displays to make sure that they are perfect.\n\nSara Torsten (10:08 AM): Fantastic. Make sure to give copies to the employees that will work our booth as soon as you finish. We don't need a repeat of last year.\n\nKathy McDermott (10:12 AM): I assure you that won't happen again. Our representatives will have ample time to study the catalog this time.\n\nSara Torsten (10:15 AM): Great work, guys! I look forward to seeing all of you in person at the convention.",
+        prompt: "What promotional materials were NOT generated for the convention?",
+      },
+      options: [
+        {
+          key: "A",
+          text: "Product catalogs",
+          isCorrect: false,
+          distractor: "Product catalogs arrived from the printer this afternoon.",
+        },
+        {
+          key: "B",
+          text: "Free samples",
+          isCorrect: true,
+          distractor: null,
+        },
+        {
+          key: "C",
+          text: "Displays",
+          isCorrect: false,
+          distractor: "The redone displays were delivered yesterday evening.",
+        },
+        {
+          key: "D",
+          text: "Backdrops",
+          isCorrect: false,
+          distractor: "Backdrops were also delivered yesterday evening.",
+        },
+      ],
+    },
+    {
+      item_type: "read_academic",
+      difficulty: "Hard",
+      skill_tags: ["Rhetorical Purpose", "Biology"],
+      payload: {
+        title: "Longevity",
+        passage:
+          "What determines how long an organism typically lives? Shrews only live for about six months while Greenland sharks can survive for centuries. The study of longevity has not been able to produce one individual factor that is responsible for the length of any species' typical lifespan, but there appear to be three contributing factors.\n\nThe first factor is living in cold environments. The longest-living mammal, the bowhead whale, lives in the extremely cold waters of the Arctic Ocean. Biologists theorize that the frigid temperatures cause the heart rates and metabolic rates of these animals to slow down, and that, in turn, helps to slow the aging process.\n\nThe second factor is the average size of adult animals. Large-bodied animals, generally speaking, live longer than small-bodied ones. Elephants and whales live longer than rats and mice. The reason seems to be that large bodies offer better protection from predators. The trade-off for this advantage is that it takes a long time to grow that large, so the members of a large-bodied species cannot reproduce quickly.\n\nThe third factor is the lifecycle of cells within an animal. As creatures age, new cells constantly replace dead and damaged ones, but the speed at which new cells are produced is not constant. It increases as animals grow to maturity, levels off, and then begins to decline. The decreasing production of new cells and the increasing accumulation of older cells have a combined effect on how long an animal lives.",
+        prompt: "Why does the author mention Greenland sharks?",
+      },
+      options: [
+        {
+          key: "A",
+          text: "To suggest that they have the longest lifespan of all animals",
+          isCorrect: false,
+          distractor: "The author mentions them to contrast with shrews, not claiming the longest of all.",
+        },
+        {
+          key: "B",
+          text: "To demonstrate the incredible longevity of some species",
+          isCorrect: true,
+          distractor: null,
+        },
+        {
+          key: "C",
+          text: "To illustrate why aquatic animals have such long lifespans",
+          isCorrect: false,
+          distractor: "Aquatic adaptation is not the general point being illustrated here.",
+        },
+        {
+          key: "D",
+          text: "To provide an example of a species that lives in the Arctic Ocean",
+          isCorrect: false,
+          distractor: "Bowhead whales are cited as Arctic examples later.",
+        },
+      ],
+    },
+    {
+      item_type: "read_academic",
+      difficulty: "Medium",
+      skill_tags: ["Factual Information", "Biology"],
+      payload: {
+        title: "Longevity",
+        passage:
+          "What determines how long an organism typically lives? Shrews only live for about six months while Greenland sharks can survive for centuries. The study of longevity has not been able to produce one individual factor that is responsible for the length of any species' typical lifespan, but there appear to be three contributing factors.\n\nThe first factor is living in cold environments. The longest-living mammal, the bowhead whale, lives in the extremely cold waters of the Arctic Ocean. Biologists theorize that the frigid temperatures cause the heart rates and metabolic rates of these animals to slow down, and that, in turn, helps to slow the aging process.\n\nThe second factor is the average size of adult animals. Large-bodied animals, generally speaking, live longer than small-bodied ones. Elephants and whales live longer than rats and mice. The reason seems to be that large bodies offer better protection from predators. The trade-off for this advantage is that it takes a long time to grow that large, so the members of a large-bodied species cannot reproduce quickly.\n\nThe third factor is the lifecycle of cells within an animal. As creatures age, new cells constantly replace dead and damaged ones, but the speed at which new cells are produced is not constant. It increases as animals grow to maturity, levels off, and then begins to decline. The decreasing production of new cells and the increasing accumulation of older cells have a combined effect on how long an animal lives.",
+        prompt: "According to the passage, cold environments",
+      },
+      options: [
+        {
+          key: "A",
+          text: "speed up the ageing process.",
+          isCorrect: false,
+          distractor: "Cold environments slow down the aging process.",
+        },
+        {
+          key: "B",
+          text: "are only survivable for mammals.",
+          isCorrect: false,
+          distractor: "Greenland sharks are fish and also survive for centuries.",
+        },
+        {
+          key: "C",
+          text: "make finding food more difficult.",
+          isCorrect: false,
+          distractor: "Finding food is not mentioned in relation to cold temperatures.",
+        },
+        {
+          key: "D",
+          text: "lower heart rates and metabolic rates.",
+          isCorrect: true,
+          distractor: null,
+        },
+      ],
+    },
+    {
+      item_type: "read_daily_life",
+      difficulty: "Medium",
+      skill_tags: ["Inference", "Email"],
+      payload: {
+        title: "Read an email",
+        format: "email",
+        email: {
+          to: "ikimataoka@sydmail.com",
+          from: "ewilson@cHinspmail.com",
+          date: "25/08/2025",
+          subject: "RE: Inspection",
+        },
+        passage:
+          "Greetings Ms. Mataoka,\n\nSakura Ramen's health inspection was performed on August 23, 2024, and although there were some issues, your restaurant passed its first inspection. An inspector will visit you on August 31 to confirm that those issues have been resolved. Assuming that they have, you may proceed with opening your establishment to customers on September 2 as you had planned.\n\nUnless we receive customer reports of unsanitary conditions, you will be inspected annually, although the dates will be random and unannounced in the future. You must be present at the restaurant for inspections, so you will be notified one hour before they begin. This should allow you sufficient time to reach your restaurant before the inspection team arrives.\n\nBest regards,\nAbigail Wilson",
+        prompt: "What can be inferred about Ms. Mataoka?",
+      },
+      options: [
+        {
+          key: "A",
+          text: "She has requested a health inspection.",
+          isCorrect: false,
+          distractor: "The email confirms an inspection was scheduled, not requested by her.",
+        },
+        {
+          key: "B",
+          text: "She disputed the results of an inspection.",
+          isCorrect: false,
+          distractor: "No dispute is mentioned.",
+        },
+        {
+          key: "C",
+          text: "She has recently become an inspector.",
+          isCorrect: false,
+          distractor: "She is receiving the inspection letter, not acting as inspector.",
+        },
+        {
+          key: "D",
+          text: "She is the owner of a new restaurant.",
+          isCorrect: true,
+          distractor: null,
+        },
+      ],
+    },
     {
       item_type: "complete_words",
       difficulty: "Medium",
@@ -515,247 +752,83 @@ export async function seedCompleteProductionBank() {
       },
       options: [],
     },
-    {
-      item_type: "read_daily_life",
-      difficulty: "Easy",
-      skill_tags: ["Factual Information", "Campus Notice"],
-      payload: {
-        title: "Greenhouse HVAC Calibration Maintenance",
-        passage:
-          "Attention Botany Researchers: All temperature calibration dials in Greenhouse Bay 4 will undergo scheduled HVAC maintenance on Thursday between 08:00 and 12:00. Automated watering mist systems will remain fully active during this window. If your specimens require exact humidity tolerances below 65%, please submit a relocation request by Wednesday afternoon.",
-        prompt:
-          "What must researchers do if their plants require humidity levels below 65% on Thursday morning?",
-      },
-      options: [
-        {
-          key: "A",
-          text: "Submit a relocation request before Wednesday afternoon",
-          isCorrect: true,
-          distractor: null,
-        },
-        {
-          key: "B",
-          text: "Manually shut down the automated mist systems themselves",
-          isCorrect: false,
-          distractor: "Mist systems remain fully active; researchers should not touch them.",
-        },
-        {
-          key: "C",
-          text: "Reschedule the HVAC maintenance team to Friday",
-          isCorrect: false,
-          distractor: "Students cannot reschedule facilities maintenance.",
-        },
-        {
-          key: "D",
-          text: "Leave all greenhouse ventilation windows open overnight",
-          isCorrect: false,
-          distractor: "Not recommended in the notice.",
-        },
-      ],
-    },
-    {
-      item_type: "read_academic",
-      difficulty: "Hard",
-      skill_tags: ["Inference", "Biology"],
-      payload: {
-        title: "Symbiotic Mycorrhizal Fungal Networks",
-        passage:
-          "Mycorrhizal fungi form vast subterranean mycelial networks that interlink the root systems of temperate forest trees. Through these mutualistic connections, fungi transfer nitrogen and phosphorus to host trees in exchange for plant-synthesized sucrose. Recent isotopic tracing studies demonstrate that healthy mature trees also distribute surplus carbohydrates to shaded saplings via these shared fungal pathways, challenging traditional models of individualistic forest competition.",
-        prompt:
-          "Which finding is supported by recent isotopic tracing studies of mycorrhizal networks?",
-      },
-      options: [
-        {
-          key: "A",
-          text: "Mature trees distribute surplus nutrients to younger saplings through fungal pathways",
-          isCorrect: true,
-          distractor: null,
-        },
-        {
-          key: "B",
-          text: "Fungi consume all tree carbohydrates without returning any minerals",
-          isCorrect: false,
-          distractor: "The passage notes fungi return nitrogen and phosphorus.",
-        },
-        {
-          key: "C",
-          text: "Subterranean mycelium inhibits the root growth of competing trees",
-          isCorrect: false,
-          distractor: "The networks connect and support trees rather than inhibiting roots.",
-        },
-        {
-          key: "D",
-          text: "Isotopic tracing proves trees compete without cooperation",
-          isCorrect: false,
-          distractor:
-            "The study challenges individualistic competition by demonstrating cooperation.",
-        },
-      ],
-    },
-    {
-      item_type: "complete_words",
-      difficulty: "Medium",
-      skill_tags: ["Morphology", "Syntax"],
-      payload: {
-        title: "Geological Glacial Moraines",
-        passage:
-          "As alpine glaciers retreat due to warming temperatures, they deposit unsorted glacial debris along valley floors, forming [0] known as lateral moraines. These formations provide scientists with critical historical records of past [1] fluctuations.",
-        blanks: [
-          { blankIndex: 0, hint: "ridges (noun)" },
-          { blankIndex: 1, hint: "climate (noun)" },
-        ],
-      },
-      options: [],
-    },
-    {
-      item_type: "read_daily_life",
-      difficulty: "Medium",
-      skill_tags: ["Pragmatics", "Campus Life"],
-      payload: {
-        title: "Science Library Extended Hours & Quiet Policy",
-        passage:
-          "During the two weeks preceding final exams, the Science and Engineering Library will operate 24 hours daily. Floors 1 and 2 are designated for collaborative group discussions, while Floors 3 and 4 are strictly enforced as silent study zones. Any audible device use or verbal conversation on the silent floors will result in immediate relocation to the ground-floor collaborative commons.",
-        prompt: "What happens if a student talks on Floor 3 during extended library hours?",
-      },
-      options: [
-        {
-          key: "A",
-          text: "They will be relocated to the ground-floor collaborative commons",
-          isCorrect: true,
-          distractor: null,
-        },
-        {
-          key: "B",
-          text: "Their student library privileges are revoked for the semester",
-          isCorrect: false,
-          distractor: "The stated consequence is relocation, not loss of privileges.",
-        },
-        {
-          key: "C",
-          text: "They must register for an evening study session",
-          isCorrect: false,
-          distractor: "No registration requirement is mentioned.",
-        },
-        {
-          key: "D",
-          text: "They are permitted to whisper quietly for up to 10 minutes",
-          isCorrect: false,
-          distractor: "Silent floors prohibit all verbal conversation.",
-        },
-      ],
-    },
-    {
-      item_type: "read_academic",
-      difficulty: "Hard",
-      skill_tags: ["Detail", "Art History"],
-      payload: {
-        title: "Chiaroscuro in Renaissance Painting",
-        passage:
-          "The painterly technique of chiaroscuro—employing stark contrasts between light and dark—emerged prominently during the Italian Renaissance to achieve psychological realism and volumetric illusion. By dramatically illuminating central figures while submerging peripheral details into deep shadow, artists directed viewer attention toward emotional focal points rather than decorative background surfaces.",
-        prompt: "According to the passage, what was a key artistic purpose of chiaroscuro?",
-      },
-      options: [
-        {
-          key: "A",
-          text: "To direct viewer focus toward emotional focal points through light contrast",
-          isCorrect: true,
-          distractor: null,
-        },
-        {
-          key: "B",
-          text: "To eliminate all shadows and make every background detail equally visible",
-          isCorrect: false,
-          distractor: "Chiaroscuro submerges background details in shadow.",
-        },
-        {
-          key: "C",
-          text: "To reduce the physical weight of oil paint on canvas",
-          isCorrect: false,
-          distractor: "The technique is aesthetic, not physical weight.",
-        },
-        {
-          key: "D",
-          text: "To replace human subjects with architectural landscape perspectives",
-          isCorrect: false,
-          distractor: "It illuminates central figures rather than replacing them.",
-        },
-      ],
-    },
   ];
 
-  // Listening Items Definitions (6 distinct items)
+  // Listening Items Definitions (Exact TestGlider "Moon | Full Test" Items)
   const listeningDefinitions = [
     {
       item_type: "listen_choose_response",
       difficulty: "Easy",
       skill_tags: ["Pragmatics", "Immediate Response"],
       payload: {
-        title: "Campus Registrar Question",
+        title: "Choose the best response.",
         audioUrl: "https://actions.google.com/sounds/v1/household/clock_ticking.ogg",
         stimulusText:
-          "Excuse me, do you know if the registrar's office is still accepting late course drop forms today?",
-        prompt: "Choose the most appropriate spoken response:",
+          "Excuse me, the air conditioning unit in Room 407 seems to be malfunctioning and making strange noises.",
+        prompt: "Choose the best response.",
       },
       options: [
         {
           key: "A",
-          text: "Yes, but you have to submit it before 5:00 PM today.",
+          text: "The summer session starts soon.",
+          isCorrect: false,
+          distractor: "Irrelevant response.",
+        },
+        {
+          key: "B",
+          text: "The maintenance team can fix it.",
           isCorrect: true,
           distractor: null,
         },
         {
-          key: "B",
-          text: "The textbook was purchased at the bookstore yesterday.",
-          isCorrect: false,
-          distractor: "Does not answer whether drop forms are accepted.",
-        },
-        {
           key: "C",
-          text: "I have already graduated two years ago.",
+          text: "I've just moved to Room 407.",
           isCorrect: false,
-          distractor: "Irrelevant personal statement.",
+          distractor: "Does not address the malfunctioning AC.",
         },
         {
           key: "D",
-          text: "The campus dining hall closes at 8:00 PM.",
+          text: "Let's open the window instead.",
           isCorrect: false,
-          distractor: "Unrelated to registrar hours.",
+          distractor: "Not an appropriate customer/facilities response.",
         },
       ],
     },
     {
       item_type: "listen_conversation",
       difficulty: "Medium",
-      skill_tags: ["Problem-Solution", "Academic Advice"],
+      skill_tags: ["Pragmatics", "Idiom & Tone"],
       payload: {
-        title: "Advising Discussion: Lab Schedule Conflict",
+        title: "Listen to a conversation.",
         audioUrl: "https://actions.google.com/sounds/v1/science/radiation_monitor.ogg",
-        prompt: "Why is the student meeting with her academic advisor?",
+        stimulusText:
+          "Man: Did you hear that the campus administration finally approved the expansion of the science lab equipment budget after two years of review?\nWoman: Really? Well, this is long overdue! We've been struggling with outdated microscopes and shared apparatus for semesters.",
+        prompt: 'Why does the woman say, "This is long overdue"?',
       },
       options: [
         {
           key: "A",
-          text: "Her required chemistry laboratory conflicts with an elective history seminar",
+          text: "She thinks an issue should have been resolved sooner.",
           isCorrect: true,
           distractor: null,
         },
         {
           key: "B",
-          text: "She wants to withdraw from the university entirely",
+          text: "She wishes the man should have told her the news right away.",
           isCorrect: false,
-          distractor: "She wants to resolve a schedule conflict, not withdraw.",
+          distractor: "The phrase refers to the administrative delay, not the conversation timing.",
         },
         {
           key: "C",
-          text: "She is applying to transfer to an overseas campus",
+          text: "She is worried about submitting an assignment late.",
           isCorrect: false,
-          distractor: "No overseas transfer is discussed.",
+          distractor: "No homework assignment is mentioned.",
         },
         {
           key: "D",
-          text: "She cannot afford her current laboratory course fee",
+          text: "She has been waiting to borrow some important equipment.",
           isCorrect: false,
-          distractor: "Financial concerns are not the topic.",
+          distractor: "The issue is overall lab budget approval, not personal equipment loan.",
         },
       ],
     },
@@ -764,71 +837,75 @@ export async function seedCompleteProductionBank() {
       difficulty: "Medium",
       skill_tags: ["Public Broadcast", "Detail"],
       payload: {
-        title: "Campus Shuttle Route Detour Notice",
+        title: "Listen to an announcement on a campus radio station.",
         audioUrl: "https://actions.google.com/sounds/v1/transportation/car_horn.ogg",
-        prompt: "What is the primary reason for the campus shuttle detour this Friday?",
+        stimulusText:
+          "Good morning students! This is WKCR Campus Radio with an update on today's events. Due to expected rain this afternoon, the outdoor club fair on the main quadrangle has been moved inside to the student union hall. Exhibits will open promptly at 1 PM. Free refreshments will be served at the welcome desk. Be sure to stop by and discover student organizations!",
+        prompt: "What change to the club fair is announced?",
       },
       options: [
         {
           key: "A",
-          text: "Water pipe replacement along University Avenue will block traffic",
+          text: "It has been moved to an indoor location due to weather.",
           isCorrect: true,
           distractor: null,
         },
         {
           key: "B",
-          text: "The university is hosting a celebratory sports parade",
+          text: "It has been cancelled until next weekend.",
           isCorrect: false,
-          distractor: "Roadwork, not a parade, causes the detour.",
+          distractor: "The event is relocated, not cancelled.",
         },
         {
           key: "C",
-          text: "The shuttle fleet is undergoing annual brake inspections",
+          text: "It will start earlier in the morning.",
           isCorrect: false,
-          distractor: "Buses are operating, just on an alternate route.",
+          distractor: "Opening time remains 1 PM.",
         },
         {
           key: "D",
-          text: "All campus classes are canceled due to bad weather",
+          text: "Refreshments will no longer be provided.",
           isCorrect: false,
-          distractor: "Classes remain in session.",
+          distractor: "Free refreshments are still served at the welcome desk.",
         },
       ],
     },
     {
       item_type: "listen_academic_talk",
       difficulty: "Hard",
-      skill_tags: ["Lecture Hierarchy", "Geology"],
+      skill_tags: ["Lecture Hierarchy", "Ecology"],
       payload: {
-        title: "Plate Tectonics & Mantle Plumes",
+        title: "Apex Predators & Trophic Cascades",
         audioUrl: "https://actions.google.com/sounds/v1/science/radiation_monitor.ogg",
+        stimulusText:
+          "When wolves were reintroduced to Yellowstone National Park after a seventy-year absence, ecologists witnessed a profound trophic cascade. The presence of apex predators altered elk grazing patterns, which in turn allowed riparian willow and aspen vegetation to regenerate along riverbanks, ultimately stabilizing the soil and restoring beaver populations.",
         prompt:
-          "According to the professor, what distinguishes mantle plumes from boundary volcanism?",
+          "What ecological effect was observed after wolves were reintroduced to Yellowstone National Park?",
       },
       options: [
         {
           key: "A",
-          text: "Mantle plumes originate deep near the core-mantle boundary independently of plate edges",
+          text: "Elk populations were dispersed, allowing riparian willow and aspen vegetation to recover",
           isCorrect: true,
           distractor: null,
         },
         {
           key: "B",
-          text: "Mantle plumes occur exclusively along subduction trenches",
+          text: "Beaver colonies completely died out across the entire river basin",
           isCorrect: false,
-          distractor: "Subduction volcanism is boundary-driven; plumes are intraplate.",
+          distractor: "Beaver populations expanded because vegetation rebounded.",
         },
         {
           key: "C",
-          text: "Mantle plumes are extinguished immediately when oceanic plates move",
+          text: "Soil erosion increased rapidly along riverbanks",
           isCorrect: false,
-          distractor: "Plumes persist stationary, creating chains of islands.",
+          distractor: "Vegetation roots stabilized riverbanks and reduced erosion.",
         },
         {
           key: "D",
-          text: "Plumes produce only cold metamorphic sedimentary rock",
+          text: "All smaller coyote and fox populations were eliminated permanently",
           isCorrect: false,
-          distractor: "Plumes produce high-temperature basaltic volcanism.",
+          distractor: "Coyotes were regulated, not eliminated entirely.",
         },
       ],
     },
@@ -837,7 +914,7 @@ export async function seedCompleteProductionBank() {
       difficulty: "Easy",
       skill_tags: ["Pragmatics", "Campus Conversation"],
       payload: {
-        title: "Study Group Invitation",
+        title: "Choose the best response.",
         audioUrl: "https://actions.google.com/sounds/v1/household/clock_ticking.ogg",
         stimulusText:
           "Hey Alex, a few of us are reviewing macroeconomics notes at the campus cafe tonight. Would you like to join us around seven?",
@@ -871,55 +948,105 @@ export async function seedCompleteProductionBank() {
       ],
     },
     {
-      item_type: "listen_academic_talk",
-      difficulty: "Hard",
-      skill_tags: ["Lecture Hierarchy", "Ecology"],
+      item_type: "listen_conversation",
+      difficulty: "Medium",
+      skill_tags: ["Problem-Solution", "Academic Advice"],
       payload: {
-        title: "Apex Predators & Trophic Cascades",
+        title: "Listen to a conversation.",
         audioUrl: "https://actions.google.com/sounds/v1/science/radiation_monitor.ogg",
-        prompt:
-          "What ecological effect was observed after wolves were reintroduced to Yellowstone National Park?",
+        stimulusText:
+          "Student: Professor, I realized this morning that my required organic chemistry laboratory time overlaps directly with the advanced history seminar I need for my minor.\nAdvisor: Let us review the alternative Thursday evening lab section. There may still be two open laboratory benches available.",
+        prompt: "Why is the student meeting with her academic advisor?",
       },
       options: [
         {
           key: "A",
-          text: "Elk populations were dispersed, allowing riparian willow and aspen vegetation to recover",
+          text: "Her required chemistry laboratory conflicts with an elective history seminar",
           isCorrect: true,
           distractor: null,
         },
         {
           key: "B",
-          text: "Beaver colonies completely died out across the entire river basin",
+          text: "She wants to withdraw from the university entirely",
           isCorrect: false,
-          distractor: "Beaver populations expanded because vegetation rebounded.",
+          distractor: "She wants to resolve a schedule conflict, not withdraw.",
         },
         {
           key: "C",
-          text: "Soil erosion increased rapidly along riverbanks",
+          text: "She is applying to transfer to an overseas campus",
           isCorrect: false,
-          distractor: "Vegetation roots stabilized riverbanks and reduced erosion.",
+          distractor: "No overseas transfer is discussed.",
         },
         {
           key: "D",
-          text: "All smaller coyote and fox populations were eliminated permanently",
+          text: "She cannot afford her current laboratory course fee",
           isCorrect: false,
-          distractor: "Coyotes were regulated, not eliminated entirely.",
+          distractor: "Financial concerns are not the topic.",
         },
       ],
     },
   ];
 
-  // Writing Items Definitions (4 distinct items)
+  // Writing Items Definitions (Exact TestGlider "Moon | Full Test" Items)
   const writingDefinitions = [
     {
       item_type: "build_sentence",
       difficulty: "Easy",
       skill_tags: ["Grammar", "Syntax"],
       payload: {
-        prompt: "Arrange the word chips to form a grammatically correct English sentence:",
-        wordBank: ["researchers", "The", "published", "their", "findings", "in", "a", "journal"],
+        title: "Build a Sentence",
+        subtitle:
+          "Move the words in the boxes to create grammatical sentences. A clock will show you how much time you have to complete this task.",
+        prompt: "Move the words in the boxes to create grammatical sentences:",
+        wordBank: [
+          "for students",
+          "The library",
+          "quiet study spaces",
+          "preparing for exams.",
+          "offers",
+        ],
         acceptedSequences: [
-          ["The", "researchers", "published", "their", "findings", "in", "a", "journal"],
+          [
+            "The library",
+            "offers",
+            "quiet study spaces",
+            "for students",
+            "preparing for exams.",
+          ],
+        ],
+      },
+      options: [],
+    },
+    {
+      item_type: "academic_discussion",
+      difficulty: "Hard",
+      skill_tags: ["Academic Discussion", "Economics"],
+      payload: {
+        title: "Academic Discussion",
+        topic: "Economics: Sin Taxes",
+        context:
+          "Your professor is teaching a class on economics. Write a post responding to the professor's question.\n\nIn your response, you should do the following.\n• Express and support your opinion.\n• Make a contribution to the discussion in your own words.\n\nAn effective response will contain at least 100 words.",
+        prompt:
+          "Your professor is teaching a class on economics. Write a post responding to the professor's question.\n\nIn your response, you should do the following.\n• Express and support your opinion.\n• Make a contribution to the discussion in your own words.\n\nAn effective response will contain at least 100 words.",
+        professor: {
+          name: "Professor Takata",
+          avatar: "PT",
+          text:
+            "Today we are going to cover the topic of sin taxes. These are taxes that the government adds to products, goods, or services that are harmful to individuals or society as a whole. Recently, these taxes have been applied to sugary drinks, fast food, and junk foods. Proponents say these taxes could discourage people from consuming such items and reduce health issues like obesity. Critics argue that these taxes unfairly target low-income consumers who cannot afford healthier foods. Which opinion do you agree with and why?",
+        },
+        discussionPosts: [
+          {
+            author: "Mikhail",
+            avatar: "M",
+            text:
+              "I do not agree with applying sin taxes to unhealthy food items. As the professor mentioned, these taxes may unfairly affect poor people who rely on those foods. There are areas in the United States called food deserts where many people without cars live too far from a supermarket to walk there. So, they often have to eat fast food and junk food just to have any kind of food. Their diets aren't healthy, but they have to eat what is available. Sin taxes would really hurt these people.",
+          },
+          {
+            author: "Kaitlyn",
+            avatar: "K",
+            text:
+              "I definitely support adding taxes to unhealthy products. Fast food and junk food often contain high amounts of sugar, fat, and salt, which can cause many health problems including heart disease and obesity. Taxes will discourage people from buying them, and the money from these taxes can be used by the government to help people with those problems. They could also provide incentives to supermarkets to move into food deserts and sell healthier foods.",
+          },
         ],
       },
       options: [],
@@ -929,11 +1056,14 @@ export async function seedCompleteProductionBank() {
       difficulty: "Medium",
       skill_tags: ["Grammar", "Adverbial Position"],
       payload: {
-        prompt: "Arrange the word chips to form a grammatically correct sentence:",
-        wordBank: ["scientist", "The", "carefully", "analyzed", "the", "experimental", "data"],
+        title: "Build a Sentence",
+        subtitle:
+          "Move the words in the boxes to create grammatical sentences. A clock will show you how much time you have to complete this task.",
+        prompt: "Move the words in the boxes to create grammatical sentences:",
+        wordBank: ["scientist", "The", "carefully", "analyzed", "the", "experimental", "data."],
         acceptedSequences: [
-          ["The", "scientist", "carefully", "analyzed", "the", "experimental", "data"],
-          ["The", "scientist", "analyzed", "the", "experimental", "data", "carefully"],
+          ["The", "scientist", "carefully", "analyzed", "the", "experimental", "data."],
+          ["The", "scientist", "analyzed", "the", "experimental", "data", "carefully."],
         ],
       },
       options: [],
@@ -943,69 +1073,61 @@ export async function seedCompleteProductionBank() {
       difficulty: "Medium",
       skill_tags: ["Pragmatics", "Email Writing"],
       payload: {
-        title: "Email to Chemistry Professor Regarding Laboratory Equipment Issue",
+        title: "Write an Email",
         recipient: "Prof. Marcus Vance (Head of Organic Chemistry)",
         context:
           "During yesterday afternoon's synthesis lab, you discovered that Spectrometer Unit 3 was displaying an inconsistent calibration error code (ERR-402). As a result, your group could not complete the second trial of the reaction titration.",
         prompt:
-          "Write an email to Professor Vance explaining what happened, specifying the equipment and error code, and requesting permission to repeat the measurement during open lab hours tomorrow.",
-        modelAnswer:
-          "Dear Professor Vance,\n\nI am writing to notify you of an equipment issue our lab group encountered during yesterday afternoon's Organic Chemistry synthesis lab...",
-      },
-      options: [],
-    },
-    {
-      item_type: "academic_discussion",
-      difficulty: "Hard",
-      skill_tags: ["Academic Argumentation", "Peer Engagement"],
-      payload: {
-        title: "Sociology Seminar: Remote Work & Urban Development",
-        context:
-          "Professor Harrison:\nThe widespread adoption of permanent remote and hybrid work is transforming modern urban landscapes. Some policymakers argue that cities should invest heavily in converting commercial office skyscrapers into residential housing to reduce rental costs. Others argue that municipalities should focus instead on revitalizing retail and cultural entertainment centers to draw workers back into city downtowns. What is your perspective on this policy debate?",
-        discussionPosts: [
-          {
-            author: "Elena (Student)",
-            text: "Converting vacant commercial office buildings into affordable housing directly addresses the severe housing shortage many metropolitan areas face today.",
-          },
-          {
-            author: "Marcus (Student)",
-            text: "Office conversions are structurally expensive and complex; cities would benefit far more by revitalizing cultural venues, dining corridors, and transit hubs to revitalize downtown vibrancy.",
-          },
-        ],
-        prompt:
-          "Write a response contributing your perspective to the class discussion. State your position clearly, provide supporting reasoning and examples, and engage meaningfully with the viewpoints expressed by Elena and Marcus.",
-        modelAnswer:
-          "In my opinion, municipal governments should prioritize converting underutilized commercial spaces into residential housing while implementing mixed-use zoning...",
+          "Write an email to Professor Vance explaining the equipment malfunction, requesting permission to conduct the trial during open lab hours on Friday, and asking if replacement calibration standards are needed.",
       },
       options: [],
     },
   ];
 
-  // Speaking Items Definitions (4 distinct items)
+  // Speaking Items Definitions (Exact TestGlider "Moon | Full Test" Items)
   const speakingDefinitions = [
     {
       item_type: "listen_repeat",
       difficulty: "Easy",
       skill_tags: ["Acoustic Memory", "Phonetics"],
       payload: {
-        prompt:
-          "Listen to the sentence carefully, then repeat it as accurately and clearly as possible.",
+        scenario: "You are training to assist visitors to a natural history museum.",
+        prompt: "Listen and repeat only once.",
         audioUrl: "https://actions.google.com/sounds/v1/human_voices/applause_cheering.ogg",
         targetSentence:
-          "The university library will remain open twenty-four hours a day during final examination week.",
+          "The dinosaur exhibit is located on the second floor near the main auditorium.",
+        stimulusText:
+          "The dinosaur exhibit is located on the second floor near the main auditorium.",
       },
       options: [],
     },
     {
       item_type: "listen_repeat",
-      difficulty: "Medium",
+      difficulty: "Easy",
       skill_tags: ["Acoustic Memory", "Phonetics"],
       payload: {
-        prompt:
-          "Listen to the sentence carefully, then repeat it as accurately and clearly as possible.",
+        scenario: "You are training to assist visitors to a natural history museum.",
+        prompt: "Listen and repeat only once.",
         audioUrl: "https://actions.google.com/sounds/v1/human_voices/applause_cheering.ogg",
         targetSentence:
-          "Renewable energy technologies are rapidly transforming industrial power grids across the globe.",
+          "Photography is permitted inside the mineral gallery, but flash is strictly prohibited.",
+        stimulusText:
+          "Photography is permitted inside the mineral gallery, but flash is strictly prohibited.",
+      },
+      options: [],
+    },
+    {
+      item_type: "listen_repeat",
+      difficulty: "Easy",
+      skill_tags: ["Acoustic Memory", "Phonetics"],
+      payload: {
+        scenario: "You are training to assist visitors to a natural history museum.",
+        prompt: "Listen and repeat only once.",
+        audioUrl: "https://actions.google.com/sounds/v1/human_voices/applause_cheering.ogg",
+        targetSentence:
+          "Guided tours depart from the information desk every half hour.",
+        stimulusText:
+          "Guided tours depart from the information desk every half hour.",
       },
       options: [],
     },
@@ -1014,26 +1136,17 @@ export async function seedCompleteProductionBank() {
       difficulty: "Medium",
       skill_tags: ["PEEL Spontaneity", "Oral Communication"],
       payload: {
-        prompt:
-          "Some university students prefer living in on-campus dormitories, while others prefer renting off-campus apartments with roommates. Which living arrangement do you think is better for undergraduates, and why? Explain with specific reasons and examples.",
+        scenario:
+          "You have agreed to take part in a research study about eating at restaurants. You will have a short online interview with a researcher. The researcher will ask you some questions.",
+        prompt: "Please answer the interviewer's question.",
+        interviewerQuestion:
+          "How often do you usually eat meals at restaurants, and what factors influence your choice of where to dine?",
+        stimulusText:
+          "How often do you usually eat meals at restaurants, and what factors influence your choice of where to dine?",
         preparationSeconds: 15,
         responseLimitSeconds: 45,
         modelAnswer:
-          "In my opinion, living in on-campus dormitories is significantly better for undergraduate students, especially during their initial years...",
-      },
-      options: [],
-    },
-    {
-      item_type: "take_interview",
-      difficulty: "Hard",
-      skill_tags: ["PEEL Spontaneity", "Oral Communication"],
-      payload: {
-        prompt:
-          "Do you agree or disagree with the following statement? Universities should require all undergraduate students to take at least one course in computer science or programming regardless of their academic major. Explain why with supporting arguments.",
-        preparationSeconds: 15,
-        responseLimitSeconds: 45,
-        modelAnswer:
-          "I strongly agree that universities should require all undergraduate students to take at least one introductory programming course...",
+          "I typically eat at restaurants about twice a week, usually with friends or when I have a demanding study schedule. The primary factors that influence where I choose to dine are the nutritional quality of the ingredients, reasonable pricing for students, and convenient location near campus.",
       },
       options: [],
     },

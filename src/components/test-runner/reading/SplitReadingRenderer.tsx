@@ -1,11 +1,11 @@
 /**
- * Split-view Reading Passage + Question Panel
- * Used for Read in Daily Life & Read an Academic Passage
+ * TestGlider 1:1 Split-view Reading Passage + Question Panel
+ * Supports Email (Millhouse Tower, Sakura Ramen), Text Chain (Innovation Convention), and Academic Passages (Longevity).
  */
 
 import React from "react";
 import type { ClientContentItem } from "@/lib/tests/session-state";
-import { Flag } from "lucide-react";
+import { Flag, Mail, MessageSquare, BookOpen } from "lucide-react";
 
 export interface SplitReadingRendererProps {
   item: ClientContentItem;
@@ -24,38 +24,124 @@ export function SplitReadingRenderer({
   onToggleFlag,
   disabled = false,
 }: SplitReadingRendererProps) {
+  const payload = (item.payload || {}) as Record<string, unknown>;
   const passageTitle =
-    (item.payload?.title as string) ||
+    (payload.title as string) ||
     (item.sectionType === "reading" ? "Reading Passage" : "Text");
-  const passageBody = (item.payload?.passage as string) || (item.payload?.context as string) || "";
+  const passageBody = (payload.passage as string) || (payload.context as string) || "";
   const questionPrompt =
-    (item.payload?.prompt as string) ||
-    (item.payload?.questionText as string) ||
+    (payload.prompt as string) ||
+    (payload.questionText as string) ||
     "Choose the best answer:";
+
+  const isEmail =
+    payload.format === "email" ||
+    Boolean(payload.email) ||
+    passageTitle.toLowerCase().includes("email") ||
+    passageBody.includes("From:") ||
+    passageBody.includes("Greetings");
+
+  const emailData = (payload.email as {
+    to?: string;
+    from?: string;
+    date?: string;
+    subject?: string;
+  }) || {
+    to: "All tenants of Millhouse Tower",
+    from: "bwrightson@MTowermail.com",
+    date: "15/07/2025",
+    subject: "Elevator Maintenance",
+  };
+
+  const isChat =
+    payload.format === "chat" ||
+    Boolean(payload.chatMessages) ||
+    passageTitle.toLowerCase().includes("text chain");
+
+  const chatMessages =
+    (payload.chatMessages as Array<{ sender: string; time: string; text: string }>) || [];
 
   return (
     <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-2">
-      {/* Left Panel: Scrollable Passage */}
-      <section className="flex flex-col rounded-xl border border-border bg-card/40 p-6 overflow-y-auto max-h-[calc(100vh-170px)]">
-        <div className="mb-4 border-b border-border pb-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-primary">
-            {item.itemType === "read_daily_life"
-              ? "Read in Daily Life"
-              : "Academic Reading Passage"}
+      {/* Left Panel: Passage Canvas */}
+      <section className="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm overflow-y-auto max-h-[calc(100vh-170px)]">
+        <div className="mb-4 border-b border-slate-100 pb-3 flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#0f3b82] flex items-center gap-1.5">
+            {isEmail ? (
+              <Mail className="size-3.5" />
+            ) : isChat ? (
+              <MessageSquare className="size-3.5" />
+            ) : (
+              <BookOpen className="size-3.5" />
+            )}
+            {passageTitle}
           </span>
-          <h3 className="mt-1 text-base font-bold text-foreground">{passageTitle}</h3>
         </div>
 
-        <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed text-foreground/90 whitespace-pre-line">
-          {passageBody}
-        </div>
+        {/* 1. Email Format */}
+        {isEmail && !isChat ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-teal-300/80 bg-teal-50/50 p-4 space-y-1.5 text-xs text-slate-800 shadow-inner">
+              <div className="grid grid-cols-[60px_1fr] gap-1">
+                <span className="font-bold text-teal-900">To:</span>
+                <span className="text-slate-900">{emailData.to || "Recipient"}</span>
+              </div>
+              <div className="grid grid-cols-[60px_1fr] gap-1">
+                <span className="font-bold text-teal-900">From:</span>
+                <span className="font-mono text-slate-900">{emailData.from || "Sender"}</span>
+              </div>
+              <div className="grid grid-cols-[60px_1fr] gap-1">
+                <span className="font-bold text-teal-900">Date:</span>
+                <span className="text-slate-900">{emailData.date || "Date"}</span>
+              </div>
+              <div className="grid grid-cols-[60px_1fr] gap-1">
+                <span className="font-bold text-teal-900">Subject:</span>
+                <span className="font-bold text-slate-900">{emailData.subject || "Subject"}</span>
+              </div>
+            </div>
+
+            <div className="text-sm leading-relaxed text-slate-800 whitespace-pre-line px-1">
+              {passageBody}
+            </div>
+          </div>
+        ) : isChat ? (
+          /* 2. Chat Text Chain Format */
+          <div className="space-y-3">
+            {chatMessages.length > 0 ? (
+              chatMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-1 shadow-sm transition-all hover:bg-slate-50"
+                >
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-[#0f3b82] font-bold">{msg.sender}</span>
+                    <span className="text-slate-400 font-mono text-[11px]">{msg.time}</span>
+                  </div>
+                  <p className="text-xs text-slate-800 leading-relaxed">{msg.text}</p>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm leading-relaxed text-slate-800 whitespace-pre-line">
+                {passageBody}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* 3. Academic Article Format */
+          <div className="space-y-4 px-1">
+            <h2 className="text-xl font-extrabold text-slate-900">{passageTitle}</h2>
+            <div className="text-sm leading-relaxed text-slate-800 whitespace-pre-line">
+              {passageBody}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Right Panel: Comprehension Question & Options */}
-      <section className="flex flex-col justify-between rounded-xl border border-border bg-card/40 p-6">
+      <section className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div>
-          <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Comprehension Question
             </span>
             {onToggleFlag ? (
@@ -64,7 +150,7 @@ export function SplitReadingRenderer({
                 onClick={onToggleFlag}
                 disabled={disabled}
                 className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                  isFlagged ? "text-warning" : "text-muted-foreground hover:text-foreground"
+                  isFlagged ? "text-amber-600 font-bold" : "text-slate-400 hover:text-slate-700"
                 }`}
               >
                 <Flag className="size-3.5" />
@@ -73,10 +159,12 @@ export function SplitReadingRenderer({
             ) : null}
           </div>
 
-          <p className="text-sm font-medium text-foreground leading-relaxed">{questionPrompt}</p>
+          <h3 className="text-base font-bold text-slate-900 leading-relaxed mb-6">
+            {questionPrompt}
+          </h3>
 
-          {/* Options */}
-          <div className="mt-5 space-y-2.5">
+          {/* TestGlider Circular Radio Options */}
+          <div className="space-y-3">
             {item.options.map((opt) => {
               const isSelected =
                 currentAnswer?.trim().toUpperCase() === opt.optionKey.toUpperCase();
@@ -87,21 +175,21 @@ export function SplitReadingRenderer({
                   type="button"
                   disabled={disabled}
                   onClick={() => onAnswerChange(opt.optionKey, { selectedKey: opt.optionKey })}
-                  className={`flex w-full items-start gap-3 rounded-lg border p-3.5 text-left text-sm transition-all ${
+                  className={`flex w-full items-start gap-3.5 rounded-xl border p-4 text-left text-sm transition-all ${
                     isSelected
-                      ? "border-primary bg-primary/10 text-primary font-medium shadow-sm"
-                      : "border-border bg-background/50 hover:border-primary/40 text-foreground"
+                      ? "border-[#0f3b82] bg-blue-50/60 text-[#0f3b82] font-semibold shadow-sm"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50 text-slate-800"
                   }`}
                 >
-                  <span
-                    className={`flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                  <div
+                    className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
                       isSelected
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border bg-surface-2 text-muted-foreground"
+                        ? "border-[#0f3b82] bg-[#0f3b82]"
+                        : "border-slate-300 bg-white"
                     }`}
                   >
-                    {opt.optionKey}
-                  </span>
+                    {isSelected ? <div className="size-2 rounded-full bg-white" /> : null}
+                  </div>
                   <span className="leading-snug">{opt.optionText}</span>
                 </button>
               );

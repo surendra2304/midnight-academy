@@ -95,16 +95,57 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
       .eq("student_id", context.userId)
       .limit(6);
 
+    // 7. Fetch Candidate Email
+    let userEmail = "student@midnightacademy.edu";
+    try {
+      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+      if (userData?.user?.email) {
+        userEmail = userData.user.email;
+      }
+    } catch {
+      // Fallback if auth admin fails
+    }
+
+    // 8. Generate Signed URLs for Speaking Voice Recordings
+    const enhancedResponses = await Promise.all(
+      (responses || []).map(async (r) => {
+        let audioPlayUrl: string | null = null;
+        if (
+          r.content_items?.section_type === "speaking" &&
+          r.raw_answer &&
+          !r.raw_answer.startsWith("http") &&
+          !r.raw_answer.startsWith("recorded-audio-")
+        ) {
+          try {
+            const { data: signed } = await supabaseAdmin.storage
+              .from("speaking-recordings")
+              .createSignedUrl(r.raw_answer, 7200);
+            if (signed?.signedUrl) {
+              audioPlayUrl = signed.signedUrl;
+            }
+          } catch (e) {
+            console.error("Failed to generate signed url for speaking recording:", e);
+          }
+        } else if (r.raw_answer?.startsWith("http")) {
+          audioPlayUrl = r.raw_answer;
+        }
+
+        return {
+          ...r,
+          audioPlayUrl,
+          evaluation: evalByResp.get(r.id) || null,
+          options: optionsByItem.get(r.content_item_id) || [],
+        };
+      }),
+    );
+
     return {
       attempt,
       report,
+      userEmail,
       targetScore: report?.target_score || 5.0,
       attemptSections: attemptSections || [],
-      responses: (responses || []).map((r) => ({
-        ...r,
-        evaluation: evalByResp.get(r.id) || null,
-        options: optionsByItem.get(r.content_item_id) || [],
-      })),
+      responses: enhancedResponses,
       recommendations: recommendations || [],
     };
   });
