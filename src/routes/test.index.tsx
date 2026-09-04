@@ -536,7 +536,7 @@ function TestCatalog() {
         </section>
       </main>
 
-      {/* TestGlider 'What is included?' Modal (Screen 1) */}
+      {/* 'What is included?' Modal — 100% Free Forever */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in select-none">
           <div className="relative w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl space-y-6">
@@ -547,95 +547,91 @@ function TestCatalog() {
               <X className="size-5" />
             </button>
 
-            <h3 className="text-lg font-bold text-slate-900">What is included?</h3>
+            <div className="flex items-center justify-between pr-8">
+              <h3 className="text-lg font-bold text-slate-900">What is included?</h3>
+              <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-0.5 text-[11px] font-bold text-emerald-700">
+                100% Free Forever
+              </span>
+            </div>
 
-            {/* Comparison Table */}
-            <div className="space-y-4 text-xs font-semibold">
-              <div className="grid grid-cols-[1fr_80px_100px] items-center pb-2 border-b border-slate-100 text-slate-500">
-                <span />
-                <span className="text-center font-bold text-slate-800">Free</span>
-                <span className="text-center font-bold text-blue-600">Membership</span>
+            {/* Features Table */}
+            <div className="space-y-3 text-xs font-semibold">
+              <div className="grid grid-cols-[1fr_130px] items-center pb-2 border-b border-slate-100 text-slate-500">
+                <span>Features</span>
+                <span className="text-center font-bold text-emerald-600">Midnight Academy</span>
               </div>
 
               {/* Row 1: Test Attempts */}
-              <div className="grid grid-cols-[1fr_80px_100px] items-center py-2">
+              <div className="grid grid-cols-[1fr_130px] items-center py-2 border-b border-slate-50">
                 <div className="flex items-center gap-2.5 text-slate-700">
                   <FileText className="size-4 text-slate-500" />
                   <span>Test Attempts</span>
                 </div>
-                <span className="text-center font-bold text-slate-800">1</span>
-                <span className="text-center font-bold text-blue-600">Unlimited</span>
+                <span className="text-center font-bold text-emerald-600">Unlimited (Free)</span>
               </div>
 
               {/* Row 2: View Total Score */}
-              <div className="grid grid-cols-[1fr_80px_100px] items-center py-2">
+              <div className="grid grid-cols-[1fr_130px] items-center py-2 border-b border-slate-50">
                 <div className="flex items-center gap-2.5 text-slate-700">
                   <BarChart2 className="size-4 text-slate-500" />
                   <span>View Total Score</span>
                 </div>
-                <div className="flex justify-center">
-                  <Check className="size-4 text-blue-600 stroke-[2.5]" />
-                </div>
-                <div className="flex justify-center">
-                  <Check className="size-4 text-blue-600 stroke-[2.5]" />
+                <div className="flex justify-center items-center gap-1 text-emerald-600 font-bold">
+                  <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
               </div>
 
               {/* Row 3: View Section Scores */}
-              <div className="grid grid-cols-[1fr_80px_100px] items-center py-2">
+              <div className="grid grid-cols-[1fr_130px] items-center py-2 border-b border-slate-50">
                 <div className="flex items-center gap-2.5 text-slate-700">
                   <LayoutGrid className="size-4 text-slate-500" />
                   <span>View Section Scores</span>
                 </div>
-                <div className="flex justify-center">
-                  <X className="size-4 text-rose-500 stroke-[2.5]" />
-                </div>
-                <div className="flex justify-center">
-                  <Check className="size-4 text-blue-600 stroke-[2.5]" />
+                <div className="flex justify-center items-center gap-1 text-emerald-600 font-bold">
+                  <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
               </div>
 
               {/* Row 4: View Explanations */}
-              <div className="grid grid-cols-[1fr_80px_100px] items-center py-2">
+              <div className="grid grid-cols-[1fr_130px] items-center py-2 border-b border-slate-50">
                 <div className="flex items-center gap-2.5 text-slate-700">
                   <Sparkles className="size-4 text-slate-500" />
                   <span>View Explanations</span>
                 </div>
-                <div className="flex justify-center">
-                  <X className="size-4 text-rose-500 stroke-[2.5]" />
+                <div className="flex justify-center items-center gap-1 text-emerald-600 font-bold">
+                  <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
-                <div className="flex justify-center">
-                  <Check className="size-4 text-blue-600 stroke-[2.5]" />
+              </div>
+
+              {/* Row 5: AI Evaluation */}
+              <div className="grid grid-cols-[1fr_130px] items-center py-2">
+                <div className="flex items-center gap-2.5 text-slate-700">
+                  <Check className="size-4 text-slate-500" />
+                  <span>AI Rubric Scoring</span>
+                </div>
+                <div className="flex justify-center items-center gap-1 text-emerald-600 font-bold">
+                  <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
               </div>
             </div>
 
-            {/* Bottom Actions */}
-            <div className="flex items-center justify-center gap-4 pt-4">
+            {/* Bottom Actions: 100% Free Launch Button */}
+            <div className="pt-2">
               <button
                 type="button"
                 disabled={Boolean(startingId)}
                 onClick={() => handleStartTest(moonVersionId, "full")}
-                className="rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold px-7 py-2.5 text-xs shadow-md transition-all flex items-center justify-center min-w-[120px]"
+                className="w-full rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {startingId ? (
                   <>
-                    <Loader2 className="size-3.5 animate-spin mr-1" /> Launching...
+                    <Loader2 className="size-4 animate-spin mr-1" /> Launching Exam...
                   </>
                 ) : (
-                  "Start Test"
+                  <>
+                    <Play className="size-3.5 fill-current text-emerald-400" /> Start Free Test
+                  </>
                 )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  toast.success("Membership details: Unlimited attempts and instant explanations unlocked!");
-                  setShowModal(false);
-                }}
-                className="rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-7 py-2.5 text-xs shadow-md transition-all"
-              >
-                Purchase
               </button>
             </div>
           </div>

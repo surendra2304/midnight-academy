@@ -43,9 +43,9 @@ export const getUserMembership = createServerFn({ method: "GET" })
     const aiQuota = checkActionQuota(usage, "ai_evaluation");
 
     return {
-      tier: usage.tier,
-      planExpiresAt: usage.planExpiresAt || null,
-      isUnlimited: usage.tier === "member",
+      tier: "free",
+      planExpiresAt: null,
+      isUnlimited: true,
       quotas: {
         fullMocks: fullMockQuota,
         sectionTests: sectionTestQuota,
