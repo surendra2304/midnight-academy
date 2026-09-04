@@ -2,9 +2,10 @@
 import { GoogleGenAI, type GenerateContentConfig, ThinkingLevel } from "@google/genai";
 
 const DEFAULT_MODELS = [
-  process.env["GEMINI_MODEL"] || "models/gemini-3.6-flash",
-  "models/gemini-flash-latest",
+  process.env["GEMINI_MODEL"] || "models/gemini-3.7-flash",
   "models/gemini-3.5-flash",
+  "models/gemini-3.6-flash",
+  "models/gemini-3.8-flash",
 ];
 
 /** Upper bound for a single Gemini call so serverless functions never hang. */
@@ -175,6 +176,15 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
           // If 404 / model not found, try next model immediately
           if (errorMsg.includes("404") || errorMsg.includes("not found")) {
             break;
+          }
+
+          // If quota exceeded (429 / RESOURCE_EXHAUSTED) for this model, immediately try next model
+          if (
+            errorMsg.includes("429") ||
+            errorMsg.includes("RESOURCE_EXHAUSTED") ||
+            errorMsg.includes("quota")
+          ) {
+            break; // Quotas are per-model; switch to next model immediately
           }
 
           // If deadline exceeded or 503 on last attempt, try next model
