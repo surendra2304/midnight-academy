@@ -8,7 +8,7 @@ const DEFAULT_MODELS = [
 ];
 
 /** Upper bound for a single Gemini call so serverless functions never hang. */
-const REQUEST_TIMEOUT_MS = Number(process.env["GEMINI_TIMEOUT_MS"] || 15000);
+const REQUEST_TIMEOUT_MS = Number(process.env["GEMINI_TIMEOUT_MS"] || 30000);
 /** How long a quota-limited key is skipped before it is tried again. */
 const KEY_COOLDOWN_MS = 60_000;
 
@@ -37,7 +37,7 @@ function getApiKeys(): string[] {
     .filter(Boolean);
   if (pool.length > 0) return [...new Set(pool)];
 
-  const legacy = [process.env["GEMINI_API_KEY"], process.env["GEMINI_FALLBACK_API_KEY"]]
+  const legacy = [process.env["GEMINI_API_KEY"]]
     .map((k) => (k || "").trim())
     .filter(Boolean);
   return [...new Set(legacy)];
@@ -119,7 +119,6 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
 
           const config: GenerateContentConfig = {
             responseMimeType: "application/json",
-            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
             ...(systemInstruction ? { systemInstruction } : {}),
           };
 
@@ -137,13 +136,20 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
             ),
           ]);
 
-          const content = response.text;
+          let content = response.text || "";
           if (!content) {
             throw new AiError("The evaluator returned an empty response.", 502);
           }
 
+          // Strip markdown code fences if model returned ```json ... ```
+          if (content.includes("```json")) {
+            content = content.replace(/```json\s*([\s\S]*?)\s*```/, "$1");
+          } else if (content.includes("```")) {
+            content = content.replace(/```\s*([\s\S]*?)\s*```/, "$1");
+          }
+
           try {
-            return JSON.parse(content) as T;
+            return JSON.parse(content.trim()) as T;
           } catch {
             const start = content.indexOf("{");
             const end = content.lastIndexOf("}");
@@ -166,14 +172,15 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
             break;
           }
 
-          // Quota/unavailable: cool this key down and rotate to next model or key
-          if (isQuotaOrUnavailable(errorMsg)) {
-            markCooldown(currentApiKey, KEY_COOLDOWN_MS);
-            break; // Try next fallback model or next key
+          // If 404 / model not found, try next model immediately
+          if (errorMsg.includes("404") || errorMsg.includes("not found")) {
+            break;
           }
 
-          if (errorMsg.includes("404") || errorMsg.includes("not found")) {
-            break; // Model not available, try next fallback model
+          // If deadline exceeded or 503 on last attempt, try next model
+          if (attempt === 1 && isQuotaOrUnavailable(errorMsg)) {
+            markCooldown(currentApiKey, KEY_COOLDOWN_MS);
+            break;
           }
         }
       }
