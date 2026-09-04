@@ -2,14 +2,14 @@
 import { GoogleGenAI, type GenerateContentConfig, ThinkingLevel } from "@google/genai";
 
 const DEFAULT_MODELS = [
-  process.env["GEMINI_MODEL"] || "models/gemini-3.7-flash",
+  process.env["GEMINI_MODEL"] || "models/gemini-3.1-flash-lite",
   "models/gemini-3.5-flash",
+  "models/gemini-3.7-flash",
   "models/gemini-3.6-flash",
-  "models/gemini-3.8-flash",
 ];
 
 /** Upper bound for a single Gemini call so serverless functions never hang. */
-const REQUEST_TIMEOUT_MS = Number(process.env["GEMINI_TIMEOUT_MS"] || 30000);
+const REQUEST_TIMEOUT_MS = Number(process.env["GEMINI_TIMEOUT_MS"] || 45000);
 /** How long a quota-limited key is skipped before it is tried again. */
 const KEY_COOLDOWN_MS = 60_000;
 
