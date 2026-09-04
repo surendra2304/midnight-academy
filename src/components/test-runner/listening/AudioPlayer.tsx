@@ -184,12 +184,15 @@ export function AudioPlayer({
     const estDuration = estimateSpeechDuration(speechText);
     setDuration(estDuration);
 
+    // Always reset progress bar to 0 at the start of every play / replay
+    setCurrentTime(0);
+
     let elapsed = 0;
     if (speechTimerRef.current) clearInterval(speechTimerRef.current);
     speechTimerRef.current = setInterval(() => {
-      elapsed += 0.5;
-      setCurrentTime((prev) => Math.min(estDuration, prev + 0.5));
-    }, 500);
+      elapsed += 0.25;
+      setCurrentTime(Math.min(estDuration, elapsed));
+    }, 250);
 
     utterance.onend = () => {
       if (speechTimerRef.current) clearInterval(speechTimerRef.current);
@@ -229,6 +232,7 @@ export function AudioPlayer({
     if (remainingPlays <= 0) return;
 
     setError(null);
+    setCurrentTime(0);
 
     if (mode === "speech") {
       startSpeechSynthesis();
@@ -244,6 +248,7 @@ export function AudioPlayer({
       return;
     }
 
+    audio.currentTime = 0;
     audio
       .play()
       .then(() => {

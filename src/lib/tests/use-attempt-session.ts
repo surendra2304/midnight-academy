@@ -155,34 +155,43 @@ export function useAttemptSession({
 
   // 5. Action: Advance to Next Section
   const handleAdvanceSection = useCallback(async () => {
-    await flushPendingSave();
-    const nextSecIndex = stateRef.current.currentSectionIndex + 1;
+    const prevSecIndex = stateRef.current.currentSectionIndex;
+    const nextSecIndex = prevSecIndex + 1;
     const nowIso = new Date().toISOString();
 
+    // Optimistic immediate UI transition (0ms latency)
+    if (nextSecIndex < blueprint.sections.length) {
+      dispatch({
+        type: "ADVANCE_SECTION",
+        nextSectionIndex: nextSecIndex,
+        timestamp: nowIso,
+      });
+    }
+
     try {
-      setIsSaving(true);
+      await flushPendingSave();
       const res = await advanceToeflSection({
         data: {
           attemptId: stateRef.current.attemptId,
-          currentSectionIndex: stateRef.current.currentSectionIndex,
+          currentSectionIndex: prevSecIndex,
         },
       });
 
-      dispatch({
-        type: "ADVANCE_SECTION",
-        nextSectionIndex: res.nextSectionIndex,
-        timestamp: nowIso,
-      });
+      if (res.nextSectionIndex !== nextSecIndex && !res.isFinalized) {
+        dispatch({
+          type: "ADVANCE_SECTION",
+          nextSectionIndex: res.nextSectionIndex,
+          timestamp: nowIso,
+        });
+      }
 
       if (res.isFinalized && onFinalized) {
         onFinalized(stateRef.current.attemptId);
       }
     } catch (err) {
-      console.error("Failed to advance section:", err);
-    } finally {
-      setIsSaving(false);
+      console.error("Failed to advance section on server:", err);
     }
-  }, [dispatch, onFinalized]);
+  }, [blueprint.sections.length, dispatch, flushPendingSave, onFinalized]);
 
   // 6. Action: Finalize Attempt
   const handleFinalize = useCallback(async () => {

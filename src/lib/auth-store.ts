@@ -156,9 +156,12 @@ async function doRestoreSession(): Promise<void> {
 if (typeof window !== "undefined" && !isInitialized) {
   isInitialized = true;
   supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === "SIGNED_OUT" || !session?.user) {
+    if (event === "SIGNED_OUT") {
       updateState({ user: null, loading: false, pendingOAuth: null });
-    } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+      return;
+    }
+
+    if (session?.user) {
       try {
         const user = await fetchUserProfileAndRole(session.user.id, session.user.email ?? "");
         updateState({ user, loading: false, pendingOAuth: null });
@@ -181,11 +184,18 @@ if (typeof window !== "undefined" && !isInitialized) {
             },
           });
         } else if (state.user) {
-          // If we already had an active valid user, do NOT wipe them out on background token refresh or network jitter
+          // Keep active valid user session intact
           updateState({ loading: false });
         } else {
           updateState({ user: null, loading: false });
         }
+      }
+    } else {
+      // Session is not available in event payload; keep cached user rather than kicking out
+      if (state.user) {
+        updateState({ loading: false });
+      } else {
+        updateState({ user: null, loading: false });
       }
     }
   });

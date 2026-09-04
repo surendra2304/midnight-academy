@@ -91,35 +91,25 @@ export function SpeakingRecorder({
       let stream: MediaStream | null = null;
       if (navigator.mediaDevices?.getUserMedia) {
         try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            },
-          });
-        } catch {
-          // If browser/OS blocks hardware microphone, provide resilient Web Audio stream
-          const AudioCtx =
-            window.AudioContext ||
-            (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-          if (AudioCtx) {
-            const ctx = new AudioCtx();
-            const dest = ctx.createMediaStreamDestination();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            gain.gain.value = 0.001;
-            osc.connect(gain);
-            gain.connect(dest);
-            osc.start();
-            stream = dest.stream;
+          // Direct audio: true has 100% universal support across all Windows/Mac microphones
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (firstErr) {
+          console.warn("[SpeakingRecorder] Primary mic request error:", firstErr);
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: { echoCancellation: false },
+            });
+          } catch (secErr) {
+            console.warn("[SpeakingRecorder] Fallback mic request error:", secErr);
           }
         }
       }
 
       if (!stream) {
         setShowManualInput(true);
-        throw new Error("Microphone input is unavailable. Please type your response below.");
+        setErrorMessage("Microphone not detected. Please type your response using the text box below.");
+        setStage("idle");
+        return;
       }
 
       mediaStreamRef.current = stream;
@@ -249,6 +239,11 @@ export function SpeakingRecorder({
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      try {
+        mediaRecorderRef.current.requestData();
+      } catch {
+        // Ignore if requestData not supported in current state
+      }
       mediaRecorderRef.current.stop();
     }
   };
