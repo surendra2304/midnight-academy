@@ -427,6 +427,21 @@ export function AudioPlayer({
       });
   };
 
+  // Automatic single playback after a short settling delay (650ms)
+  const hasAutoPlayedRef = useRef(false);
+  useEffect(() => {
+    if (disabled || hasAutoPlayedRef.current) return;
+
+    const timer = setTimeout(() => {
+      if (!hasAutoPlayedRef.current && !isPlayingRef.current && playCount === 0) {
+        hasAutoPlayedRef.current = true;
+        handlePlay();
+      }
+    }, 650);
+
+    return () => clearTimeout(timer);
+  }, [disabled, playCount]);
+
   const handlePause = () => {
     stopAll();
   };

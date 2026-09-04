@@ -147,19 +147,6 @@ export function AppNav({ admin }: { admin?: boolean } = {}) {
               Community
             </Link>
 
-            <button
-              type="button"
-              onClick={() =>
-                toast.success(
-                  "Midnight Academy is 100% free for all students! Enjoy unlimited tests, explanations, and AI grading.",
-                )
-              }
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 hover:bg-emerald-100/80 px-3.5 py-1 text-xs font-bold text-emerald-700 transition-colors shadow-xs"
-            >
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              100% Free
-            </button>
-
             <ProfileMenu admin={false} />
           </div>
         </div>

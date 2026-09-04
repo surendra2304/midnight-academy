@@ -54,13 +54,59 @@ export function ListeningRenderer({
     item.itemType === "listen_choose_response" ||
     title.toLowerCase().includes("choose the best response");
 
+  // Dynamic speaker rotation matching diverse high-res studio photos and voice genders
+  const speaker = React.useMemo(() => {
+    if (item.payload?.imageUrl) {
+      return {
+        imageUrl: item.payload.imageUrl as string,
+        gender: (item.payload.speakerGender as "female" | "male") || "female",
+        alt: "Speaker",
+      };
+    }
+
+    const firstSpeakerLine = speechText.split("\n")[0]?.toLowerCase() || "";
+    if (
+      firstSpeakerLine.startsWith("man:") ||
+      firstSpeakerLine.startsWith("male:") ||
+      firstSpeakerLine.startsWith("mr.") ||
+      firstSpeakerLine.startsWith("dr. king")
+    ) {
+      return {
+        imageUrl: "/images/speakers/student-male-1.jpg",
+        gender: "male" as const,
+        alt: "Male Student",
+      };
+    }
+
+    if (
+      firstSpeakerLine.includes("professor") &&
+      !firstSpeakerLine.includes("ms.") &&
+      !firstSpeakerLine.includes("mrs.")
+    ) {
+      return {
+        imageUrl: "/images/speakers/professor-male.jpg",
+        gender: "male" as const,
+        alt: "Male Professor",
+      };
+    }
+
+    // Default rotation across questions: alternating Female Student, Male Student, Female Professor, Male Professor
+    const idx = item.itemOrder ?? 0;
+    const roster = [
+      { imageUrl: "/images/speakers/student-female-1.jpg", gender: "female" as const, alt: "Female Student" },
+      { imageUrl: "/images/speakers/student-male-1.jpg", gender: "male" as const, alt: "Male Student" },
+      { imageUrl: "/images/speakers/professor-female.jpg", gender: "female" as const, alt: "Female Professor" },
+      { imageUrl: "/images/speakers/professor-male.jpg", gender: "male" as const, alt: "Male Professor" },
+    ];
+
+    return roster[Math.abs(idx) % roster.length]!;
+  }, [item.itemOrder, item.payload?.imageUrl, item.payload?.speakerGender, speechText]);
+
   const hasStudentPhoto =
     isChooseResponse ||
     Boolean(item.payload?.imageUrl) ||
-    Boolean(item.payload?.hasStudentImage);
-
-  const studentImageUrl =
-    (item.payload?.imageUrl as string) || "/images/student-female-listening.png";
+    Boolean(item.payload?.hasStudentImage) ||
+    true; // TestGlider displays speaker stimulus across listening items
 
   const handleAudioInteraction = React.useCallback(
     (log: AudioInteractionLog) => {
@@ -73,9 +119,9 @@ export function ListeningRenderer({
   );
 
   return (
-    <div className="flex flex-col h-full space-y-6">
+    <div className="flex flex-col h-full space-y-4">
       {/* Centered Heading (TestGlider Screen 10) */}
-      <div className="text-center pt-2">
+      <div className="text-center pt-1">
         <h2 className="text-2xl font-black text-slate-900 tracking-tight">
           {prompt.includes("Choose the best") ? "Choose the best response." : prompt}
         </h2>
@@ -84,32 +130,26 @@ export function ListeningRenderer({
         ) : null}
       </div>
 
-      {/* Main Two-Column Split Container with Vertical Divider */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-8 px-4 lg:px-12 py-4">
-        {/* Left Column: Student Photo & Audio Stimulus */}
-        <div className="flex flex-col items-center justify-center space-y-6">
-          {hasStudentPhoto ? (
-            <div className="relative flex items-center justify-center overflow-hidden rounded-2xl bg-white p-2">
-              <img
-                src={studentImageUrl}
-                alt="Student Prompt"
-                className="max-h-[420px] w-auto object-contain transition-transform"
-              />
-            </div>
-          ) : (
-            <div className="flex h-72 w-full max-w-md items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/50 p-6 text-center text-xs text-slate-500">
-              Audio stimulus for academic talk / lecture
-            </div>
-          )}
+      {/* Main Two-Column Split Container with Vertical Divider (Constrained to prevent vertical scrolling) */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-8 px-4 lg:px-12 py-2">
+        {/* Left Column: Speaker Portrait & Audio Stimulus */}
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <div className="relative flex items-center justify-center overflow-hidden rounded-2xl bg-white p-2 border border-slate-100 shadow-xs">
+            <img
+              src={speaker.imageUrl}
+              alt={speaker.alt}
+              className="max-h-[250px] w-auto object-contain rounded-xl transition-transform"
+            />
+          </div>
 
-          {/* Audio Player */}
+          {/* Audio Player (Autoplays once, natural voice matching gender) */}
           <div className="w-full max-w-md">
             <AudioPlayer
               key={item.id}
               audioUrl={audioUrl}
               speechText={speechText}
-              gender={hasStudentPhoto ? "female" : "auto"}
-              maxPlays={2}
+              gender={speaker.gender}
+              maxPlays={1}
               onInteractionChange={handleAudioInteraction}
               disabled={disabled}
             />
@@ -119,13 +159,13 @@ export function ListeningRenderer({
         {/* Center: Vertical Divider Bar with Up/Down Arrows */}
         <div className="hidden md:flex flex-col items-center justify-center gap-2 text-slate-300">
           <ChevronUp className="size-4 text-slate-400" />
-          <div className="h-96 w-1 rounded-full bg-slate-200" />
+          <div className="h-64 w-1 rounded-full bg-slate-200" />
           <ChevronDown className="size-4 text-slate-400" />
         </div>
 
         {/* Right Column: Radio Button Choices */}
         <div className="flex flex-col justify-center space-y-4 max-w-lg">
-          <div className="space-y-3.5">
+          <div className="space-y-3">
             {item.options.map((opt) => {
               const isSelected =
                 currentAnswer?.trim().toUpperCase() === opt.optionKey.toUpperCase();
@@ -136,7 +176,7 @@ export function ListeningRenderer({
                   type="button"
                   disabled={disabled}
                   onClick={() => onAnswerChange(opt.optionKey, { selectedKey: opt.optionKey })}
-                  className={`group flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition-all ${
+                  className={`group flex w-full items-center gap-4 rounded-2xl border p-3.5 text-left transition-all ${
                     isSelected
                       ? "border-[#0f3b82] bg-blue-50/50 text-[#0f3b82] font-semibold shadow-xs"
                       : "border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/80 text-slate-700"
@@ -159,9 +199,9 @@ export function ListeningRenderer({
             })}
           </div>
 
-          {/* Action Row: Flag & Next Question */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-            {onToggleFlag ? (
+          {/* Action Row: Flag Question Only (No duplicate Next button) */}
+          {onToggleFlag && (
+            <div className="flex items-center justify-end pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={onToggleFlag}
@@ -173,21 +213,8 @@ export function ListeningRenderer({
                 <Flag className="size-3.5" />
                 {isFlagged ? "Flagged for Review" : "Flag Question"}
               </button>
-            ) : (
-              <div />
-            )}
-
-            {onNext && (
-              <button
-                type="button"
-                onClick={onNext}
-                disabled={disabled}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#0f3b82] hover:bg-blue-700 text-white font-bold px-6 py-2 text-xs shadow-md hover:shadow-lg transition-all cursor-pointer"
-              >
-                Next &gt;
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

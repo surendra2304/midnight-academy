@@ -549,16 +549,13 @@ function TestCatalog() {
 
             <div className="flex items-center justify-between pr-8">
               <h3 className="text-lg font-bold text-slate-900">What is included?</h3>
-              <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-0.5 text-[11px] font-bold text-emerald-700">
-                100% Free Forever
-              </span>
             </div>
 
             {/* Features Table */}
             <div className="space-y-3 text-xs font-semibold">
               <div className="grid grid-cols-[1fr_130px] items-center pb-2 border-b border-slate-100 text-slate-500">
                 <span>Features</span>
-                <span className="text-center font-bold text-emerald-600">Midnight Academy</span>
+                <span className="text-center font-bold text-blue-600">Included</span>
               </div>
 
               {/* Row 1: Test Attempts */}
@@ -567,7 +564,7 @@ function TestCatalog() {
                   <FileText className="size-4 text-slate-500" />
                   <span>Test Attempts</span>
                 </div>
-                <span className="text-center font-bold text-emerald-600">Unlimited (Free)</span>
+                <span className="text-center font-bold text-blue-600">Unlimited</span>
               </div>
 
               {/* Row 2: View Total Score */}
@@ -576,7 +573,7 @@ function TestCatalog() {
                   <BarChart2 className="size-4 text-slate-500" />
                   <span>View Total Score</span>
                 </div>
-                <div className="flex justify-center items-center gap-1 text-emerald-600 font-bold">
+                <div className="flex justify-center items-center gap-1 text-blue-600 font-bold">
                   <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
               </div>
@@ -587,7 +584,7 @@ function TestCatalog() {
                   <LayoutGrid className="size-4 text-slate-500" />
                   <span>View Section Scores</span>
                 </div>
-                <div className="flex justify-center items-center gap-1 text-emerald-600 font-bold">
+                <div className="flex justify-center items-center gap-1 text-blue-600 font-bold">
                   <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
               </div>
@@ -598,7 +595,7 @@ function TestCatalog() {
                   <Sparkles className="size-4 text-slate-500" />
                   <span>View Explanations</span>
                 </div>
-                <div className="flex justify-center items-center gap-1 text-emerald-600 font-bold">
+                <div className="flex justify-center items-center gap-1 text-blue-600 font-bold">
                   <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
               </div>
@@ -609,13 +606,13 @@ function TestCatalog() {
                   <Check className="size-4 text-slate-500" />
                   <span>AI Rubric Scoring</span>
                 </div>
-                <div className="flex justify-center items-center gap-1 text-emerald-600 font-bold">
+                <div className="flex justify-center items-center gap-1 text-blue-600 font-bold">
                   <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
               </div>
             </div>
 
-            {/* Bottom Actions: 100% Free Launch Button */}
+            {/* Bottom Actions: Launch Button */}
             <div className="pt-2">
               <button
                 type="button"
@@ -629,7 +626,7 @@ function TestCatalog() {
                   </>
                 ) : (
                   <>
-                    <Play className="size-3.5 fill-current text-emerald-400" /> Start Free Test
+                    <Play className="size-3.5 fill-current text-white" /> Start Test
                   </>
                 )}
               </button>

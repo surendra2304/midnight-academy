@@ -287,13 +287,19 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
             onClick={() => {
               if (micStreamRef.current) {
                 micStreamRef.current.getTracks().forEach((t) => t.stop());
+                micStreamRef.current = null;
+              }
+              if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+                audioCtxRef.current.close().catch(() => {});
+                audioCtxRef.current = null;
               }
               if (animFrameRef.current) {
                 cancelAnimationFrame(animFrameRef.current);
+                animFrameRef.current = null;
               }
               setHasStartedMock(true);
             }}
-            className="rounded-full bg-white px-5 py-1 text-xs font-bold text-[#0f3b82] shadow-xs hover:bg-slate-100 transition-all"
+            className="rounded-full bg-white px-5 py-1 text-xs font-bold text-[#0f3b82] shadow-xs hover:bg-slate-100 transition-all cursor-pointer"
           >
             Continue &gt;
           </button>
@@ -369,18 +375,20 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
-                    <CheckCircle2 className="size-3 mr-1 text-emerald-600" />
-                    Verified Active
-                  </span>
+                  {micCheckPassed && (
+                    <span className="inline-flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                      <CheckCircle2 className="size-3 mr-1 text-emerald-600" />
+                      Verified Active
+                    </span>
+                  )}
                   <Button
                     size="sm"
-                    variant={hasMicStream ? "outline" : "secondary"}
+                    variant={micCheckPassed ? "outline" : "secondary"}
                     disabled={isTestingMic}
                     onClick={handleTestMic}
                     className="text-xs"
                   >
-                    {isTestingMic ? "Connecting..." : hasMicStream ? "Mic Live ✓" : "Test Live Mic"}
+                    {isTestingMic ? "Testing Mic..." : micCheckPassed ? "Mic Verified ✓" : "Test Live Mic"}
                   </Button>
                 </div>
               </div>
@@ -410,13 +418,19 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
                 onClick={() => {
                   if (micStreamRef.current) {
                     micStreamRef.current.getTracks().forEach((t) => t.stop());
+                    micStreamRef.current = null;
+                  }
+                  if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+                    audioCtxRef.current.close().catch(() => {});
+                    audioCtxRef.current = null;
                   }
                   if (animFrameRef.current) {
                     cancelAnimationFrame(animFrameRef.current);
+                    animFrameRef.current = null;
                   }
                   setHasStartedMock(true);
                 }}
-                className="rounded-full bg-[#0f3b82] px-8 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#154694] transition-all"
+                className="rounded-full bg-[#0f3b82] px-8 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#154694] transition-all cursor-pointer"
               >
                 Continue &gt;
               </button>
@@ -602,7 +616,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           </button>
         </div>
 
-        {/* Right Action Buttons: [Volume] [Review] [< Back] [Next >] */}
+        {/* Right Action Buttons: [Volume] [Review] [< Back] [Next >] (Authoritative Navigation) */}
         <div className="flex items-center gap-2">
           {isSaving && (
             <span className="mr-2 text-[11px] text-blue-200 animate-pulse">Autosaving...</span>
@@ -610,8 +624,16 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
 
           <button
             type="button"
+            onClick={handleTestAudio}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#184896] hover:bg-[#2054a8] px-3 py-1 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
+          >
+            <Volume2 className="size-3.5" /> Volume
+          </button>
+
+          <button
+            type="button"
             onClick={() => setIsReviewOpen((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#184896] hover:bg-[#2054a8] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#184896] hover:bg-[#2054a8] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
           >
             <BookOpen className="size-3.5" /> Review
           </button>
@@ -624,7 +646,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
                 handleNavigateItem(state.currentItemIndex - 1);
               }
             }}
-            className="inline-flex items-center gap-1 rounded-lg bg-[#184896] hover:bg-[#2054a8] disabled:opacity-40 disabled:hover:bg-[#184896] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors"
+            className="inline-flex items-center gap-1 rounded-lg bg-[#184896] hover:bg-[#2054a8] disabled:opacity-40 disabled:hover:bg-[#184896] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
           >
             <ChevronLeft className="size-3.5" /> Back
           </button>
@@ -632,9 +654,21 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           <button
             type="button"
             onClick={handleNextAction}
-            className="inline-flex items-center gap-1 rounded-full bg-blue-600 hover:bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow-sm transition-all cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-full bg-white hover:bg-slate-100 px-5 py-1 text-xs font-bold text-[#0f3b82] shadow-sm transition-all cursor-pointer"
           >
-            Next &gt;
+            {isLastItem ? (
+              isLastSection ? (
+                "Submit Exam"
+              ) : (
+                <>
+                  Next Section <ChevronRight className="size-3.5" />
+                </>
+              )
+            ) : (
+              <>
+                Next <ChevronRight className="size-3.5" />
+              </>
+            )}
           </button>
         </div>
       </header>
@@ -671,50 +705,9 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
         </div>
       </div>
 
-      {/* 3. Main Test Canvas Area */}
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col p-6">
-        <div className="flex-1">{renderItemStimulus()}</div>
-
-        {/* Bottom Test Navigation Bar */}
-        <div className="mt-8 flex items-center justify-between border-t border-slate-200/80 pt-4 pb-6 select-none">
-          <button
-            type="button"
-            disabled={state.currentItemIndex === 0}
-            onClick={() => {
-              if (state.currentItemIndex > 0) {
-                handleNavigateItem(state.currentItemIndex - 1);
-              }
-            }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white hover:bg-slate-50 px-5 py-2 text-xs font-semibold text-slate-700 disabled:opacity-30 disabled:pointer-events-none shadow-xs transition-all cursor-pointer"
-          >
-            <ChevronLeft className="size-4" /> Back
-          </button>
-
-          <div className="flex items-center gap-3">
-            {isSaving && (
-              <span className="text-[11px] text-slate-400 animate-pulse">Saving response...</span>
-            )}
-            <button
-              type="button"
-              onClick={handleNextAction}
-              className="inline-flex items-center gap-2 rounded-full bg-[#0f3b82] hover:bg-blue-700 text-white font-bold px-7 py-2.5 text-xs shadow-md hover:shadow-lg transition-all cursor-pointer"
-            >
-              {isLastItem ? (
-                isLastSection ? (
-                  "Submit Full Exam"
-                ) : (
-                  <>
-                    Next Section <ChevronRight className="size-4" />
-                  </>
-                )
-              ) : (
-                <>
-                  Next Question <ChevronRight className="size-4" />
-                </>
-              )}
-            </button>
-          </div>
-        </div>
+      {/* 3. Main Test Canvas Area (Zero Scrolling, Single Next Button in Top Bar) */}
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 md:px-8 py-3 overflow-y-auto">
+        <div className="flex-1 flex flex-col justify-center">{renderItemStimulus()}</div>
       </main>
 
       {/* 4. Question Review Modal / Drawer */}
