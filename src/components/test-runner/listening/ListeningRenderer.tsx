@@ -16,6 +16,7 @@ export interface ListeningRendererProps {
   isFlagged?: boolean;
   onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
   onToggleFlag?: () => void;
+  onNext?: () => void;
   disabled?: boolean;
 }
 
@@ -25,6 +26,7 @@ export function ListeningRenderer({
   isFlagged = false,
   onAnswerChange,
   onToggleFlag,
+  onNext,
   disabled = false,
 }: ListeningRendererProps) {
   const audioUrl = item.payload?.audioUrl as string | undefined;
@@ -157,21 +159,35 @@ export function ListeningRenderer({
             })}
           </div>
 
-          {onToggleFlag && (
-            <div className="flex justify-end pt-2">
+          {/* Action Row: Flag & Next Question */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            {onToggleFlag ? (
               <button
                 type="button"
                 onClick={onToggleFlag}
                 disabled={disabled}
-                className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer ${
                   isFlagged ? "text-amber-600" : "text-slate-400 hover:text-slate-700"
                 }`}
               >
                 <Flag className="size-3.5" />
                 {isFlagged ? "Flagged for Review" : "Flag Question"}
               </button>
-            </div>
-          )}
+            ) : (
+              <div />
+            )}
+
+            {onNext && (
+              <button
+                type="button"
+                onClick={onNext}
+                disabled={disabled}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#0f3b82] hover:bg-blue-700 text-white font-bold px-6 py-2 text-xs shadow-md hover:shadow-lg transition-all cursor-pointer"
+              >
+                Next &gt;
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

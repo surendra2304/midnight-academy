@@ -525,6 +525,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           isFlagged={Boolean(currentResponse?.isFlagged)}
           onAnswerChange={handleAnswerChange}
           onToggleFlag={handleToggleFlag}
+          onNext={handleNextAction}
         />
       );
     }
@@ -543,6 +544,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           isFlagged={Boolean(currentResponse?.isFlagged)}
           onAnswerChange={handleAnswerChange}
           onToggleFlag={handleToggleFlag}
+          onNext={handleNextAction}
         />
       );
     }
@@ -629,9 +631,8 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
 
           <button
             type="button"
-            disabled={isSaving}
             onClick={handleNextAction}
-            className="inline-flex items-center gap-1 rounded-lg bg-[#184896] hover:bg-[#2054a8] px-4 py-1 text-xs font-bold text-white shadow-xs transition-colors"
+            className="inline-flex items-center gap-1 rounded-full bg-blue-600 hover:bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow-sm transition-all cursor-pointer"
           >
             Next &gt;
           </button>
@@ -673,6 +674,47 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
       {/* 3. Main Test Canvas Area */}
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col p-6">
         <div className="flex-1">{renderItemStimulus()}</div>
+
+        {/* Bottom Test Navigation Bar */}
+        <div className="mt-8 flex items-center justify-between border-t border-slate-200/80 pt-4 pb-6 select-none">
+          <button
+            type="button"
+            disabled={state.currentItemIndex === 0}
+            onClick={() => {
+              if (state.currentItemIndex > 0) {
+                handleNavigateItem(state.currentItemIndex - 1);
+              }
+            }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white hover:bg-slate-50 px-5 py-2 text-xs font-semibold text-slate-700 disabled:opacity-30 disabled:pointer-events-none shadow-xs transition-all cursor-pointer"
+          >
+            <ChevronLeft className="size-4" /> Back
+          </button>
+
+          <div className="flex items-center gap-3">
+            {isSaving && (
+              <span className="text-[11px] text-slate-400 animate-pulse">Saving response...</span>
+            )}
+            <button
+              type="button"
+              onClick={handleNextAction}
+              className="inline-flex items-center gap-2 rounded-full bg-[#0f3b82] hover:bg-blue-700 text-white font-bold px-7 py-2.5 text-xs shadow-md hover:shadow-lg transition-all cursor-pointer"
+            >
+              {isLastItem ? (
+                isLastSection ? (
+                  "Submit Full Exam"
+                ) : (
+                  <>
+                    Next Section <ChevronRight className="size-4" />
+                  </>
+                )
+              ) : (
+                <>
+                  Next Question <ChevronRight className="size-4" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </main>
 
       {/* 4. Question Review Modal / Drawer */}
