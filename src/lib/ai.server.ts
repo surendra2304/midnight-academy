@@ -1,7 +1,12 @@
 /** Server-only helpers for calling Google Gemini using the official @google/genai SDK. */
 import { GoogleGenAI, type GenerateContentConfig, ThinkingLevel } from "@google/genai";
 
-const MODEL_NAME = process.env["GEMINI_MODEL"] || "gemini-3.5-flash-lite";
+const DEFAULT_MODELS = [
+  process.env["GEMINI_MODEL"] || "models/gemini-3.6-flash",
+  "models/gemini-flash-latest",
+  "models/gemini-3.5-flash",
+];
+
 /** Upper bound for a single Gemini call so serverless functions never hang. */
 const REQUEST_TIMEOUT_MS = Number(process.env["GEMINI_TIMEOUT_MS"] || 15000);
 /** How long a quota-limited key is skipped before it is tried again. */
@@ -46,8 +51,8 @@ function isCoolingDown(key: string): boolean {
   return typeof until === "number" && until > Date.now();
 }
 
-function markCooldown(key: string): void {
-  keyCooldowns.set(key, Date.now() + KEY_COOLDOWN_MS);
+function markCooldown(key: string, durationMs = KEY_COOLDOWN_MS): void {
+  keyCooldowns.set(key, Date.now() + durationMs);
 }
 
 function isQuotaOrUnavailable(errorMsg: string): boolean {
@@ -61,6 +66,16 @@ function isQuotaOrUnavailable(errorMsg: string): boolean {
     lower.includes("unavailable") ||
     lower.includes("high demand") ||
     lower.includes("deadline")
+  );
+}
+
+function isAuthError(errorMsg: string): boolean {
+  const lower = errorMsg.toLowerCase();
+  return (
+    errorMsg.includes("401") ||
+    lower.includes("unauthenticated") ||
+    lower.includes("invalid authentication") ||
+    lower.includes("access_token_type_unsupported")
   );
 }
 
@@ -88,70 +103,78 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
 
   // Rotate over the pool: cooled-down keys are skipped unless every key is
   // cooling down, in which case we still try them rather than failing fast.
-  const rotation = [...allKeys.filter((k) => !isCoolingDown(k)), ...allKeys.filter(isCoolingDown)];
-  const keysToTry = rotation.length > 0 ? rotation : allKeys;
+  const activeKeys = allKeys.filter((k) => !isCoolingDown(k));
+  const keysToTry = activeKeys.length > 0 ? activeKeys : allKeys;
 
   for (let keyIdx = 0; keyIdx < keysToTry.length; keyIdx++) {
     const currentApiKey = keysToTry[keyIdx]!;
     const ai = new GoogleGenAI({ apiKey: currentApiKey });
 
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        if (attempt > 0) {
-          await new Promise((r) => setTimeout(r, 1500 * Math.pow(2, attempt)));
-        }
-
-        const config: GenerateContentConfig = {
-          responseMimeType: "application/json",
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-          ...(systemInstruction ? { systemInstruction } : {}),
-        };
-
-        const response = await Promise.race([
-          ai.models.generateContent({
-            model: MODEL_NAME,
-            contents: userPrompt,
-            config: { ...config, httpOptions: { timeout: REQUEST_TIMEOUT_MS } },
-          }),
-          new Promise<never>((_, reject) =>
-            setTimeout(
-              () => reject(new AiError("Gemini request timed out.", 504)),
-              REQUEST_TIMEOUT_MS + 5000,
-            ),
-          ),
-        ]);
-
-        const content = response.text;
-        if (!content) {
-          throw new AiError("The evaluator returned an empty response.", 502);
-        }
-
+    for (const modelName of DEFAULT_MODELS) {
+      for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          return JSON.parse(content) as T;
-        } catch {
-          const start = content.indexOf("{");
-          const end = content.lastIndexOf("}");
-          if (start >= 0 && end > start) {
-            return JSON.parse(content.slice(start, end + 1)) as T;
+          if (attempt > 0) {
+            await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
           }
-          throw new AiError("The evaluator returned malformed output.", 502);
-        }
-      } catch (err: unknown) {
-        lastError = err;
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        console.error(
-          `[gemini key ${keyIdx + 1}/${keysToTry.length}] attempt ${attempt + 1} error:`,
-          errorMsg,
-        );
 
-        // Quota/unavailable: cool this key down and rotate to the next key now
-        if (isQuotaOrUnavailable(errorMsg)) {
-          markCooldown(currentApiKey);
-          break;
-        }
+          const config: GenerateContentConfig = {
+            responseMimeType: "application/json",
+            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+            ...(systemInstruction ? { systemInstruction } : {}),
+          };
 
-        if (attempt === 1 && keyIdx === keysToTry.length - 1) {
-          throw new AiError("The evaluator could not be reached.", 502);
+          const response = await Promise.race([
+            ai.models.generateContent({
+              model: modelName,
+              contents: userPrompt,
+              config: { ...config, httpOptions: { timeout: REQUEST_TIMEOUT_MS } },
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(
+                () => reject(new AiError("Gemini request timed out.", 504)),
+                REQUEST_TIMEOUT_MS + 5000,
+              ),
+            ),
+          ]);
+
+          const content = response.text;
+          if (!content) {
+            throw new AiError("The evaluator returned an empty response.", 502);
+          }
+
+          try {
+            return JSON.parse(content) as T;
+          } catch {
+            const start = content.indexOf("{");
+            const end = content.lastIndexOf("}");
+            if (start >= 0 && end > start) {
+              return JSON.parse(content.slice(start, end + 1)) as T;
+            }
+            throw new AiError("The evaluator returned malformed output.", 502);
+          }
+        } catch (err: unknown) {
+          lastError = err;
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          console.error(
+            `[gemini key ${keyIdx + 1}/${keysToTry.length} | ${modelName}] attempt ${attempt + 1} error:`,
+            errorMsg,
+          );
+
+          // If auth failure, mark key as invalid for 24h and break to next key immediately
+          if (isAuthError(errorMsg)) {
+            markCooldown(currentApiKey, 24 * 60 * 60 * 1000);
+            break;
+          }
+
+          // Quota/unavailable: cool this key down and rotate to next model or key
+          if (isQuotaOrUnavailable(errorMsg)) {
+            markCooldown(currentApiKey, KEY_COOLDOWN_MS);
+            break; // Try next fallback model or next key
+          }
+
+          if (errorMsg.includes("404") || errorMsg.includes("not found")) {
+            break; // Model not available, try next fallback model
+          }
         }
       }
     }
@@ -161,5 +184,5 @@ export async function chatJson<T>(messages: Message[]): Promise<T> {
   if (isQuotaOrUnavailable(msg)) {
     throw new AiError("The evaluator is busy right now. Please try again in a moment.", 429);
   }
-  throw new AiError("The evaluator could not be reached.", 502);
+  throw new AiError(`The evaluator could not be reached: ${msg}`, 502);
 }
