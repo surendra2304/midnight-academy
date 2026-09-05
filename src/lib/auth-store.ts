@@ -130,10 +130,20 @@ async function doRestoreSession(): Promise<void> {
     } = await supabase.auth.getSession();
     if (error || !session?.user) {
       // If we had a cached user, let's also check getUser() in case getSession() was temporarily out of sync
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData?.user) {
-        const user = await fetchUserProfileAndRole(userData.user.id, userData.user.email ?? "");
-        updateState({ user, loading: false, pendingOAuth: null });
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          const user = await fetchUserProfileAndRole(userData.user.id, userData.user.email ?? "");
+          updateState({ user, loading: false, pendingOAuth: null });
+          return;
+        }
+      } catch {
+        // Fallthrough to preserve cached user
+      }
+
+      // CRITICAL FIX: If user is already cached/active, do not log them out without their permission
+      if (state.user) {
+        updateState({ loading: false });
         return;
       }
       updateState({ user: null, loading: false });

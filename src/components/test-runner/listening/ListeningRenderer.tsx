@@ -119,10 +119,10 @@ export function ListeningRenderer({
   );
 
   return (
-    <div className="flex flex-col h-full space-y-4">
-      {/* Centered Heading (TestGlider Screen 10) */}
+    <div className="flex flex-col h-full space-y-4 max-w-5xl mx-auto w-full">
+      {/* Centered Heading (TestGlider Screen 10 & scene_10_frame_031_93s.jpg) */}
       <div className="text-center pt-1">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+        <h2 className="text-3xl font-black text-slate-900 tracking-tight">
           {prompt.includes("Choose the best") ? "Choose the best response." : prompt}
         </h2>
         {prompt !== "Choose the best response." && prompt !== title ? (
@@ -130,15 +130,15 @@ export function ListeningRenderer({
         ) : null}
       </div>
 
-      {/* Main Two-Column Split Container with Vertical Divider (Constrained to prevent vertical scrolling) */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-8 px-4 lg:px-12 py-2">
-        {/* Left Column: Speaker Portrait & Audio Stimulus */}
+      {/* Main Two-Column Split Container with Vertical Divider */}
+      <div className="grid grid-cols-1 md:grid-cols-[1.1fr_auto_1fr] items-center gap-8 px-2 lg:px-8 py-2">
+        {/* Left Column: Clean Speaker Portrait & Compact Audio Stimulus */}
         <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="relative flex items-center justify-center overflow-hidden rounded-2xl bg-white p-2 border border-slate-100 shadow-xs">
+          <div className="relative flex items-center justify-center">
             <img
               src={speaker.imageUrl}
               alt={speaker.alt}
-              className="max-h-[250px] w-auto object-contain rounded-xl transition-transform"
+              className="max-h-[280px] w-auto object-contain rounded-2xl shadow-sm transition-transform"
             />
           </div>
 
@@ -156,16 +156,16 @@ export function ListeningRenderer({
           </div>
         </div>
 
-        {/* Center: Vertical Divider Bar with Up/Down Arrows */}
-        <div className="hidden md:flex flex-col items-center justify-center gap-2 text-slate-300">
+        {/* Center: Thin Vertical Divider Bar with Up/Down Arrows */}
+        <div className="hidden md:flex flex-col items-center justify-center gap-2 text-slate-400 py-4">
           <ChevronUp className="size-4 text-slate-400" />
-          <div className="h-64 w-1 rounded-full bg-slate-200" />
+          <div className="h-64 w-0.5 rounded-full bg-slate-300" />
           <ChevronDown className="size-4 text-slate-400" />
         </div>
 
-        {/* Right Column: Radio Button Choices */}
-        <div className="flex flex-col justify-center space-y-4 max-w-lg">
-          <div className="space-y-3">
+        {/* Right Column: Borderless Circular Radio Button Choices */}
+        <div className="flex flex-col justify-center space-y-5 max-w-lg">
+          <div className="space-y-4">
             {item.options.map((opt) => {
               const isSelected =
                 currentAnswer?.trim().toUpperCase() === opt.optionKey.toUpperCase();
@@ -176,24 +176,28 @@ export function ListeningRenderer({
                   type="button"
                   disabled={disabled}
                   onClick={() => onAnswerChange(opt.optionKey, { selectedKey: opt.optionKey })}
-                  className={`group flex w-full items-center gap-4 rounded-2xl border p-3.5 text-left transition-all ${
-                    isSelected
-                      ? "border-[#0f3b82] bg-blue-50/50 text-[#0f3b82] font-semibold shadow-xs"
-                      : "border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/80 text-slate-700"
-                  }`}
+                  className="group flex w-full items-start gap-3.5 text-left py-1.5 px-1 rounded-lg hover:bg-white/40 transition-colors cursor-pointer"
                 >
-                  {/* TestGlider Radio Circle */}
+                  {/* TestGlider Circular Radio */}
                   <div
-                    className={`flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                    className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
                       isSelected
-                        ? "border-[#0f3b82] bg-[#0f3b82]"
-                        : "border-slate-300 bg-white group-hover:border-slate-400"
+                        ? "border-[#0f3b82] bg-white"
+                        : "border-slate-400 bg-white group-hover:border-slate-600"
                     }`}
                   >
-                    {isSelected && <div className="size-2 rounded-full bg-white" />}
+                    {isSelected && <div className="size-2.5 rounded-full bg-[#0f3b82]" />}
                   </div>
 
-                  <span className="text-sm leading-relaxed">{opt.optionText}</span>
+                  <span
+                    className={`text-sm leading-relaxed ${
+                      isSelected
+                        ? "font-bold text-slate-900"
+                        : "font-normal text-slate-800 group-hover:text-slate-900"
+                    }`}
+                  >
+                    {opt.optionText}
+                  </span>
                 </button>
               );
             })}
@@ -201,7 +205,7 @@ export function ListeningRenderer({
 
           {/* Action Row: Flag Question Only (No duplicate Next button) */}
           {onToggleFlag && (
-            <div className="flex items-center justify-end pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end pt-3 border-t border-slate-200/60">
               <button
                 type="button"
                 onClick={onToggleFlag}

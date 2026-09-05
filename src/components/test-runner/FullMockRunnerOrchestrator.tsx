@@ -602,7 +602,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900">
+    <div className="flex min-h-screen flex-col bg-[#e8f2f9] text-slate-900">
       {/* 1. TestGlider Top Header Bar (#0f3b82) */}
       <header className="flex h-12 items-center justify-between bg-[#0f3b82] px-6 text-white shadow-sm select-none">
         {/* Left: [Save & Exit] Button */}
@@ -610,18 +610,19 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           <button
             type="button"
             onClick={() => setShowSaveExitModal(true)}
-            className="rounded-full bg-white px-4 py-1 text-xs font-bold text-[#0f3b82] shadow-xs hover:bg-slate-100 transition-all"
+            className="rounded-full bg-white px-4 py-1 text-xs font-bold text-[#0f3b82] shadow-xs hover:bg-slate-100 transition-all cursor-pointer"
           >
             Save &amp; Exit
           </button>
         </div>
 
-        {/* Right Action Buttons: [Volume] [Review] [< Back] [Next >] (Authoritative Navigation) */}
+        {/* Right Action Buttons: Authoritative Navigation */}
         <div className="flex items-center gap-2">
           {isSaving && (
             <span className="mr-2 text-[11px] text-blue-200 animate-pulse">Autosaving...</span>
           )}
 
+          {/* Volume Button: Always present */}
           <button
             type="button"
             onClick={handleTestAudio}
@@ -630,27 +631,34 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
             <Volume2 className="size-3.5" /> Volume
           </button>
 
-          <button
-            type="button"
-            onClick={() => setIsReviewOpen((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#184896] hover:bg-[#2054a8] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
-          >
-            <BookOpen className="size-3.5" /> Review
-          </button>
+          {/* Review Button: Hidden in Listening per ETS rules */}
+          {currentSection?.sectionType !== "listening" && (
+            <button
+              type="button"
+              onClick={() => setIsReviewOpen((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#184896] hover:bg-[#2054a8] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
+            >
+              <BookOpen className="size-3.5" /> Review
+            </button>
+          )}
 
-          <button
-            type="button"
-            disabled={state.currentItemIndex === 0}
-            onClick={() => {
-              if (state.currentItemIndex > 0) {
-                handleNavigateItem(state.currentItemIndex - 1);
-              }
-            }}
-            className="inline-flex items-center gap-1 rounded-lg bg-[#184896] hover:bg-[#2054a8] disabled:opacity-40 disabled:hover:bg-[#184896] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
-          >
-            <ChevronLeft className="size-3.5" /> Back
-          </button>
+          {/* Back Button: Strictly Hidden in Listening per ETS rules */}
+          {currentSection?.sectionType !== "listening" && (
+            <button
+              type="button"
+              disabled={state.currentItemIndex === 0}
+              onClick={() => {
+                if (state.currentItemIndex > 0) {
+                  handleNavigateItem(state.currentItemIndex - 1);
+                }
+              }}
+              className="inline-flex items-center gap-1 rounded-lg bg-[#184896] hover:bg-[#2054a8] disabled:opacity-40 disabled:hover:bg-[#184896] px-3.5 py-1 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="size-3.5" /> Back
+            </button>
+          )}
 
+          {/* Next / Continue Action Button (White Pill) */}
           <button
             type="button"
             onClick={handleNextAction}
@@ -661,7 +669,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
                 "Submit Exam"
               ) : (
                 <>
-                  Next Section <ChevronRight className="size-3.5" />
+                  Continue <ChevronRight className="size-3.5" />
                 </>
               )
             ) : (

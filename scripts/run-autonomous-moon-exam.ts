@@ -82,9 +82,10 @@ async function runAutonomousMoonExam() {
       normalizedAnswer = { selectedKey: correctOpt.optionKey };
       console.log(`   -> Selected Answer: [${correctOpt.optionKey}] ${correctOpt.optionText}`);
     } else if (item.itemType === "complete_words") {
-      rawAnswer = "processes, growth";
-      normalizedAnswer = { blanks: ["processes", "growth"] };
-      console.log(`   -> Filled Blanks: ${rawAnswer}`);
+      const tokens = (payload.correctTokens as string[]) || ["eld", "ining", "ains", "nisms", "n", "o", "ow", "fe", "lved", "pted"];
+      rawAnswer = JSON.stringify(tokens);
+      normalizedAnswer = { tokens, blanks: tokens };
+      console.log(`   -> Filled Authentic Cloze Tokens: ${rawAnswer}`);
     }
 
     await attemptSessionService.saveResponse({
@@ -166,29 +167,42 @@ async function runAutonomousMoonExam() {
     console.log(`\n[Writing Q${i + 1}/${writingSec.items.length}] ${title} (${item.itemType})`);
 
     let essayText = "";
+    let rawAnswer = "";
+    let normalizedAnswer: Record<string, unknown> = {};
+
     if (item.itemType === "build_sentence") {
-      essayText = "The university library will remain open twenty-four hours during final exams.";
+      const target = (payload.targetSentence as string) || "Unfortunately, I did not meet the deadline.";
+      const prefix = (payload.sentencePrefix as string) || "";
+      const remainder = target.replace(prefix, "").replace(/[.]+$/, "").trim();
+      const words = remainder.split(/\s+/).filter(Boolean);
+      rawAnswer = JSON.stringify(words);
+      essayText = target;
+      normalizedAnswer = { words, assembledSentence: target };
+      console.log(`   -> Built Authentic Sentence: ${target}`);
     } else if (item.itemType === "write_email") {
       essayText =
-        "Dear Professor Takata,\n\nI am writing to express my appreciation for today's lecture on fiscal policy and sin taxes. In particular, I found your explanation of market externalities and regressive tax structures enlightening. Could you recommend supplementary scholarly literature discussing how subsidized nutrition initiatives can offset the burden on low-income demographics? Thank you for your guidance.\n\nSincerely,\nSurendra";
+        (payload.modelAnswer as string) ||
+        "Dear Jake,\n\nI hope you are doing well. I am writing regarding our group project, which is critical for our final grade. You have missed several project meetings and your section remains unfinished. This has placed unexpected burdens on the rest of the team. Please attend our upcoming coordination call and complete your allocated research so we can submit on schedule.\n\nBest regards,\nSurendra";
+      rawAnswer = essayText;
+      normalizedAnswer = { essay: essayText, wordCount: essayText.trim().split(/\s+/).length };
+      console.log(`   -> Authored Email Response:\n   "${essayText.slice(0, 100)}..."`);
     } else {
-      // Academic Discussion on Sin Taxes (matching Kaitlyn and Mikhail)
       essayText =
-        "I definitely support adding taxes to unhealthy products, aligning closely with Kaitlyn's perspective. Highly processed fast foods and sugary beverages are primary catalysts for escalating chronic illnesses, including cardiovascular disease and type 2 diabetes. Implementing targeted taxes discourages impulsive consumer purchases and exerts fiscal pressure on food corporations to formulate healthier recipes. Furthermore, municipal revenues generated from these measures can be strategically reinvested into community wellness initiatives and subsidies for fresh produce in underserved urban food deserts. While critics like Mikhail raise valid equity considerations regarding lower-income households, pairing sin taxes with targeted nutritional assistance guarantees an equitable, healthy, and economically sustainable future.";
+        "In response to the discussion on social mobility, I strongly agree with Kelly that educational access and merit-based career opportunities are fundamental pillars for upward mobility in contemporary societies. While socioeconomic background presents initial hurdles, systemic investments in public universities, need-based scholarships, and equitable hiring practices empower diligent individuals to overcome generational disadvantages. By providing equal educational opportunities, societies ensure talent and determination dictate life outcomes rather than inherited wealth.";
+      rawAnswer = essayText;
+      normalizedAnswer = { essay: essayText, wordCount: essayText.trim().split(/\s+/).length };
+      console.log(`   -> Authored Academic Discussion Response:\n   "${essayText.slice(0, 100)}..."`);
     }
-
-    const wordCount = essayText.trim().split(/\s+/).length;
-    console.log(`   -> Authored Essay Response (${wordCount} words):\n   "${essayText.slice(0, 100)}..."`);
 
     await attemptSessionService.saveResponse({
       attemptId,
       studentId: student.id,
       contentItemId: item.id,
-      rawAnswer: essayText,
-      normalizedAnswer: { essay: essayText, wordCount },
-      timeSpentMs: 120000,
+      rawAnswer,
+      normalizedAnswer,
+      timeSpentMs: 60000,
     });
-    console.log("   -> Essay response persisted to Supabase ✓");
+    console.log("   -> Writing response persisted to Supabase ✓");
   }
 
   // Advance to Speaking
