@@ -117,33 +117,12 @@ export function SpeakingRecorder({
       }
 
       if (!stream) {
-        // Resilient fallback: create Web Audio stream with active audio track so recording never throws or fails
-        const AudioCtxClass =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-        if (AudioCtxClass) {
-          try {
-            const ctx = new AudioCtxClass();
-            const dest = ctx.createMediaStreamDestination();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            gain.gain.value = 0.0001; // subtle live carrier
-            osc.connect(gain);
-            gain.connect(dest);
-            osc.start();
-            stream = dest.stream;
-          } catch (synthErr) {
-            console.warn("[SpeakingRecorder] Synthetic stream error:", synthErr);
-          }
-        }
-      }
-
-      if (!stream) {
         setShowManualInput(true);
         setErrorMessage("Microphone permission required. Please allow microphone access or type response.");
         setStage("idle");
         return;
       }
+
 
       mediaStreamRef.current = stream;
 
@@ -517,19 +496,7 @@ export function SpeakingRecorder({
           )}
         </div>
 
-        {/* Action Row: Prominent Next Button */}
-        {onNext && (
-          <div className="flex justify-end pt-4 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={disabled || stage === "recording" || stage === "uploading"}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#0f3b82] hover:bg-[#154694] disabled:opacity-40 px-8 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
-            >
-              {nextLabel || "Next >"}
-            </button>
-          </div>
-        )}
+
       </div>
     </div>
   );

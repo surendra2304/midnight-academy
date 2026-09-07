@@ -717,6 +717,19 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
               </>
             )}
           </button>
+          
+          {/* Submit Early Dev Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("Are you sure you want to end the test early and submit?")) {
+                handleFinalize().then(() => setIsTestEnded(true));
+              }
+            }}
+            className="ml-2 inline-flex items-center gap-1 rounded-full bg-rose-600 hover:bg-rose-700 px-4 py-1 text-xs font-bold text-white shadow-sm transition-all cursor-pointer"
+          >
+            Submit Early
+          </button>
         </div>
       </header>
 

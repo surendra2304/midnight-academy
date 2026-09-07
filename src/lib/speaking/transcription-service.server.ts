@@ -72,7 +72,6 @@ export class GeminiSpeechToTextProvider {
     };
 
     const transcript = (parsed.transcript || "").trim();
-    if (!transcript) throw new Error("Transcription provider returned an empty transcript.");
 
     return {
       transcript,

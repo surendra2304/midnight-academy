@@ -512,8 +512,8 @@ export async function seedTestGliderMoon() {
     },
     {
       q: "Why was the history class canceled?",
-      speakerImg: "/images/speakers/student-male-1.jpg",
-      gender: "male",
+      speakerImg: "/images/speakers/student-female-2.jpg",
+      gender: "female",
       options: [
         { key: "A", text: "The teacher is not feeling well.", correct: true },
         { key: "B", text: "I have other classes.", correct: false },
@@ -523,7 +523,7 @@ export async function seedTestGliderMoon() {
     },
     {
       q: "Would you like to try the appetizer special?",
-      speakerImg: "/images/speakers/student-male-1.jpg",
+      speakerImg: "/images/speakers/student-male-2.jpg",
       gender: "male",
       options: [
         { key: "A", text: "I brought a warm coat.", correct: false },
@@ -534,7 +534,7 @@ export async function seedTestGliderMoon() {
     },
     {
       q: "Have you made progress on the report?",
-      speakerImg: "/images/speakers/student-female-1.jpg",
+      speakerImg: "/images/speakers/student-female-3.jpg",
       gender: "female",
       options: [
         { key: "A", text: "They ended yesterday.", correct: false },
@@ -545,8 +545,8 @@ export async function seedTestGliderMoon() {
     },
     {
       q: "When is the deadline for the project?",
-      speakerImg: "/images/speakers/student-female-1.jpg",
-      gender: "female",
+      speakerImg: "/images/speakers/student-male-1.jpg",
+      gender: "male",
       options: [
         { key: "A", text: "Your plans were delayed.", correct: false },
         { key: "B", text: "I can't miss my train.", correct: false },
@@ -556,8 +556,8 @@ export async function seedTestGliderMoon() {
     },
     {
       q: "How do I extend my hotel reservation?",
-      speakerImg: "/images/speakers/student-male-1.jpg",
-      gender: "male",
+      speakerImg: "/images/speakers/student-female-1.jpg",
+      gender: "female",
       options: [
         { key: "A", text: "Maybe one more day.", correct: false },
         { key: "B", text: "I think that's right.", correct: false },
@@ -567,8 +567,8 @@ export async function seedTestGliderMoon() {
     },
     {
       q: "How can I update my user profile?",
-      speakerImg: "/images/speakers/student-female-1.jpg",
-      gender: "female",
+      speakerImg: "/images/speakers/student-male-2.jpg",
+      gender: "male",
       options: [
         { key: "A", text: "First, go to Settings.", correct: true },
         { key: "B", text: "You can submit it tomorrow.", correct: false },

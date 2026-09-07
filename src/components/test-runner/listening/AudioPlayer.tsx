@@ -469,7 +469,17 @@ export function AudioPlayer({
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleAudioEnded}
         onError={handleAudioError}
+        onPlay={() => {
+          setIsPlaying(true);
+          isPlayingRef.current = true;
+          if (playCount === 0) {
+            interactionRef.current.firstPlayedAt = new Date().toISOString();
+          }
+          interactionRef.current.playCount = Math.max(1, interactionRef.current.playCount);
+          interactionRef.current.lastPlayedAt = new Date().toISOString();
+        }}
         preload="auto"
+        autoPlay={autoPlay}
       />
 
       {/* Status & Replay Allowance Bar */}

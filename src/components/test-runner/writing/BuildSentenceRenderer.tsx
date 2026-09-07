@@ -40,7 +40,7 @@ export function BuildSentenceRenderer({
   const sentencePrefix =
     (payload.sentencePrefix as string) ||
     (payload.prefix as string) ||
-    "Unfortunately, I";
+    "";
 
   // TestGlider typically includes 1 distractor in the word bank (e.g. 5 words for 4 slots)
   const totalSlots =
@@ -205,19 +205,7 @@ export function BuildSentenceRenderer({
           </button>
         )}
 
-        {/* Question Action Row: Prominent Next Button */}
-        {onNext && (
-          <div className="flex justify-center pt-4">
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={disabled}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#0f3b82] hover:bg-[#154694] px-8 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
-            >
-              {nextLabel || "Next >"}
-            </button>
-          </div>
-        )}
+
       </div>
     </div>
   );
