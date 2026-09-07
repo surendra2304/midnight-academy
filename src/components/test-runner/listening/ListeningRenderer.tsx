@@ -205,7 +205,7 @@ export function ListeningRenderer({
             })}
           </div>
 
-          {/* Action Row: Flag Question & Prominent Next Button */}
+          {/* Action Row: Flag Question */}
           <div className="flex items-center justify-between pt-4 border-t border-slate-200/60">
             {onToggleFlag ? (
               <button
@@ -220,17 +220,6 @@ export function ListeningRenderer({
                 {isFlagged ? "Flagged for Review" : "Flag Question"}
               </button>
             ) : <div />}
-
-            {onNext && (
-              <button
-                type="button"
-                onClick={onNext}
-                disabled={disabled}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#0f3b82] hover:bg-[#154694] px-7 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
-              >
-                {nextLabel || "Next >"}
-              </button>
-            )}
           </div>
         </div>
       </div>
