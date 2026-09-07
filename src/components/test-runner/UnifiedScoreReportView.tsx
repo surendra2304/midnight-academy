@@ -543,6 +543,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                           audioUrl={payload.audioUrl as string}
                           speechText={(payload.transcript as string) || (payload.prompt as string)}
                           maxPlays={99}
+                          allowControls={true}
                         />
                         {payload.transcript ? (
                           <div className="mt-2">

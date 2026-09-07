@@ -16,6 +16,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
+import { TestGliderSubNav } from "@/components/TestGliderSubNav";
 import { PageShell } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { getStudentAnalyticsDashboard } from "@/lib/analytics/analytics.functions";
@@ -65,6 +66,7 @@ function HistoryPage() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <AppNav />
+        <TestGliderSubNav />
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
@@ -88,6 +90,7 @@ function HistoryPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AppNav />
+      <TestGliderSubNav />
       <PageShell>
         <div className="space-y-8 pb-16">
           {/* Header Banner */}

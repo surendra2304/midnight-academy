@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2, Sparkles, Target, ArrowRight } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
+import { TestGliderSubNav } from "@/components/TestGliderSubNav";
 import { PageShell } from "@/components/kit";
 import { getStudentPracticeQueue } from "@/lib/recommendations/recommendations.functions";
 import { PracticeQueueView } from "@/components/test-runner/PracticeQueueView";
@@ -154,6 +155,7 @@ function PracticePage() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <AppNav />
+        <TestGliderSubNav />
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
@@ -167,6 +169,7 @@ function PracticePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AppNav />
+      <TestGliderSubNav />
       <PageShell>
         <div className="space-y-6 pb-16">
           <div className="border-b border-border pb-4">

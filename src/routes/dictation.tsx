@@ -1,8 +1,9 @@
-﻿import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth } from "@/lib/auth-guard";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Headphones, Loader2, Sparkles, Volume2 } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
+import { TestGliderSubNav } from "@/components/TestGliderSubNav";
 import { PageShell } from "@/components/kit";
 import { DictationPlayer } from "@/components/dictation/DictationPlayer";
 import { getDictationItems, type DictationItem } from "@/lib/dictation/dictation.functions";
@@ -52,6 +53,7 @@ function DictationPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AppNav />
+      <TestGliderSubNav />
       <PageShell>
         <div className="space-y-8 pb-16">
           {/* Header Banner */}

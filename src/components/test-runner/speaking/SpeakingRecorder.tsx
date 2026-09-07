@@ -29,6 +29,8 @@ export interface SpeakingRecorderProps {
   responseLimitSeconds?: number;
   isExamMode?: boolean;
   attemptId?: string;
+  onNext?: () => void;
+  nextLabel?: string;
 }
 
 export function SpeakingRecorder({
@@ -40,6 +42,8 @@ export function SpeakingRecorder({
   responseLimitSeconds = 45,
   isExamMode = false,
   attemptId,
+  onNext,
+  nextLabel,
 }: SpeakingRecorderProps) {
   const isListenRepeat = item.itemType === "listen_repeat";
   const payload = (item.payload || {}) as Record<string, unknown>;
@@ -512,6 +516,20 @@ export function SpeakingRecorder({
             </div>
           )}
         </div>
+
+        {/* Action Row: Prominent Next Button */}
+        {onNext && (
+          <div className="flex justify-end pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={disabled || stage === "recording" || stage === "uploading"}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#0f3b82] hover:bg-[#154694] disabled:opacity-40 px-8 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
+            >
+              {nextLabel || "Next >"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

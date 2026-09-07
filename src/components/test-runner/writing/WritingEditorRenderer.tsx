@@ -11,6 +11,8 @@ export interface WritingEditorRendererProps {
   item: ClientContentItem;
   currentAnswer: string | null;
   onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
+  onNext?: () => void;
+  nextLabel?: string;
   disabled?: boolean;
 }
 
@@ -18,6 +20,8 @@ export function WritingEditorRenderer({
   item,
   currentAnswer,
   onAnswerChange,
+  onNext,
+  nextLabel,
   disabled = false,
 }: WritingEditorRendererProps) {
   const isEmail = item.itemType === "write_email";
@@ -291,8 +295,21 @@ export function WritingEditorRenderer({
         </div>
 
         <div className="mt-4 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <span>Target length: {isEmail ? "80–120 words" : "100+ words"}</span>
-          <span className="font-medium text-emerald-600">Continuous Autosave Active ✓</span>
+          <div className="flex items-center gap-3">
+            <span>Target length: {isEmail ? "80–120 words" : "100+ words"}</span>
+            <span className="font-medium text-emerald-600">Continuous Autosave Active ✓</span>
+          </div>
+
+          {onNext && (
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={disabled}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#0f3b82] hover:bg-[#154694] px-7 py-2 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
+            >
+              {nextLabel || "Next >"}
+            </button>
+          )}
         </div>
       </section>
     </div>

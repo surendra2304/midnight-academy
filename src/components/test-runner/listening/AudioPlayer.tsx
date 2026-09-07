@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, Volume2, AlertCircle, Loader2 } from "lucide-react";
+import { Play, Pause, Volume2, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
 import type { AudioInteractionLog } from "@/lib/audio/audio-service";
 
 export interface AudioPlayerProps {
@@ -15,8 +15,10 @@ export interface AudioPlayerProps {
   gender?: "female" | "male" | "auto" | undefined;
   maxPlays?: number | undefined; // e.g. 1 or 2 (TOEFL listening items limit replays)
   onInteractionChange?: ((log: AudioInteractionLog) => void) | undefined;
+  onEnded?: (() => void) | undefined;
   disabled?: boolean | undefined;
   autoPlay?: boolean | undefined;
+  allowControls?: boolean | undefined;
 }
 
 interface DialogueTurn {
@@ -29,10 +31,12 @@ export function AudioPlayer({
   audioUrl,
   speechText,
   gender = "auto",
-  maxPlays = 2,
+  maxPlays = 1,
   onInteractionChange,
+  onEnded,
   disabled = false,
-  autoPlay = false,
+  autoPlay = true,
+  allowControls = false,
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speechTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -276,6 +280,7 @@ export function AudioPlayer({
     interactionRef.current.completedListen = true;
     interactionRef.current.timeListenedMs += (duration || 0) * 1000;
     notifyInteraction();
+    if (onEnded) onEnded();
   };
 
   const handleAudioError = () => {
@@ -327,6 +332,7 @@ export function AudioPlayer({
         interactionRef.current.completedListen = true;
         interactionRef.current.timeListenedMs += estDuration * 1000;
         notifyInteraction();
+        if (onEnded) onEnded();
         return;
       }
 
@@ -477,9 +483,23 @@ export function AudioPlayer({
             </span>
           )}
         </div>
-        <span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-[11px] text-slate-700">
-          Plays Remaining: <strong className="text-blue-600 font-bold">{remainingPlays}</strong> of {maxPlays}
-        </span>
+        <div>
+          {allowControls ? (
+            <span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-[11px] text-slate-700">
+              Plays Remaining: <strong className="text-blue-600 font-bold">{remainingPlays}</strong> of {maxPlays}
+            </span>
+          ) : isPlaying ? (
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 animate-pulse">
+              <span className="size-2 rounded-full bg-blue-600" /> Playing Audio...
+            </span>
+          ) : playCount > 0 ? (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
+              <CheckCircle2 className="size-3.5" /> Stimulus Completed
+            </span>
+          ) : (
+            <span className="text-[11px] text-slate-400 font-medium">Automatic Playback</span>
+          )}
+        </div>
       </div>
 
       {/* Error state */}
@@ -489,42 +509,110 @@ export function AudioPlayer({
             <AlertCircle className="size-4 shrink-0" />
             <span>{error}</span>
           </div>
+          <button
+            type="button"
+            onClick={handlePlay}
+            className="rounded bg-rose-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-rose-700"
+          >
+            Retry
+          </button>
         </div>
       ) : null}
 
-      {/* Playback Controls & Progress */}
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          disabled={disabled || isLoading || (remainingPlays <= 0 && !isPlaying)}
-          onClick={isPlaying ? handlePause : handlePlay}
-          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-all hover:bg-blue-700 hover:scale-105 active:scale-95 disabled:opacity-40"
-          aria-label={isPlaying ? "Pause Audio" : "Play Audio"}
-        >
-          {isLoading ? (
-            <Loader2 className="size-5 animate-spin" />
-          ) : isPlaying ? (
-            <Pause className="size-5" />
-          ) : (
-            <Play className="size-5 ml-0.5 fill-current" />
-          )}
-        </button>
+      {/* Playback Display: Locked Stimulus (No Student Pause/Scrub) vs Controlled Review */}
+      {!allowControls ? (
+        /* Locked Exam Stimulus: Student cannot pause, seek, or rewind */
+        <div className="space-y-3 pt-1 select-none">
+          <div className="flex items-center justify-between">
+            {isPlaying ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 h-5">
+                  {[40, 80, 100, 55, 90, 45, 85, 35, 70].map((h, i) => (
+                    <div
+                      key={i}
+                      className="w-1 rounded-full bg-blue-600 animate-pulse"
+                      style={{
+                        height: `${h}%`,
+                        animationDelay: `${i * 90}ms`,
+                        animationDuration: "600ms",
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-bold text-slate-800">
+                  Listening to audio stimulus...
+                </span>
+              </div>
+            ) : playCount > 0 ? (
+              <div className="flex items-center gap-2 text-emerald-700">
+                <CheckCircle2 className="size-4 text-emerald-600" />
+                <span className="text-xs font-semibold">Audio stimulus completed</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between w-full">
+                <span className="text-xs text-slate-500 font-medium animate-pulse">
+                  Audio stimulus playing shortly...
+                </span>
+                <button
+                  type="button"
+                  onClick={handlePlay}
+                  className="rounded-full bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs font-bold text-white shadow-xs transition-all cursor-pointer"
+                >
+                  <Play className="size-3 mr-1 inline fill-current" /> Play Audio
+                </button>
+              </div>
+            )}
 
-        {/* Progress Bar */}
-        <div className="flex-1 space-y-1.5">
+            <div className="text-[11px] font-mono text-slate-500 font-semibold">
+              <span>{formatSeconds(currentTime)}</span> / <span>{formatSeconds(duration)}</span>
+            </div>
+          </div>
+
+          {/* Read-Only Progress Bar (Student cannot scrub or seek) */}
           <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100">
             <div
-              className="absolute top-0 bottom-0 left-0 bg-blue-600 transition-all duration-200"
-              style={{ width: `${progressPercent}%` }}
+              className={`absolute top-0 bottom-0 left-0 transition-all duration-200 ${
+                playCount > 0 && !isPlaying ? "bg-emerald-600" : "bg-blue-600"
+              }`}
+              style={{ width: `${playCount > 0 && !isPlaying ? 100 : progressPercent}%` }}
             />
           </div>
+        </div>
+      ) : (
+        /* Interactive Review Controls (for score report & post-test review) */
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            disabled={disabled || isLoading || (remainingPlays <= 0 && !isPlaying)}
+            onClick={isPlaying ? handlePause : handlePlay}
+            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-all hover:bg-blue-700 hover:scale-105 active:scale-95 disabled:opacity-40"
+            aria-label={isPlaying ? "Pause Audio" : "Play Audio"}
+          >
+            {isLoading ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : isPlaying ? (
+              <Pause className="size-5" />
+            ) : (
+              <Play className="size-5 ml-0.5 fill-current" />
+            )}
+          </button>
 
-          <div className="flex justify-between text-[11px] font-mono text-slate-500 font-semibold">
-            <span>{formatSeconds(currentTime)}</span>
-            <span>{formatSeconds(duration)}</span>
+          {/* Progress Bar */}
+          <div className="flex-1 space-y-1.5">
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="absolute top-0 bottom-0 left-0 bg-blue-600 transition-all duration-200"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+
+            <div className="flex justify-between text-[11px] font-mono text-slate-500 font-semibold">
+              <span>{formatSeconds(currentTime)}</span>
+              <span>{formatSeconds(duration)}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

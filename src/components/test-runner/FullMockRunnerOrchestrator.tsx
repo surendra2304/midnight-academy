@@ -26,6 +26,8 @@ import {
   X,
   Flag,
   Headphones,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -65,7 +67,23 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
   const [hideTime, setHideTime] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [showSaveExitModal, setShowSaveExitModal] = useState(false);
+  const [showEarlySubmitModal, setShowEarlySubmitModal] = useState(false);
+  const [isFinalizingAI, setIsFinalizingAI] = useState(false);
   const [isTestEnded, setIsTestEnded] = useState(state.status === "completed");
+
+  const handleEarlySubmit = async () => {
+    try {
+      setIsFinalizingAI(true);
+      setShowEarlySubmitModal(false);
+      toast.info("Submitting test and starting Gemini AI evaluation...");
+      await handleFinalize();
+      setIsTestEnded(true);
+    } catch (err: unknown) {
+      console.error("Early submit error:", err);
+      toast.error(`Evaluation Error: ${(err as Error)?.message || "Failed to finalize"}`);
+      setIsFinalizingAI(false);
+    }
+  };
 
   const micStreamRef = React.useRef<MediaStream | null>(null);
   const audioCtxRef = React.useRef<AudioContext | null>(null);
@@ -515,6 +533,8 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
     }
   };
 
+  const nextLabel = isLastItem ? (isLastSection ? "Submit Exam" : "Continue >") : "Next >";
+
   // Render Section-specific Item Component
   const renderItemStimulus = () => {
     if (!currentItem) return null;
@@ -526,6 +546,8 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           item={currentItem}
           currentAnswer={currentResponse?.rawAnswer || null}
           onAnswerChange={handleAnswerChange}
+          onNext={handleNextAction}
+          nextLabel={nextLabel}
         />
       );
     }
@@ -540,6 +562,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           onAnswerChange={handleAnswerChange}
           onToggleFlag={handleToggleFlag}
           onNext={handleNextAction}
+          nextLabel={nextLabel}
         />
       );
     }
@@ -559,6 +582,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           onAnswerChange={handleAnswerChange}
           onToggleFlag={handleToggleFlag}
           onNext={handleNextAction}
+          nextLabel={nextLabel}
         />
       );
     }
@@ -570,6 +594,8 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           item={currentItem}
           currentAnswer={currentResponse?.rawAnswer || null}
           onAnswerChange={handleAnswerChange}
+          onNext={handleNextAction}
+          nextLabel={nextLabel}
         />
       );
     }
@@ -581,6 +607,8 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           item={currentItem}
           currentAnswer={currentResponse?.rawAnswer || null}
           onAnswerChange={handleAnswerChange}
+          onNext={handleNextAction}
+          nextLabel={nextLabel}
         />
       );
     }
@@ -594,6 +622,8 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           onAnswerChange={handleAnswerChange}
           isExamMode={blueprint.examMode !== "practice"}
           attemptId={state.attemptId}
+          onNext={handleNextAction}
+          nextLabel={nextLabel}
         />
       );
     }
@@ -605,14 +635,23 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
     <div className="flex min-h-screen flex-col bg-[#e8f2f9] text-slate-900">
       {/* 1. TestGlider Top Header Bar (#0f3b82) */}
       <header className="flex h-12 items-center justify-between bg-[#0f3b82] px-6 text-white shadow-sm select-none">
-        {/* Left: [Save & Exit] Button */}
-        <div>
+        {/* Left: [Save & Exit] & [Submit for AI Evaluation] Buttons */}
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => setShowSaveExitModal(true)}
             className="rounded-full bg-white px-4 py-1 text-xs font-bold text-[#0f3b82] shadow-xs hover:bg-slate-100 transition-all cursor-pointer"
           >
             Save &amp; Exit
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowEarlySubmitModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1 text-xs font-bold text-white shadow-xs transition-all cursor-pointer"
+          >
+            <Sparkles className="size-3.5 text-yellow-300" />
+            <span>Submit for AI Evaluation</span>
           </button>
         </div>
 
@@ -810,7 +849,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
               <button
                 type="button"
                 onClick={() => setShowSaveExitModal(false)}
-                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Return to Exam
               </button>
@@ -819,12 +858,65 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
                 onClick={() => {
                   window.location.href = "/dashboard";
                 }}
-                className="rounded-lg bg-[#0f3b82] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#154694]"
+                className="rounded-lg bg-[#0f3b82] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#154694] cursor-pointer"
               >
                 Exit to Dashboard
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 6. Early Submit for Immediate Gemini AI Evaluation Modal */}
+      {showEarlySubmitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs select-none">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-2.5 text-emerald-700">
+              <Sparkles className="size-5 text-emerald-600" />
+              <h3 className="text-base font-bold text-slate-900">
+                Submit for Immediate AI Evaluation?
+              </h3>
+            </div>
+            <p className="text-xs leading-relaxed text-slate-600">
+              You can finalize your test right now with your responses so far. The Gemini AI
+              evaluation pipeline will immediately score your answers, evaluate speech and writing
+              rubrics, and produce your complete official score report.
+            </p>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs text-emerald-800">
+              <strong>Current Progress:</strong> Section {state.currentSectionIndex + 1} of{" "}
+              {blueprint.sections.length} · Question {state.currentItemIndex + 1}
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowEarlySubmitModal(false)}
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                Return to Exam
+              </button>
+              <button
+                type="button"
+                onClick={handleEarlySubmit}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Sparkles className="size-3.5" /> Submit &amp; Evaluate Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Fullscreen AI Evaluating Overlay */}
+      {isFinalizingAI && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/80 text-white backdrop-blur-xs p-6 select-none">
+          <div className="relative size-16 mb-4">
+            <div className="size-16 rounded-full border-4 border-slate-600" />
+            <div className="absolute top-0 left-0 size-16 rounded-full border-4 border-transparent border-t-emerald-400 animate-spin" />
+          </div>
+          <h3 className="text-lg font-bold text-white">Running Gemini AI Evaluation...</h3>
+          <p className="text-xs text-slate-300 mt-2 max-w-sm text-center leading-relaxed">
+            Please wait while Gemini evaluates your rubric traits and generates your official score report.
+          </p>
         </div>
       )}
     </div>

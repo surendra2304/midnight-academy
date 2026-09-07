@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, BookOpen, Clock, Loader2, Play, Sparkles, Target, Trophy } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
+import { TestGliderSubNav } from "@/components/TestGliderSubNav";
 import { PageShell } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { getStudentAnalyticsDashboard } from "@/lib/analytics/analytics.functions";
@@ -69,6 +70,7 @@ function Dashboard() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <AppNav />
+        <TestGliderSubNav />
         <PageShell>
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="size-8 animate-spin text-primary" />
@@ -84,19 +86,9 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AppNav />
+      <TestGliderSubNav />
       <PageShell>
         <div className="space-y-10 pb-16">
-          {/* Membership & Usage Quotas */}
-          {membership ? (
-            <MembershipCard
-              currentTier={membership.tier}
-              quotas={membership.quotas}
-              onUpgradeSuccess={() => {
-                setMembership((prev: any) => ({ ...prev, tier: "member", isUnlimited: true }));
-              }}
-            />
-          ) : null}
-
           {/* Quick Start Card Banner */}
           <section className="rounded-2xl border border-border bg-gradient-to-r from-card/80 via-card/50 to-card/80 p-8 shadow-lg flex flex-wrap items-center justify-between gap-6">
             <div>

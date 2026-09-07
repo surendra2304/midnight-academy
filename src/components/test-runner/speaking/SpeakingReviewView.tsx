@@ -131,7 +131,7 @@ export function SpeakingReviewView({ reviews }: SpeakingReviewViewProps) {
                     Your Spoken Recording:
                   </span>
                   {audioUrl ? (
-                    <AudioPlayer audioUrl={audioUrl} maxPlays={99} />
+                    <AudioPlayer audioUrl={audioUrl} maxPlays={99} allowControls={true} />
                   ) : (
                     <p className="text-muted-foreground italic">Audio recording uploaded.</p>
                   )}

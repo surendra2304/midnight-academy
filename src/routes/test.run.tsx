@@ -96,7 +96,12 @@ function RunTest() {
     <FullMockRunnerOrchestrator
       initialBlueprint={blueprint}
       initialSnapshot={initialState}
-      onFinalized={() => navigate({ to: `/result/${attemptId}` })}
+      onFinalized={(finalAttemptId) =>
+        navigate({
+          to: "/result/$attemptId",
+          params: { attemptId: (finalAttemptId as string) || attemptId! },
+        })
+      }
     />
   );
 }

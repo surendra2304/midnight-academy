@@ -13,6 +13,8 @@ export interface CompleteWordsRendererProps {
   item: ClientContentItem;
   currentAnswer: string | null;
   onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
+  onNext?: () => void;
+  nextLabel?: string;
   disabled?: boolean;
 }
 
@@ -27,6 +29,8 @@ export function CompleteWordsRenderer({
   item,
   currentAnswer,
   onAnswerChange,
+  onNext,
+  nextLabel,
   disabled = false,
 }: CompleteWordsRendererProps) {
   const passageTemplate =
@@ -213,6 +217,20 @@ export function CompleteWordsRenderer({
       <div className="text-base sm:text-lg leading-[2.4] font-normal text-slate-900 text-left bg-white/40 p-8 sm:p-10 rounded-2xl shadow-xs border border-blue-100/60">
         {renderedElements}
       </div>
+
+      {/* Question Action Row: Prominent Next Button */}
+      {onNext && (
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={disabled}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#0f3b82] hover:bg-[#154694] px-8 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
+          >
+            {nextLabel || "Next >"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

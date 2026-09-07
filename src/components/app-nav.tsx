@@ -129,22 +129,22 @@ export function AppNav({ admin }: { admin?: boolean } = {}) {
           {/* Right Header Navigation: Reviews, Blog, Community, Purchase, Profile */}
           <div className="flex items-center gap-6">
             <Link
-              to="/lessons"
+              to="/history"
               className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
             >
-              Reviews
+              Test Records
             </Link>
             <Link
               to="/lessons"
               className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
             >
-              Blog
+              Lessons
             </Link>
             <Link
               to="/dashboard"
               className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
             >
-              Community
+              Study Center
             </Link>
 
             <ProfileMenu admin={false} />

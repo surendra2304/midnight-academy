@@ -19,6 +19,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
+import { TestGliderSubNav } from "@/components/TestGliderSubNav";
 import { Button } from "@/components/ui/button";
 import { getPublishedTests } from "@/lib/practice.functions";
 import { startToeflAttempt } from "@/lib/tests/engine.functions";
@@ -178,45 +179,7 @@ function TestCatalog() {
       <AppNav />
 
       {/* TestGlider 7-Category Tab Navigation */}
-      <div className="border-b border-slate-200 bg-white shadow-xs select-none">
-        <div className="mx-auto flex max-w-6xl items-center justify-start gap-8 px-6 py-3 overflow-x-auto no-scrollbar">
-          {[
-            { id: "study-center", label: "Study Center", icon: Calendar, to: "/dashboard" },
-            { id: "mock-tests", label: "Mock Tests", icon: Briefcase, to: "/test" },
-            { id: "practice-questions", label: "Practice Questions", icon: Puzzle, to: "/practice" },
-            { id: "test-records", label: "Test Records", icon: ClipboardList, to: "/history" },
-            { id: "lessons", label: "Lessons", icon: PlaySquare, to: "/lessons" },
-            { id: "shadowing", label: "Shadowing", icon: Mic, to: "/shadowing" },
-            { id: "dictation", label: "Dictation", icon: AudioLines, to: "/dictation" },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = tab.id === activeNavTab;
-            return (
-              <Link
-                key={tab.id}
-                to={tab.to}
-                onClick={() => setActiveNavTab(tab.id)}
-                className={`flex flex-col items-center gap-1.5 transition-all text-xs font-semibold py-1 px-3 ${
-                  isActive
-                    ? "text-[#1d4ed8]"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <div
-                  className={`flex size-11 items-center justify-center rounded-2xl transition-all ${
-                    isActive
-                      ? "bg-[#eaf1fb] text-[#1d4ed8] shadow-xs"
-                      : "bg-slate-50 text-slate-400 hover:bg-slate-100"
-                  }`}
-                >
-                  <Icon className="size-5" />
-                </div>
-                <span>{tab.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+      <TestGliderSubNav />
 
       <main className="mx-auto max-w-6xl px-6 py-10 space-y-10">
         {/* Section 1: TestGlider vs. Actual Score */}

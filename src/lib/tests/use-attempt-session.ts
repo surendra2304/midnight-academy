@@ -200,6 +200,7 @@ export function useAttemptSession({
 
     try {
       setIsSaving(true);
+      await flushPendingSave();
       await finalizeToeflAttempt({
         data: { attemptId: stateRef.current.attemptId },
       });
@@ -208,10 +209,11 @@ export function useAttemptSession({
       }
     } catch (err) {
       console.error("Failed to finalize attempt:", err);
+      throw err;
     } finally {
       setIsSaving(false);
     }
-  }, [dispatch, onFinalized]);
+  }, [dispatch, flushPendingSave, onFinalized]);
 
   const currentSection = blueprint.sections[state.currentSectionIndex];
   const currentItem = currentSection?.items[state.currentItemIndex];

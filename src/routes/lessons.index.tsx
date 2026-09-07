@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
+import { TestGliderSubNav } from "@/components/TestGliderSubNav";
 import { PageShell } from "@/components/kit";
 import { getLessons, type LessonItem } from "@/lib/lessons/lessons.functions";
 
@@ -66,6 +67,7 @@ function LessonsIndexPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AppNav />
+      <TestGliderSubNav />
       <PageShell>
         <div className="space-y-8 pb-16">
           {/* Hero Banner */}

@@ -138,7 +138,7 @@ export function ListeningReviewView({
               {/* Audio Playback In Review */}
               {audioUrl ? (
                 <div className="rounded-lg border border-border/60 bg-background/40 p-4">
-                  <AudioPlayer audioUrl={audioUrl} maxPlays={99} />
+                  <AudioPlayer audioUrl={audioUrl} maxPlays={99} allowControls={true} />
                 </div>
               ) : null}
 

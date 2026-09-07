@@ -17,6 +17,7 @@ export interface ListeningRendererProps {
   onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
   onToggleFlag?: () => void;
   onNext?: () => void;
+  nextLabel?: string;
   disabled?: boolean;
 }
 
@@ -27,6 +28,7 @@ export function ListeningRenderer({
   onAnswerChange,
   onToggleFlag,
   onNext,
+  nextLabel,
   disabled = false,
 }: ListeningRendererProps) {
   const audioUrl = item.payload?.audioUrl as string | undefined;
@@ -203,9 +205,9 @@ export function ListeningRenderer({
             })}
           </div>
 
-          {/* Action Row: Flag Question Only (No duplicate Next button) */}
-          {onToggleFlag && (
-            <div className="flex items-center justify-end pt-3 border-t border-slate-200/60">
+          {/* Action Row: Flag Question & Prominent Next Button */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200/60">
+            {onToggleFlag ? (
               <button
                 type="button"
                 onClick={onToggleFlag}
@@ -217,8 +219,19 @@ export function ListeningRenderer({
                 <Flag className="size-3.5" />
                 {isFlagged ? "Flagged for Review" : "Flag Question"}
               </button>
-            </div>
-          )}
+            ) : <div />}
+
+            {onNext && (
+              <button
+                type="button"
+                onClick={onNext}
+                disabled={disabled}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#0f3b82] hover:bg-[#154694] px-7 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
+              >
+                {nextLabel || "Next >"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
