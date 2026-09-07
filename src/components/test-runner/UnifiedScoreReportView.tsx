@@ -433,6 +433,62 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
               const correctOpt = r.options.find((o) => o.is_correct);
               const payload = (item.payload || {}) as Record<string, unknown>;
 
+              // Safe extraction of email stimulus fields (handles object or string representations)
+              const emailHeaderObj = (
+                typeof payload.emailHeader === "object" && payload.emailHeader !== null
+                  ? payload.emailHeader
+                  : typeof payload.email === "object" && payload.email !== null
+                  ? payload.email
+                  : {}
+              ) as Record<string, unknown>;
+
+              const emailTo =
+                typeof emailHeaderObj.to === "string"
+                  ? emailHeaderObj.to
+                  : typeof payload.to === "string"
+                  ? payload.to
+                  : undefined;
+              const emailFrom =
+                typeof emailHeaderObj.from === "string"
+                  ? emailHeaderObj.from
+                  : typeof payload.from === "string"
+                  ? payload.from
+                  : undefined;
+              const emailDate =
+                typeof emailHeaderObj.date === "string"
+                  ? emailHeaderObj.date
+                  : typeof payload.date === "string"
+                  ? payload.date
+                  : undefined;
+              const emailSubject =
+                typeof emailHeaderObj.subject === "string"
+                  ? emailHeaderObj.subject
+                  : typeof payload.subject === "string"
+                  ? payload.subject
+                  : undefined;
+
+              const isEmailStimulus = Boolean(
+                emailTo ||
+                  emailFrom ||
+                  emailDate ||
+                  emailSubject ||
+                  payload.format === "email" ||
+                  payload.contextType === "email" ||
+                  Boolean(payload.emailHeader) ||
+                  (payload.email && typeof payload.email === "object"),
+              );
+
+              let emailBody = "";
+              if (typeof payload.email === "string") {
+                emailBody = payload.email;
+              } else if (typeof emailHeaderObj.body === "string") {
+                emailBody = emailHeaderObj.body;
+              } else if (typeof payload.passage === "string") {
+                emailBody = payload.passage;
+              } else if (typeof payload.text === "string") {
+                emailBody = payload.text;
+              }
+
               // Calculate word count for written responses
               const wordCount = r.raw_answer
                 ? r.raw_answer.trim().split(/\s+/).filter(Boolean).length
@@ -484,55 +540,58 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                   {/* PROMPT / PASSAGE STIMULUS */}
                   <div className="rounded-xl bg-muted/30 border border-border p-5 text-xs text-foreground/90 space-y-2">
                     {payload.title ? (
-                      <h4 className="font-bold text-sm text-foreground">{payload.title as string}</h4>
+                      <h4 className="font-bold text-sm text-foreground">
+                        {typeof payload.title === "string" ? payload.title : ""}
+                      </h4>
                     ) : null}
 
                     {payload.prompt ? (
                       <p className="font-semibold text-foreground text-xs leading-relaxed">
-                        {payload.prompt as string}
+                        {typeof payload.prompt === "string" ? payload.prompt : ""}
                       </p>
                     ) : null}
 
                     {/* Email Stimulus Renderer */}
-                    {payload.email ? (
+                    {isEmailStimulus ? (
                       <div className="my-3 rounded-lg border border-teal-300 bg-teal-50/50 dark:bg-teal-950/20 p-4 font-mono text-[11px] space-y-1">
-                        {Boolean(payload.to) && (
+                        {emailTo && (
                           <p>
                             <span className="font-bold text-teal-800 dark:text-teal-300">To:</span>{" "}
-                            {payload.to as string}
+                            {emailTo}
                           </p>
                         )}
-                        {Boolean(payload.from) && (
+                        {emailFrom && (
                           <p>
                             <span className="font-bold text-teal-800 dark:text-teal-300">From:</span>{" "}
-                            {payload.from as string}
+                            {emailFrom}
                           </p>
                         )}
-                        {Boolean(payload.date) && (
+                        {emailDate && (
                           <p>
                             <span className="font-bold text-teal-800 dark:text-teal-300">Date:</span>{" "}
-                            {payload.date as string}
+                            {emailDate}
                           </p>
                         )}
-                        {Boolean(payload.subject) && (
+                        {emailSubject && (
                           <p>
                             <span className="font-bold text-teal-800 dark:text-teal-300">
                               Subject:
                             </span>{" "}
-                            {payload.subject as string}
+                            {emailSubject}
                           </p>
                         )}
-                        <hr className="my-2 border-teal-200 dark:border-teal-800" />
-                        <p className="font-sans text-xs whitespace-pre-line text-foreground">
-                          {payload.email as string}
-                        </p>
+                        {emailBody && (
+                          <>
+                            <hr className="my-2 border-teal-200 dark:border-teal-800" />
+                            <p className="font-sans text-xs whitespace-pre-line text-foreground">
+                              {emailBody}
+                            </p>
+                          </>
+                        )}
                       </div>
-                    ) : null}
-
-                    {/* Academic Passage Stimulus */}
-                    {payload.passage ? (
+                    ) : payload.passage ? (
                       <div className="my-3 rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-muted-foreground whitespace-pre-line max-h-60 overflow-y-auto">
-                        {payload.passage as string}
+                        {typeof payload.passage === "string" ? payload.passage : ""}
                       </div>
                     ) : null}
 
@@ -720,7 +779,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                       </div>
 
                       {/* Evaluated Traits */}
-                      {evalObj?.traits ? (
+                      {evalObj?.traits && typeof evalObj.traits === "object" ? (
                         <div className="rounded-xl border border-border bg-background p-4 space-y-3">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                             Rubric Breakdown (Pronunciation, Fluency & Grammar)
@@ -732,7 +791,13 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                                   {trait.replace(/_/g, " ")}
                                 </span>
                                 <span className="text-base font-black text-foreground mt-0.5 block">
-                                  {typeof val === "number" ? val.toFixed(1) : val}
+                                  {typeof val === "number"
+                                    ? val.toFixed(1)
+                                    : typeof val === "string"
+                                    ? val
+                                    : typeof (val as Record<string, unknown>)?.score === "number"
+                                    ? ((val as Record<string, unknown>).score as number).toFixed(1)
+                                    : ""}
                                 </span>
                               </div>
                             ))}
@@ -755,11 +820,14 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                   )}
 
                   {/* NEXT ACTION RECOMMENDATIONS FOR THIS ITEM */}
-                  {evalObj?.next_actions && evalObj.next_actions.length > 0 ? (
+                  {Array.isArray(evalObj?.next_actions) && evalObj.next_actions.length > 0 ? (
                     <div className="pt-2 border-t border-border/40 text-xs flex items-center gap-2 text-muted-foreground">
                       <Target className="size-3.5 text-primary shrink-0" />
                       <span>
-                        <strong>Key Takeaway:</strong> {evalObj.next_actions[0]}
+                        <strong>Key Takeaway:</strong>{" "}
+                        {typeof evalObj.next_actions[0] === "string"
+                          ? evalObj.next_actions[0]
+                          : JSON.stringify(evalObj.next_actions[0])}
                       </span>
                     </div>
                   ) : null}

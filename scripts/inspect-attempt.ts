@@ -1,31 +1,18 @@
-import { createClient } from "@supabase/supabase-js";
 import "dotenv/config";
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY!;
-const supabase = createClient(supabaseUrl, supabaseSecretKey);
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SECRET_KEY!
+);
 
-async function inspect() {
-  const attemptId = "c50fb940-0624-475c-9149-4d174122fe8f";
-  const { data: att } = await supabase
-    .from("attempts")
+async function run() {
+  const { data: it } = await supabase
+    .from("content_items")
     .select("*")
-    .eq("id", attemptId)
+    .eq("id", "c5010000-0000-0000-0000-000000000001")
     .single();
-  console.log("Attempt:", JSON.stringify(att, null, 2));
-
-  const { data: secs } = await supabase
-    .from("attempt_sections")
-    .select("*, sections(*)")
-    .eq("attempt_id", attemptId)
-    .order("created_at", { ascending: true });
-  console.log("Attempt Sections:", JSON.stringify(secs, null, 2));
-
-  const { data: resps } = await supabase
-    .from("responses")
-    .select("*")
-    .in("attempt_section_id", (secs ?? []).map((s) => s.id));
-  console.log("Responses:", JSON.stringify(resps, null, 2));
+  console.log("Entire Item:", JSON.stringify(it, null, 2));
 }
 
-inspect();
+run();

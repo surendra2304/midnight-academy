@@ -20,6 +20,27 @@ export const Route = createFileRoute("/result/$attemptId")({
       },
     ],
   }),
+  errorComponent: ({ error, reset }) => (
+    <div className="min-h-screen bg-background text-foreground">
+      <AppNav />
+      <PageShell>
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center space-y-4 max-w-lg mx-auto mt-12">
+          <h2 className="text-lg font-bold text-destructive">Unable to render score report</h2>
+          <p className="text-sm text-muted-foreground">{error.message}</p>
+          <div className="flex justify-center gap-3">
+            <Button onClick={() => reset()} variant="default" size="sm">
+              Try again
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/dashboard">
+                <ArrowLeft className="size-3.5 mr-1" /> Return to Dashboard
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </PageShell>
+    </div>
+  ),
   component: ResultPage,
 });
 
