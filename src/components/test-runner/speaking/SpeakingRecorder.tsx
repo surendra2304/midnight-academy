@@ -305,12 +305,9 @@ export function SpeakingRecorder({
           </span>
         </div>
 
-        {/* Audio Stimulus Player */}
+        {/* Audio Stimulus Player (Hidden visually, plays automatically) */}
         {(audioSource || speechText) && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2">
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-              Audio Stimulus:
-            </span>
+          <div className="hidden">
             <AudioPlayer
               key={item.id}
               audioUrl={audioSource}

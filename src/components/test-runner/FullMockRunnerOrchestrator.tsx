@@ -541,29 +541,33 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
 
     if (currentItem.itemType === "complete_words") {
       return (
-        <CompleteWordsRenderer
-          key={currentItem.id}
-          item={currentItem}
-          currentAnswer={currentResponse?.rawAnswer || null}
-          onAnswerChange={handleAnswerChange}
-          onNext={handleNextAction}
-          nextLabel={nextLabel}
-        />
+        <div key={`wrapper-${currentItem.id}`} className="h-full w-full">
+          <CompleteWordsRenderer
+            key={currentItem.id}
+            item={currentItem}
+            currentAnswer={currentResponse?.rawAnswer || null}
+            onAnswerChange={handleAnswerChange}
+            onNext={handleNextAction}
+            nextLabel={nextLabel}
+          />
+        </div>
       );
     }
 
     if (currentItem.itemType === "read_daily_life" || currentItem.itemType === "read_academic") {
       return (
-        <SplitReadingRenderer
-          key={currentItem.id}
-          item={currentItem}
-          currentAnswer={currentResponse?.rawAnswer || null}
-          isFlagged={Boolean(currentResponse?.isFlagged)}
-          onAnswerChange={handleAnswerChange}
-          onToggleFlag={handleToggleFlag}
-          onNext={handleNextAction}
-          nextLabel={nextLabel}
-        />
+        <div key={`wrapper-${currentItem.id}`} className="h-full w-full">
+          <SplitReadingRenderer
+            key={currentItem.id}
+            item={currentItem}
+            currentAnswer={currentResponse?.rawAnswer || null}
+            isFlagged={Boolean(currentResponse?.isFlagged)}
+            onAnswerChange={handleAnswerChange}
+            onToggleFlag={handleToggleFlag}
+            onNext={handleNextAction}
+            nextLabel={nextLabel}
+          />
+        </div>
       );
     }
 
@@ -574,57 +578,65 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
       currentItem.itemType === "listen_academic_talk"
     ) {
       return (
-        <ListeningRenderer
-          key={currentItem.id}
-          item={currentItem}
-          currentAnswer={currentResponse?.rawAnswer || null}
-          isFlagged={Boolean(currentResponse?.isFlagged)}
-          onAnswerChange={handleAnswerChange}
-          onToggleFlag={handleToggleFlag}
-          onNext={handleNextAction}
-          nextLabel={nextLabel}
-        />
+        <div key={`wrapper-${currentItem.id}`} className="h-full w-full">
+          <ListeningRenderer
+            key={currentItem.id}
+            item={currentItem}
+            currentAnswer={currentResponse?.rawAnswer || null}
+            isFlagged={Boolean(currentResponse?.isFlagged)}
+            onAnswerChange={handleAnswerChange}
+            onToggleFlag={handleToggleFlag}
+            onNext={handleNextAction}
+            nextLabel={nextLabel}
+          />
+        </div>
       );
     }
 
     if (currentItem.itemType === "build_sentence") {
       return (
-        <BuildSentenceRenderer
-          key={currentItem.id}
-          item={currentItem}
-          currentAnswer={currentResponse?.rawAnswer || null}
-          onAnswerChange={handleAnswerChange}
-          onNext={handleNextAction}
-          nextLabel={nextLabel}
-        />
+        <div key={`wrapper-${currentItem.id}`} className="h-full w-full">
+          <BuildSentenceRenderer
+            key={currentItem.id}
+            item={currentItem}
+            currentAnswer={currentResponse?.rawAnswer || null}
+            onAnswerChange={handleAnswerChange}
+            onNext={handleNextAction}
+            nextLabel={nextLabel}
+          />
+        </div>
       );
     }
 
     if (currentItem.itemType === "write_email" || currentItem.itemType === "academic_discussion") {
       return (
-        <WritingEditorRenderer
-          key={currentItem.id}
-          item={currentItem}
-          currentAnswer={currentResponse?.rawAnswer || null}
-          onAnswerChange={handleAnswerChange}
-          onNext={handleNextAction}
-          nextLabel={nextLabel}
-        />
+        <div key={`wrapper-${currentItem.id}`} className="h-full w-full">
+          <WritingEditorRenderer
+            key={currentItem.id}
+            item={currentItem}
+            currentAnswer={currentResponse?.rawAnswer || null}
+            onAnswerChange={handleAnswerChange}
+            onNext={handleNextAction}
+            nextLabel={nextLabel}
+          />
+        </div>
       );
     }
 
     if (currentItem.itemType === "listen_repeat" || currentItem.itemType === "take_interview") {
       return (
-        <SpeakingRecorder
-          key={currentItem.id}
-          item={currentItem}
-          currentAnswer={currentResponse?.rawAnswer || null}
-          onAnswerChange={handleAnswerChange}
-          isExamMode={blueprint.examMode !== "practice"}
-          attemptId={state.attemptId}
-          onNext={handleNextAction}
-          nextLabel={nextLabel}
-        />
+        <div key={`wrapper-${currentItem.id}`} className="h-full w-full">
+          <SpeakingRecorder
+            key={currentItem.id}
+            item={currentItem}
+            currentAnswer={currentResponse?.rawAnswer || null}
+            onAnswerChange={handleAnswerChange}
+            isExamMode={blueprint.examMode !== "practice"}
+            attemptId={state.attemptId}
+            onNext={handleNextAction}
+            nextLabel={nextLabel}
+          />
+        </div>
       );
     }
 
