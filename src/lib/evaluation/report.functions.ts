@@ -9,6 +9,13 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const SECTION_ORDER_WEIGHT: Record<string, number> = {
+  reading: 0,
+  listening: 1,
+  writing: 2,
+  speaking: 3,
+};
+
 export const getToeflScoreReport = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((data) => z.object({ attemptId: z.string().uuid() }).parse(data))
@@ -55,7 +62,7 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
     const { data: responses } = await supabaseAdmin
       .from("responses")
       .select(
-        "id, attempt_section_id, content_item_id, raw_answer, normalized_answer, is_correct, score, time_spent_ms, flagged, answered_at, content_items(id, section_type, item_type, difficulty, skill_tags, payload)",
+        "id, attempt_section_id, content_item_id, raw_answer, normalized_answer, is_correct, score, time_spent_ms, flagged, answered_at, content_items(id, section_type, item_type, difficulty, skill_tags, payload, item_order)",
       )
       .in("attempt_section_id", attemptSecIds);
 
@@ -96,7 +103,7 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
       .limit(6);
 
     // 7. Fetch Candidate Email
-    let userEmail = "student@midnightacademy.edu";
+    let userEmail = "student@testglider.com";
     try {
       const { data: userData } = await supabaseAdmin.auth.admin.getUserById(context.userId);
       if (userData?.user?.email) {
@@ -106,7 +113,7 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
       // Fallback if auth admin fails
     }
 
-    // 8. Generate Signed URLs for Speaking Voice Recordings
+    // 8. Generate Signed URLs for Speaking Voice Recordings & Sort
     const enhancedResponses = await Promise.all(
       (responses || []).map(async (r) => {
         let audioPlayUrl: string | null = null;
@@ -126,7 +133,7 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
           } catch (e) {
             console.error("Failed to generate signed url for speaking recording:", e);
           }
-        } else if (r.raw_answer?.startsWith("http")) {
+        } else if (r.raw_answer?.startsWith("http") || r.raw_answer?.startsWith("data:")) {
           audioPlayUrl = r.raw_answer;
         }
 
@@ -138,6 +145,15 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
         };
       }),
     );
+
+    enhancedResponses.sort((a, b) => {
+      const secA = SECTION_ORDER_WEIGHT[a.content_items?.section_type || "reading"] ?? 99;
+      const secB = SECTION_ORDER_WEIGHT[b.content_items?.section_type || "reading"] ?? 99;
+      if (secA !== secB) return secA - secB;
+      const ordA = (a.content_items as { item_order?: number } | null)?.item_order ?? 0;
+      const ordB = (b.content_items as { item_order?: number } | null)?.item_order ?? 0;
+      return ordA - ordB;
+    });
 
     return {
       attempt,

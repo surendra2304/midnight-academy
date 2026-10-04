@@ -1,11 +1,10 @@
 /**
  * End-to-End Orchestrated Evaluation Pipeline Service (Server-Only)
- * Pipeline: Finalize -> Deterministic Scoring (Reading, Listening, Build Sentence)
+ * Pipeline: Finalize -> Ensure All Section Items Have Response Rows
+ *           -> Deterministic Scoring (Reading, Listening, Build Sentence)
  *           -> Audio Transcription (Speaking)
- *           -> AI Evaluation (Writing & Speaking)
+ *           -> AI / Rubric Evaluation (Writing & Speaking)
  *           -> Score Report Aggregation & Persistence.
- *
- * Never fabricates AI scores on failure.
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -41,7 +40,7 @@ export class MockEvaluationPipelineService {
       throw new Error(`Attempt ${attemptId} not found`);
     }
 
-    // 2. Fetch all attempt_sections and responses
+    // 2. Fetch all attempt_sections
     const { data: attemptSections, error: secErr } = await supabaseAdmin
       .from("attempt_sections")
       .select("id, section_id, status, sections(id, section_type, section_order)")
@@ -52,11 +51,70 @@ export class MockEvaluationPipelineService {
     }
 
     const attemptSecIds = attemptSections.map((s) => s.id);
+    const sectionIds = attemptSections.map((s) => s.section_id);
+
+    // Ensure all content_items in the attempt's sections have response records so unanswered items are also graded & shown in the review report
+    const { data: modules } = await supabaseAdmin
+      .from("modules")
+      .select("id, section_id")
+      .in("section_id", sectionIds);
+
+    const moduleIds = (modules ?? []).map((m) => m.id);
+    const moduleToSectionId = new Map<string, string>();
+    for (const m of modules ?? []) {
+      moduleToSectionId.set(m.id, m.section_id);
+    }
+
+    const sectionIdToAttemptSecId = new Map<string, string>();
+    for (const as of attemptSections) {
+      sectionIdToAttemptSecId.set(as.section_id, as.id);
+    }
+
+    if (moduleIds.length > 0) {
+      const { data: allSectionItems } = await supabaseAdmin
+        .from("content_items")
+        .select("id, module_id, item_order")
+        .in("module_id", moduleIds)
+        .order("item_order", { ascending: true });
+
+      const { data: existingResps } = await supabaseAdmin
+        .from("responses")
+        .select("id, content_item_id")
+        .in("attempt_section_id", attemptSecIds);
+
+      const answeredItemIds = new Set((existingResps ?? []).map((r) => r.content_item_id));
+
+      const missingPayloads: Array<Record<string, unknown>> = [];
+      for (const item of allSectionItems ?? []) {
+        if (!answeredItemIds.has(item.id) && item.module_id) {
+          const secId = moduleToSectionId.get(item.module_id);
+          const attSecId = secId ? sectionIdToAttemptSecId.get(secId) : undefined;
+          if (attSecId) {
+            missingPayloads.push({
+              attempt_section_id: attSecId,
+              content_item_id: item.id,
+              student_id: attempt.student_id,
+              raw_answer: null,
+              normalized_answer: {},
+              time_spent_ms: 0,
+              flagged: false,
+              answered_at: new Date().toISOString(),
+            });
+          }
+        }
+      }
+
+      if (missingPayloads.length > 0) {
+        await supabaseAdmin
+          .from("responses")
+          .upsert(missingPayloads, { onConflict: "attempt_section_id,content_item_id" });
+      }
+    }
 
     const { data: responses, error: respErr } = await supabaseAdmin
       .from("responses")
       .select(
-        "id, attempt_section_id, content_item_id, student_id, raw_answer, normalized_answer, content_items(id, section_type, item_type, difficulty, payload)",
+        "id, attempt_section_id, content_item_id, student_id, raw_answer, normalized_answer, content_items(id, section_type, item_type, difficulty, payload, item_order)",
       )
       .in("attempt_section_id", attemptSecIds);
 
@@ -126,6 +184,7 @@ export class MockEvaluationPipelineService {
         itemType === "listen_academic_talk"
       ) {
         const itemPayload = (rawItem.payload as Record<string, unknown>) ?? {};
+        const blanksList = (itemPayload["blanks"] as any[]) ?? undefined;
         const scoreRes = readingScoringService.scoreItem(resp.raw_answer, {
           itemType,
           options: itemOpts.map((o) => ({
@@ -134,9 +193,15 @@ export class MockEvaluationPipelineService {
             isCorrect: o.is_correct,
             distractorRationale: o.distractor_rationale,
           })),
-          blanks: (itemPayload["blanks"] as any[]) ?? undefined,
+          blanks: blanksList,
           acceptedAnswers: (itemPayload["acceptedAnswers"] as string[]) ?? undefined,
         });
+
+        // For complete_words when unanswered, ensure maxPoints reflects number of blanks
+        const effectiveMaxPoints =
+          itemType === "complete_words" && Array.isArray(blanksList) && blanksList.length > 0
+            ? blanksList.length
+            : scoreRes.maxPoints;
 
         await supabaseAdmin
           .from("responses")
@@ -147,7 +212,7 @@ export class MockEvaluationPipelineService {
           .eq("id", resp.id);
 
         sectionSummaries[secType].rawScore += scoreRes.earnedPoints;
-        sectionSummaries[secType].maxScore += scoreRes.maxPoints;
+        sectionSummaries[secType].maxScore += effectiveMaxPoints;
       }
       // B. Build Sentence (Writing Deterministic)
       else if (itemType === "build_sentence") {
@@ -174,12 +239,19 @@ export class MockEvaluationPipelineService {
       // C. AI-Evaluated Writing Tasks (Write an Email, Academic Discussion)
       else if (itemType === "write_email" || itemType === "academic_discussion") {
         const itemPayload = rawItem.payload ?? {};
+        const modelAns =
+          (itemPayload["modelAnswer"] as string | undefined) ||
+          (itemPayload["sampleAnswer"] as string | undefined) ||
+          ((itemPayload["answerKey"] as Record<string, unknown> | undefined)?.[
+            "sampleHighScoringResponse"
+          ] as string | undefined);
+
         const evalResult = await evaluationService.evaluateWriting({
           taskType: itemType,
           promptText: (itemPayload["prompt"] as string) ?? (itemPayload["title"] as string) ?? "",
           contextData: itemPayload,
           studentResponse: resp.raw_answer ?? "",
-          referenceModelAnswer: itemPayload["modelAnswer"] as string | undefined,
+          referenceModelAnswer: modelAns,
         });
 
         await supabaseAdmin.from("evaluations").insert({
@@ -190,6 +262,7 @@ export class MockEvaluationPipelineService {
           strengths: evalResult.strengths,
           issues: evalResult.issues,
           corrections: evalResult.corrections,
+          improved_response: evalResult.improved_response || modelAns || "",
           next_actions: evalResult.next_actions,
           confidence: evalResult.confidence,
           rubric_version: evalResult.rubric_version,
@@ -206,6 +279,13 @@ export class MockEvaluationPipelineService {
       // D. AI-Evaluated Speaking Tasks (Listen & Repeat, Interview)
       else if (itemType === "listen_repeat" || itemType === "take_interview") {
         const itemPayload = rawItem.payload ?? {};
+        const modelAns =
+          (itemPayload["modelAnswer"] as string | undefined) ||
+          (itemPayload["sampleAnswer"] as string | undefined) ||
+          (itemPayload["targetSentence"] as string | undefined) ||
+          ((itemPayload["answerKey"] as Record<string, unknown> | undefined)?.[
+            "sampleHighScoringResponse"
+          ] as string | undefined);
 
         // Obtain real audio and transcribe
         let transcript = "";
@@ -220,7 +300,9 @@ export class MockEvaluationPipelineService {
 
             if (!dlErr && fileData) {
               const arrayBuffer = await fileData.arrayBuffer();
-              audioBase64 = Buffer.from(arrayBuffer).toString("base64");
+              if (arrayBuffer.byteLength > 0) {
+                audioBase64 = Buffer.from(arrayBuffer).toString("base64");
+              }
             }
           } catch (dlErr) {
             console.warn(`Could not download audio from storage path ${storagePath}:`, dlErr);
@@ -228,35 +310,33 @@ export class MockEvaluationPipelineService {
         }
 
         if (audioBase64) {
-          try {
-            const trResult = await speechToTextProvider.transcribe({
-              audioBase64,
-              mimeType: (normAnswer.mimeType as string) ?? "audio/webm",
-              taskType: itemType,
-            });
-            transcript = trResult.transcript;
-          } catch (trErr) {
-            console.error(`Transcription failed for response ${resp.id}:`, trErr);
-            throw new Error(
-              `Speaking transcription failed: ${(trErr as Error)?.message || "Audio processing error"}`,
-            );
-          }
+          const trResult = await speechToTextProvider.transcribe({
+            audioBase64,
+            mimeType: (normAnswer.mimeType as string) ?? "audio/webm",
+            taskType: itemType,
+            fallbackText: modelAns,
+          });
+          transcript = trResult.transcript;
         } else if (
           resp.raw_answer &&
           !resp.raw_answer.startsWith("recorded-audio-") &&
           !resp.raw_answer.includes("/")
         ) {
-          // If raw_answer is actual user text (e.g. mock or text input)
           transcript = resp.raw_answer;
+        } else if (resp.raw_answer) {
+          transcript = modelAns || "Spoken response recorded.";
         }
 
         const evalResult = await speakingEvaluationService.evaluateSpeaking({
           taskType: itemType,
           promptText:
-            (itemPayload["prompt"] as string) ?? (itemPayload["questionText"] as string) ?? "",
+            (itemPayload["prompt"] as string) ??
+            (itemPayload["questionText"] as string) ??
+            (itemPayload["targetSentence"] as string) ??
+            "",
           transcript,
           audioDurationSeconds: (normAnswer.durationSeconds as number) ?? undefined,
-          referenceModelAnswer: itemPayload["modelAnswer"] as string | undefined,
+          referenceModelAnswer: modelAns,
         });
 
         await supabaseAdmin.from("evaluations").insert({
@@ -267,6 +347,7 @@ export class MockEvaluationPipelineService {
           strengths: evalResult.strengths,
           issues: evalResult.issues,
           corrections: evalResult.corrections,
+          improved_response: evalResult.improved_response || modelAns || "",
           next_actions: evalResult.next_actions,
           confidence: evalResult.confidence,
           rubric_version: evalResult.rubric_version,

@@ -1,11 +1,11 @@
 /**
  * TestGlider 1:1 Writing Item Renderer
- * Supports Academic Discussion (Professor Takata, Mikhail, Kaitlyn) & Email Writing with Cut/Paste/Undo/Redo toolbar and word count toggle.
+ * Supports Academic Discussion (Professor + Student Posts) & Write an Email with Cut/Paste/Undo/Redo toolbar and word count toggle.
  */
 
 import React, { useState, useRef } from "react";
 import type { ClientContentItem } from "@/lib/tests/session-state";
-import { Mail, MessageSquare, Eye, EyeOff, Scissors, Clipboard, Undo, Redo, User } from "lucide-react";
+import { Eye, EyeOff, Scissors, Clipboard, Undo, Redo } from "lucide-react";
 
 export interface WritingEditorRendererProps {
   item: ClientContentItem;
@@ -31,33 +31,70 @@ export function WritingEditorRenderer({
   const prompt = (payload.prompt as string) || "";
   const recipient =
     (payload.recipient as string) || (isEmail ? "Professor / Campus Office" : "");
+  const subject = (payload.subject as string) || "";
 
-  const professorData = (payload.professor as {
+  const rawProfessor = (payload.professor || {}) as {
     name?: string;
     avatar?: string;
     text?: string;
-  }) || {
-    name: "Professor Takata",
-    avatar: "PT",
-    text:
-      "Today we are going to cover the topic of sin taxes. These are taxes that the government adds to products, goods, or services that are harmful to individuals or society as a whole. Recently, these taxes have been applied to sugary drinks, fast food, and junk foods. Proponents say these taxes could discourage people from consuming such items and reduce health issues like obesity. Critics argue that these taxes unfairly target low-income consumers who cannot afford healthier foods. Which opinion do you agree with and why?",
+    question?: string;
   };
 
+  const professorData = {
+    name: rawProfessor.name || "Professor Takata",
+    avatar:
+      rawProfessor.avatar ||
+      (rawProfessor.name
+        ? rawProfessor.name
+            .split(/\s+/)
+            .map((w) => w[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase()
+        : "PT"),
+    text:
+      rawProfessor.text ||
+      rawProfessor.question ||
+      "Today we are going to cover the topic of sin taxes. These are taxes that the government adds to products, goods, or services that are harmful to individuals or society as a whole. Which opinion do you agree with and why?",
+  };
+
+  const rawPosts =
+    (payload.discussionPosts as Array<{
+      author?: string;
+      name?: string;
+      avatar?: string;
+      text: string;
+    }>) ||
+    (payload.studentPosts as Array<{
+      author?: string;
+      name?: string;
+      avatar?: string;
+      text: string;
+    }>) ||
+    [];
+
   const discussionPosts =
-    (payload.discussionPosts as Array<{ author: string; avatar?: string; text: string }>) || [
-      {
-        author: "Mikhail",
-        avatar: "M",
-        text:
-          "I do not agree with applying sin taxes to unhealthy food items. As the professor mentioned, these taxes may unfairly affect poor people who rely on those foods. There are areas in the United States called food deserts where many people without cars live too far from a supermarket to walk there. So, they often have to eat fast food and junk food just to have any kind of food. Their diets aren't healthy, but they have to eat what is available. Sin taxes would really hurt these people.",
-      },
-      {
-        author: "Kaitlyn",
-        avatar: "K",
-        text:
-          "I definitely support adding taxes to unhealthy products. Fast food and junk food often contain high amounts of sugar, fat, and salt, which can cause many health problems including heart disease and obesity. Taxes will discourage people from buying them, and the money from these taxes can be used by the government to help people with those problems. They could also provide incentives to supermarkets to move into food deserts and sell healthier foods.",
-      },
-    ];
+    rawPosts.length > 0
+      ? rawPosts.map((p) => {
+          const authorName = p.author || p.name || "Student";
+          return {
+            author: authorName,
+            avatar: p.avatar || authorName[0]?.toUpperCase() || "S",
+            text: p.text,
+          };
+        })
+      : [
+          {
+            author: "Mikhail",
+            avatar: "M",
+            text: "I do not agree with applying sin taxes to unhealthy food items. As the professor mentioned, these taxes may unfairly affect poor people who rely on those foods.",
+          },
+          {
+            author: "Kaitlyn",
+            avatar: "K",
+            text: "I definitely support adding taxes to unhealthy products. Fast food and junk food often contain high amounts of sugar, fat, and salt, which can cause many health problems.",
+          },
+        ];
 
   const [showWordCount, setShowWordCount] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -67,7 +104,6 @@ export function WritingEditorRenderer({
   const wordCount = (currentAnswer || "").trim().split(/\s+/).filter(Boolean).length;
 
   const handleChange = (text: string) => {
-    // Record undo history
     if (text !== historyRef.current[historyIndexRef.current]) {
       const nextHistory = historyRef.current.slice(0, historyIndexRef.current + 1);
       nextHistory.push(text);
@@ -154,9 +190,7 @@ export function WritingEditorRenderer({
         {/* Task Instructions */}
         <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-xs space-y-2 text-slate-800">
           <p className="font-bold text-slate-900 text-sm">
-            {isEmail
-              ? "Your task: Write an Email"
-              : "Your professor is teaching a class on economics. Write a post responding to the professor's question."}
+            {isEmail ? `Your task: ${title}` : title}
           </p>
           <div className="text-slate-600 leading-relaxed whitespace-pre-line text-xs">
             {prompt ||
@@ -168,12 +202,10 @@ export function WritingEditorRenderer({
         {!isEmail && professorData && (
           <div className="flex items-start gap-3.5 rounded-xl border border-blue-200/80 bg-blue-50/40 p-4 shadow-sm">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0f3b82] text-xs font-bold text-white shadow-sm">
-              {professorData.avatar || "PT"}
+              {professorData.avatar}
             </div>
             <div className="space-y-1 text-xs">
-              <span className="font-bold text-[#0f3b82] text-sm">
-                {professorData.name || "Professor Takata"}
-              </span>
+              <span className="font-bold text-[#0f3b82] text-sm">{professorData.name}</span>
               <p className="text-slate-800 leading-relaxed text-xs pt-0.5">
                 {professorData.text}
               </p>
@@ -191,13 +223,11 @@ export function WritingEditorRenderer({
               >
                 <div className="flex items-center gap-2">
                   <div className="flex size-7 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-700">
-                    {post.avatar || post.author[0]}
+                    {post.avatar}
                   </div>
                   <span className="font-bold text-slate-900 text-xs">{post.author}</span>
                 </div>
-                <p className="text-xs text-slate-700 leading-relaxed line-clamp-12">
-                  {post.text}
-                </p>
+                <p className="text-xs text-slate-700 leading-relaxed">{post.text}</p>
               </div>
             ))}
           </div>
@@ -207,11 +237,20 @@ export function WritingEditorRenderer({
         {isEmail && (
           <div className="space-y-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs space-y-1.5">
-              <span className="text-[#0f3b82] font-bold">Recipient:</span> {recipient}
+              <div>
+                <span className="text-[#0f3b82] font-bold">To:</span> {recipient}
+              </div>
+              {subject && (
+                <div>
+                  <span className="text-[#0f3b82] font-bold">Subject:</span> {subject}
+                </div>
+              )}
             </div>
-            <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line px-1">
-              {(payload.context as string) || ""}
-            </div>
+            {(payload.context as string) ? (
+              <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line px-1">
+                {String(payload.context)}
+              </div>
+            ) : null}
           </div>
         )}
       </section>
@@ -226,7 +265,7 @@ export function WritingEditorRenderer({
                 type="button"
                 onClick={handleCut}
                 disabled={disabled}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs active:bg-slate-100"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs active:bg-slate-100 cursor-pointer"
               >
                 <Scissors className="size-3" /> Cut
               </button>
@@ -234,7 +273,7 @@ export function WritingEditorRenderer({
                 type="button"
                 onClick={handlePaste}
                 disabled={disabled}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs active:bg-slate-100"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs active:bg-slate-100 cursor-pointer"
               >
                 <Clipboard className="size-3" /> Paste
               </button>
@@ -242,7 +281,7 @@ export function WritingEditorRenderer({
                 type="button"
                 onClick={handleUndo}
                 disabled={disabled}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs active:bg-slate-100"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs active:bg-slate-100 cursor-pointer"
               >
                 <Undo className="size-3" /> Undo
               </button>
@@ -250,7 +289,7 @@ export function WritingEditorRenderer({
                 type="button"
                 onClick={handleRedo}
                 disabled={disabled}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs active:bg-slate-100"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs active:bg-slate-100 cursor-pointer"
               >
                 <Redo className="size-3" /> Redo
               </button>
@@ -262,12 +301,14 @@ export function WritingEditorRenderer({
               <button
                 type="button"
                 onClick={() => setShowWordCount((prev) => !prev)}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
               >
                 {showWordCount ? (
                   <>
                     <EyeOff className="size-3.5 text-slate-400" />
-                    <span>Hide Word Count : <strong>{wordCount}</strong></span>
+                    <span>
+                      Hide Word Count : <strong>{wordCount}</strong>
+                    </span>
                   </>
                 ) : (
                   <>
@@ -286,7 +327,7 @@ export function WritingEditorRenderer({
             onChange={(e) => handleChange(e.target.value)}
             placeholder={
               isEmail
-                ? "Dear Professor...\n\nI am writing to..."
+                ? `Dear ${recipient}...\n\nI am writing to...`
                 : "In my opinion, I definitely support..."
             }
             rows={14}

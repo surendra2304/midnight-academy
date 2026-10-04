@@ -1,15 +1,13 @@
 /**
  * Unified TOEFL Score Report & Review Experience
  * 1:1 Parity with TestGlider Summary Report (Screens 47-48)
- * "Moon | Full Test" Review and Diagnostic Item Analysis
+ * Supports all 8 Official TOEFL 2026 Mock Tests (Moon, Mars, Venus, Jupiter, Saturn, Mercury, Neptune, Uranus)
  */
 
 import React, { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  Award,
   Target,
-  TrendingUp,
   Sparkles,
   Filter,
   CheckCircle2,
@@ -22,7 +20,6 @@ import {
   FileText,
   ChevronRight,
   AlertCircle,
-  RotateCcw,
   Loader2,
   Share2,
 } from "lucide-react";
@@ -99,14 +96,31 @@ export interface UnifiedScoreReportProps {
   };
 }
 
+function parseJsonStringArray(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((x) => String(x ?? ""));
+      }
+    } catch {
+      // fall through
+    }
+  }
+  return trimmed
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) {
   const {
     attempt,
     report,
-    userEmail = "surendrabtech12321@gmail.com",
-    targetScore = 5.0,
+    userEmail = "student@testglider.com",
     responses,
-    recommendations = [],
   } = reportData;
 
   const [activeSectionTab, setActiveSectionTab] = useState<string>("all");
@@ -115,7 +129,6 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
 
   const overallBand = report?.overall_band || 1.0;
   const comparable120 = report?.comparable_score || 0;
-  const targetGap = (overallBand - targetScore).toFixed(1);
 
   const formattedDate = attempt.completed_at
     ? new Date(attempt.completed_at).toLocaleDateString("en-US", {
@@ -158,6 +171,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
 
   // Filter responses by tab
   const filteredResponses = responses.filter((r) => {
+    if (!r.content_items) return false;
     if (activeSectionTab !== "all" && r.content_items.section_type !== activeSectionTab) {
       return false;
     }
@@ -179,7 +193,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
           to="/test"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
         >
-          <ChevronLeft className="size-4" /> All Records
+          <ChevronLeft className="size-4" /> All Mock Tests &amp; Records
         </Link>
 
         <div className="flex items-center gap-3">
@@ -207,7 +221,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border/60">
           <div>
             <span className="text-[11px] font-black uppercase tracking-widest text-[#0f3b82] dark:text-blue-400">
-              Midnight Academy Standardized Exam Review
+              TestGlider TOEFL iBT 2026 Standardized Review
             </span>
             <h1 className="text-3xl font-black tracking-tight text-foreground mt-1">
               SUMMARY REPORT
@@ -215,12 +229,12 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
             <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-muted-foreground">
               <span className="font-semibold text-foreground">{userEmail}</span>
               <span>•</span>
-              <span className="font-medium text-foreground">
+              <span className="font-bold text-foreground">
                 {attempt.tests?.name || "Moon | Full Test"}
               </span>
               <span>•</span>
               <span className="inline-block px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-[#0f3b82] dark:text-blue-300 font-bold text-[11px]">
-                Free
+                Official 2026 Format
               </span>
               <span>•</span>
               <span>{formattedDate}</span>
@@ -253,7 +267,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
           </div>
         </div>
 
-        {/* AI Grading Status Notice (Screen 48 exact copy) */}
+        {/* AI Grading Status Notice */}
         {attempt.evaluation_status === "pending" ? (
           <div className="mt-6 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-center justify-between gap-4 text-xs text-amber-900 dark:text-amber-200">
             <div className="flex items-center gap-3">
@@ -296,7 +310,10 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
         ) : (
           <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
             <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
-            <span>AI assessment complete. All responses and traits calibrated against official rubric.</span>
+            <span>
+              AI assessment complete. All responses, answer keys, explanations, and rubric traits
+              are calibrated against the TOEFL iBT 2026 1.0–6.0 scale.
+            </span>
           </div>
         )}
 
@@ -318,7 +335,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
               {sectionScores.reading}{" "}
               <span className="text-xs font-normal text-muted-foreground">/ 6.0</span>
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Passage & Vocabulary</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Cloze, Daily Life &amp; Academic</p>
           </div>
 
           <div
@@ -337,7 +354,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
               {sectionScores.listening}{" "}
               <span className="text-xs font-normal text-muted-foreground">/ 6.0</span>
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Audio & Lecture Talk</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Responses, Convos &amp; Lectures</p>
           </div>
 
           <div
@@ -356,7 +373,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
               {sectionScores.writing}{" "}
               <span className="text-xs font-normal text-muted-foreground">/ 6.0</span>
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Discussion & Sentences</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Sentences, Email &amp; Discussion</p>
           </div>
 
           <div
@@ -375,26 +392,38 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
               {sectionScores.speaking}{" "}
               <span className="text-xs font-normal text-muted-foreground">/ 6.0</span>
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Interview & Repeat</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Listen &amp; Repeat + Interview</p>
           </div>
         </div>
       </section>
 
-      {/* 3. TESTGLIDER SECTION TABS STRIP (Screen 48: Reading | Listening | Writing | Speaking) */}
+      {/* 3. TESTGLIDER SECTION TABS STRIP */}
       <section className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-3">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
             {[
-              { key: "all", label: "All Items" },
-              { key: "reading", label: "Reading" },
-              { key: "listening", label: "Listening" },
-              { key: "writing", label: "Writing" },
-              { key: "speaking", label: "Speaking" },
+              { key: "all", label: `All Items (${responses.length})` },
+              {
+                key: "reading",
+                label: `Reading (${responses.filter((r) => r.content_items?.section_type === "reading").length})`,
+              },
+              {
+                key: "listening",
+                label: `Listening (${responses.filter((r) => r.content_items?.section_type === "listening").length})`,
+              },
+              {
+                key: "writing",
+                label: `Writing (${responses.filter((r) => r.content_items?.section_type === "writing").length})`,
+              },
+              {
+                key: "speaking",
+                label: `Speaking (${responses.filter((r) => r.content_items?.section_type === "speaking").length})`,
+              },
             ].map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveSectionTab(tab.key)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors capitalize ${
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                   activeSectionTab === tab.key
                     ? "bg-[#0f3b82] text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -417,7 +446,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
         </div>
 
         {/* 4. ITEM REVIEWS CONTAINER */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           {filteredResponses.length === 0 ? (
             <div className="text-center py-12 border border-dashed border-border rounded-xl">
               <p className="text-sm font-semibold text-muted-foreground">
@@ -428,76 +457,63 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
             filteredResponses.map((r, idx) => {
               const item = r.content_items;
               const evalObj = r.evaluation;
-              const isDeterministic =
-                Boolean(r.options && r.options.length > 0) || item.item_type === "build_sentence";
-              const correctOpt = r.options.find((o) => o.is_correct);
               const payload = (item.payload || {}) as Record<string, unknown>;
+              const answerKey = (payload.answerKey || {}) as Record<string, unknown>;
 
-              // Safe extraction of email stimulus fields (handles object or string representations)
+              const isCompleteWords = item.item_type === "complete_words";
+              const isBuildSentence = item.item_type === "build_sentence";
+              const isMcq = Boolean(r.options && r.options.length > 0);
+              const isDeterministic = isMcq || isBuildSentence || isCompleteWords;
+
+              const correctOpt = r.options.find((o) => o.is_correct);
+              const selectedOpt = r.options.find(
+                (o) =>
+                  r.raw_answer &&
+                  o.option_key.toUpperCase() === r.raw_answer.trim().toUpperCase(),
+              );
+
+              const explanationText =
+                (payload.explanation as string) ||
+                (answerKey.explanation as string) ||
+                correctOpt?.distractor_rationale ||
+                "";
+
+              const modelResponseText =
+                evalObj?.improved_response ||
+                (payload.modelAnswer as string) ||
+                (payload.sampleAnswer as string) ||
+                (answerKey.sampleHighScoringResponse as string) ||
+                (payload.targetSentence as string) ||
+                "";
+
+              // Email stimulus extraction
               const emailHeaderObj = (
                 typeof payload.emailHeader === "object" && payload.emailHeader !== null
                   ? payload.emailHeader
-                  : typeof payload.email === "object" && payload.email !== null
-                  ? payload.email
                   : {}
               ) as Record<string, unknown>;
 
-              const emailTo =
-                typeof emailHeaderObj.to === "string"
-                  ? emailHeaderObj.to
-                  : typeof payload.to === "string"
-                  ? payload.to
-                  : undefined;
-              const emailFrom =
-                typeof emailHeaderObj.from === "string"
-                  ? emailHeaderObj.from
-                  : typeof payload.from === "string"
-                  ? payload.from
-                  : undefined;
-              const emailDate =
-                typeof emailHeaderObj.date === "string"
-                  ? emailHeaderObj.date
-                  : typeof payload.date === "string"
-                  ? payload.date
-                  : undefined;
-              const emailSubject =
-                typeof emailHeaderObj.subject === "string"
-                  ? emailHeaderObj.subject
-                  : typeof payload.subject === "string"
-                  ? payload.subject
-                  : undefined;
+              const isEmailStimulus =
+                payload.format === "email" ||
+                payload.contextType === "email" ||
+                Boolean(payload.emailHeader);
 
-              const isEmailStimulus = Boolean(
-                emailTo ||
-                  emailFrom ||
-                  emailDate ||
-                  emailSubject ||
-                  payload.format === "email" ||
-                  payload.contextType === "email" ||
-                  Boolean(payload.emailHeader) ||
-                  (payload.email && typeof payload.email === "object"),
-              );
+              const audioSpeechText =
+                (payload.transcript as string) ||
+                (payload.stimulusText as string) ||
+                (payload.targetSentence as string) ||
+                "";
 
-              let emailBody = "";
-              if (typeof payload.email === "string") {
-                emailBody = payload.email;
-              } else if (typeof emailHeaderObj.body === "string") {
-                emailBody = emailHeaderObj.body;
-              } else if (typeof payload.passage === "string") {
-                emailBody = payload.passage;
-              } else if (typeof payload.text === "string") {
-                emailBody = payload.text;
-              }
-
-              // Calculate word count for written responses
-              const wordCount = r.raw_answer
-                ? r.raw_answer.trim().split(/\s+/).filter(Boolean).length
-                : 0;
+              // Calculate word count for written essays
+              const wordCount =
+                r.raw_answer && !isBuildSentence
+                  ? r.raw_answer.trim().split(/\s+/).filter(Boolean).length
+                  : 0;
 
               return (
                 <article
                   key={r.id}
-                  className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm space-y-6"
+                  className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm space-y-5"
                 >
                   {/* Item Header */}
                   <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
@@ -518,27 +534,37 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                         r.is_correct ? (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-emerald-700 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300">
                             <CheckCircle2 className="size-3.5" /> Correct
+                            {isCompleteWords && typeof r.score === "number"
+                              ? ` (${Math.round(r.score * 100)}%)`
+                              : ""}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-rose-700 bg-rose-100 dark:bg-rose-950 dark:text-rose-300">
-                            <XCircle className="size-3.5" /> Incorrect
+                            <XCircle className="size-3.5" />{" "}
+                            {isCompleteWords && typeof r.score === "number" && r.score > 0
+                              ? `Partial (${Math.round(r.score * 100)}%)`
+                              : r.raw_answer
+                                ? "Incorrect"
+                                : "Unanswered"}
                           </span>
                         )
                       ) : evalObj ? (
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-muted-foreground">Band Score:</span>
+                          <span className="text-xs font-bold text-muted-foreground">
+                            Band Score:
+                          </span>
                           <span className="text-base font-black text-[#0f3b82] dark:text-blue-400">
                             {evalObj.score_band.toFixed(1)} / 6.0
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Evaluating...</span>
+                        <span className="text-xs text-muted-foreground">Evaluated</span>
                       )}
                     </div>
                   </header>
 
                   {/* PROMPT / PASSAGE STIMULUS */}
-                  <div className="rounded-xl bg-muted/30 border border-border p-5 text-xs text-foreground/90 space-y-2">
+                  <div className="rounded-xl bg-muted/30 border border-border p-5 text-xs text-foreground/90 space-y-2.5">
                     {payload.title ? (
                       <h4 className="font-bold text-sm text-foreground">
                         {typeof payload.title === "string" ? payload.title : ""}
@@ -546,129 +572,274 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                     ) : null}
 
                     {payload.prompt ? (
-                      <p className="font-semibold text-foreground text-xs leading-relaxed">
+                      <p className="font-semibold text-foreground text-xs leading-relaxed whitespace-pre-line">
                         {typeof payload.prompt === "string" ? payload.prompt : ""}
                       </p>
                     ) : null}
 
-                    {/* Email Stimulus Renderer */}
                     {isEmailStimulus ? (
-                      <div className="my-3 rounded-lg border border-teal-300 bg-teal-50/50 dark:bg-teal-950/20 p-4 font-mono text-[11px] space-y-1">
-                        {emailTo && (
+                      <div className="my-2 rounded-lg border border-teal-300 bg-teal-50/50 dark:bg-teal-950/20 p-4 font-mono text-[11px] space-y-1">
+                        {emailHeaderObj.from ? (
                           <p>
-                            <span className="font-bold text-teal-800 dark:text-teal-300">To:</span>{" "}
-                            {emailTo}
+                            <span className="font-bold text-teal-800 dark:text-teal-300">
+                              From:
+                            </span>{" "}
+                            {String(emailHeaderObj.from)}
                           </p>
-                        )}
-                        {emailFrom && (
+                        ) : null}
+                        {emailHeaderObj.date ? (
                           <p>
-                            <span className="font-bold text-teal-800 dark:text-teal-300">From:</span>{" "}
-                            {emailFrom}
+                            <span className="font-bold text-teal-800 dark:text-teal-300">
+                              Date:
+                            </span>{" "}
+                            {String(emailHeaderObj.date)}
                           </p>
-                        )}
-                        {emailDate && (
-                          <p>
-                            <span className="font-bold text-teal-800 dark:text-teal-300">Date:</span>{" "}
-                            {emailDate}
-                          </p>
-                        )}
-                        {emailSubject && (
+                        ) : null}
+                        {emailHeaderObj.subject ? (
                           <p>
                             <span className="font-bold text-teal-800 dark:text-teal-300">
                               Subject:
                             </span>{" "}
-                            {emailSubject}
+                            {String(emailHeaderObj.subject)}
                           </p>
-                        )}
-                        {emailBody && (
+                        ) : null}
+                        {payload.passage ? (
                           <>
                             <hr className="my-2 border-teal-200 dark:border-teal-800" />
                             <p className="font-sans text-xs whitespace-pre-line text-foreground">
-                              {emailBody}
+                              {String(payload.passage)}
                             </p>
                           </>
-                        )}
+                        ) : null}
                       </div>
-                    ) : payload.passage ? (
-                      <div className="my-3 rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-muted-foreground whitespace-pre-line max-h-60 overflow-y-auto">
-                        {typeof payload.passage === "string" ? payload.passage : ""}
+                    ) : payload.passage && !isCompleteWords ? (
+                      <div className="my-2 rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-muted-foreground whitespace-pre-line max-h-56 overflow-y-auto">
+                        {String(payload.passage)}
                       </div>
                     ) : null}
 
-                    {/* Audio Stimulus for Listening items */}
-                    {payload.audioUrl ? (
-                      <div className="pt-2">
+                    {/* Audio Stimulus for Listening & Speaking items */}
+                    {(payload.audioUrl ||
+                      (item.section_type === "listening" && audioSpeechText) ||
+                      (item.section_type === "speaking" && audioSpeechText)) && (
+                      <div className="pt-2 space-y-2">
                         <AudioPlayer
-                          audioUrl={payload.audioUrl as string}
-                          speechText={(payload.transcript as string) || (payload.prompt as string)}
+                          audioUrl={payload.audioUrl as string | undefined}
+                          speechText={audioSpeechText}
                           maxPlays={99}
+                          autoPlay={false}
                           allowControls={true}
                         />
-                        {payload.transcript ? (
-                          <div className="mt-2">
+                        {audioSpeechText ? (
+                          <div>
                             <button
+                              type="button"
                               onClick={() => toggleTranscript(r.id)}
-                              className="text-[11px] font-semibold text-primary hover:underline"
+                              className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
                             >
                               {expandedTranscripts[r.id]
                                 ? "Hide Audio Transcript"
                                 : "View Audio Transcript"}
                             </button>
                             {expandedTranscripts[r.id] && (
-                              <p className="mt-2 text-[11px] text-muted-foreground bg-background p-3 rounded border border-border leading-relaxed whitespace-pre-line">
-                                {payload.transcript as string}
+                              <p className="mt-2 text-xs text-foreground bg-background p-3.5 rounded-lg border border-border leading-relaxed whitespace-pre-line">
+                                {audioSpeechText}
                               </p>
                             )}
                           </div>
                         ) : null}
                       </div>
-                    ) : null}
+                    )}
                   </div>
 
-                  {/* SECTION SPECIFIC REVIEW */}
+                  {/* SECTION & TASK SPECIFIC REVIEW */}
 
-                  {/* 1. OBJECTIVE MCQ RESPONSES */}
-                  {r.options && r.options.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                      <div
-                        className={`p-4 rounded-xl border ${
-                          r.is_correct
-                            ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20"
-                            : "border-rose-300 bg-rose-50/50 dark:bg-rose-950/20"
-                        }`}
-                      >
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                          Your Answer
-                        </span>
-                        <p className="mt-1 font-semibold text-foreground text-sm">
-                          {r.raw_answer ? (
-                            r.raw_answer
-                          ) : (
-                            <span className="text-muted-foreground italic">(No answer selected)</span>
-                          )}
-                        </p>
+                  {/* 1. COMPLETE THE WORDS (10-Blank Cloze Breakdown) */}
+                  {isCompleteWords && Array.isArray(payload.blanks) ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                        {(
+                          payload.blanks as Array<{
+                            blankIndex?: number;
+                            index?: number;
+                            prefix?: string;
+                            answer?: string;
+                          }>
+                        ).map((b, bIdx) => {
+                          const userTokens = parseJsonStringArray(r.raw_answer);
+                          const typed = (userTokens[bIdx] || "").trim();
+                          const expected = (b.answer || "").trim();
+                          const fullWord = `${b.prefix || ""}${expected}`;
+                          const isBlankCorrect =
+                            typed.toLowerCase() === expected.toLowerCase() ||
+                            typed.toLowerCase() === fullWord.toLowerCase();
+
+                          return (
+                            <div
+                              key={bIdx}
+                              className={`rounded-xl border p-3 text-xs ${
+                                isBlankCorrect
+                                  ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20"
+                                  : "border-rose-300 bg-rose-50/50 dark:bg-rose-950/20"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground">
+                                <span>Blank #{bIdx + 1}</span>
+                                {isBlankCorrect ? (
+                                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                ) : (
+                                  <XCircle className="size-3.5 text-rose-600" />
+                                )}
+                              </div>
+                              <p className="mt-1 font-bold text-foreground">
+                                Correct: <span className="text-emerald-700 dark:text-emerald-400">{fullWord}</span>
+                              </p>
+                              <p className="text-[11px] text-muted-foreground mt-0.5">
+                                Yours:{" "}
+                                {typed ? (
+                                  <span className="font-mono font-semibold text-foreground">
+                                    {b.prefix || ""}
+                                    {typed}
+                                  </span>
+                                ) : (
+                                  <span className="italic">(blank)</span>
+                                )}
+                              </p>
+                            </div>
+                          );
+                        })}
                       </div>
+                      {explanationText && (
+                        <div className="rounded-xl border border-blue-200 bg-blue-50/40 dark:bg-blue-950/20 p-4 text-xs text-foreground">
+                          <span className="font-bold text-[#0f3b82] dark:text-blue-300">
+                            Answer Key Explanation:{" "}
+                          </span>
+                          {explanationText}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
 
-                      <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                          Correct Answer
-                        </span>
-                        <p className="mt-1 font-semibold text-emerald-800 dark:text-emerald-300 text-sm">
-                          {correctOpt?.option_key ? `${correctOpt.option_key}. ` : ""}
-                          {correctOpt?.option_text}
-                        </p>
-                        {correctOpt?.distractor_rationale ? (
-                          <p className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80 mt-1">
-                            {correctOpt.distractor_rationale}
+                  {/* 2. BUILD A SENTENCE REVIEW */}
+                  {isBuildSentence ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div
+                          className={`p-4 rounded-xl border ${
+                            r.is_correct
+                              ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20"
+                              : "border-rose-300 bg-rose-50/50 dark:bg-rose-950/20"
+                          }`}
+                        >
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Your Assembled Sentence
+                          </span>
+                          <p className="mt-1.5 font-semibold text-foreground text-sm">
+                            {(() => {
+                              const chips = parseJsonStringArray(r.raw_answer);
+                              if (chips.length > 0) {
+                                const prefix = (payload.sentencePrefix as string) || "";
+                                const punct = (payload.terminalPunctuation as string) || ".";
+                                return `${prefix ? `${prefix} ` : ""}${chips.join(" ")}${punct}`;
+                              }
+                              return (
+                                <span className="text-muted-foreground italic">
+                                  (No sentence assembled)
+                                </span>
+                              );
+                            })()}
                           </p>
-                        ) : null}
+                        </div>
+
+                        <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                            Official Target Sentence
+                          </span>
+                          <p className="mt-1.5 font-bold text-emerald-800 dark:text-emerald-300 text-sm">
+                            {(payload.targetSentence as string) ||
+                              ((payload.acceptedSequences as string[][])?.[0] || []).join(" ")}
+                          </p>
+                          {explanationText && (
+                            <p className="text-[11px] text-emerald-700/90 dark:text-emerald-400/90 mt-1">
+                              {explanationText}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ) : null}
 
-                  {/* 2. WRITING SIDE-BY-SIDE COMPARISON (Exact TestGlider Screen 47) */}
-                  {item.section_type === "writing" && (
+                  {/* 3. OBJECTIVE MCQ RESPONSES (Reading & Listening) */}
+                  {isMcq ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div
+                          className={`p-4 rounded-xl border ${
+                            r.is_correct
+                              ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20"
+                              : "border-rose-300 bg-rose-50/50 dark:bg-rose-950/20"
+                          }`}
+                        >
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Your Answer
+                          </span>
+                          <p className="mt-1 font-semibold text-foreground text-sm">
+                            {r.raw_answer ? (
+                              selectedOpt ? (
+                                `${selectedOpt.option_key}. ${selectedOpt.option_text}`
+                              ) : (
+                                r.raw_answer
+                              )
+                            ) : (
+                              <span className="text-muted-foreground italic">
+                                (No answer selected)
+                              </span>
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                            Correct Answer
+                          </span>
+                          <p className="mt-1 font-bold text-emerald-800 dark:text-emerald-300 text-sm">
+                            {correctOpt?.option_key ? `${correctOpt.option_key}. ` : ""}
+                            {correctOpt?.option_text}
+                          </p>
+                          {explanationText ? (
+                            <p className="text-[11px] text-emerald-700/90 dark:text-emerald-400/90 mt-1.5 leading-relaxed">
+                              {explanationText}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* 4. WRITING ESSAY SIDE-BY-SIDE COMPARISON (Write an Email & Academic Discussion) */}
+                  {item.section_type === "writing" && !isBuildSentence && (
                     <div className="space-y-4 pt-2">
+                      {/* Evaluated Traits */}
+                      {evalObj?.traits && typeof evalObj.traits === "object" ? (
+                        <div className="rounded-xl border border-border bg-background p-4 space-y-2.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Writing Rubric Trait Breakdown (1.0 – 6.0 Scale)
+                          </span>
+                          <div className="grid grid-cols-3 gap-3">
+                            {Object.entries(evalObj.traits).map(([trait, val]) => (
+                              <div key={trait} className="p-2.5 rounded-lg bg-muted/40 text-center">
+                                <span className="text-[10px] uppercase font-semibold text-muted-foreground block truncate">
+                                  {trait.replace(/_/g, " ")}
+                                </span>
+                                <span className="text-base font-black text-foreground mt-0.5 block">
+                                  {typeof val === "number" ? val.toFixed(1) : String(val)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* LEFT: My Answer */}
                         <div className="rounded-xl border border-border bg-background p-5 space-y-3 flex flex-col justify-between">
@@ -684,30 +855,31 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                             <div className="mt-3 text-xs leading-relaxed text-foreground/90 whitespace-pre-line font-serif">
                               {r.raw_answer || (
                                 <span className="italic text-muted-foreground">
-                                  (No essay submitted)
+                                  (No essay submitted — review the official high-scoring response on
+                                  the right)
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        {/* RIGHT: Corrected Answer (TestGlider Screen 47) */}
+                        {/* RIGHT: Corrected / Model Answer */}
                         <div className="rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/30 dark:bg-blue-950/10 p-5 space-y-3 flex flex-col justify-between">
                           <div>
                             <div className="flex items-center justify-between border-b border-blue-200 dark:border-blue-900 pb-2.5">
                               <div className="flex items-center gap-2">
                                 <Sparkles className="size-4 text-[#0f3b82] dark:text-blue-400" />
                                 <h3 className="text-sm font-black text-[#0f3b82] dark:text-blue-400 uppercase tracking-wide">
-                                  Corrected Answer
+                                  Official High-Scoring Model Answer
                                 </h3>
                               </div>
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#0f3b82]/10 text-[#0f3b82] dark:text-blue-300">
-                                AI Enhanced
+                                Band 6.0 Benchmark
                               </span>
                             </div>
                             <div className="mt-3 text-xs leading-relaxed text-foreground/90 whitespace-pre-line font-serif">
-                              {evalObj?.improved_response ||
-                                "Model correction is being generated based on ETS TOEFL scoring criteria."}
+                              {modelResponseText ||
+                                "Model response calibrated against TOEFL iBT 2026 writing rubric."}
                             </div>
                           </div>
                         </div>
@@ -717,7 +889,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                       {evalObj?.corrections && evalObj.corrections.length > 0 ? (
                         <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-3">
                           <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            Targeted Grammatical & Stylistic Corrections
+                            Targeted Grammatical &amp; Stylistic Corrections
                           </h4>
                           <div className="space-y-2">
                             {evalObj.corrections.map((c, ci) => (
@@ -745,20 +917,24 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                     </div>
                   )}
 
-                  {/* 3. SPEAKING VOICE RECORDING & RUBRIC REVIEW */}
+                  {/* 5. SPEAKING VOICE RECORDING & RUBRIC REVIEW */}
                   {item.section_type === "speaking" && (
-                    <div className="space-y-5 pt-2">
+                    <div className="space-y-4 pt-2">
                       {/* Audio Player for Student's Recorded Voice */}
                       <div className="rounded-xl border border-[#0f3b82]/20 bg-blue-50/20 dark:bg-blue-950/20 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Mic className="size-4 text-[#0f3b82] dark:text-blue-400" />
                             <span className="text-xs font-bold text-foreground">
-                              Your Voice Recording
+                              Your Spoken Response
                             </span>
                           </div>
                           <span className="text-[10px] font-semibold text-muted-foreground">
-                            {r.audioPlayUrl ? "Playable Audio" : "Speech Captured"}
+                            {r.audioPlayUrl
+                              ? "Playable Recording"
+                              : r.raw_answer
+                                ? "Evaluated Response"
+                                : "Unanswered"}
                           </span>
                         </div>
 
@@ -770,10 +946,20 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                               Your browser does not support audio playback.
                             </audio>
                           </div>
+                        ) : r.raw_answer &&
+                          !r.raw_answer.startsWith("recorded-audio-") &&
+                          !r.raw_answer.includes("/") ? (
+                          <div className="rounded-lg bg-background p-3 border border-border text-xs text-foreground">
+                            {r.raw_answer}
+                          </div>
                         ) : (
                           <div className="rounded-lg bg-background p-3 border border-border text-xs text-muted-foreground flex items-center gap-2">
                             <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
-                            <span>Speech recording captured and evaluated.</span>
+                            <span>
+                              {r.raw_answer
+                                ? "Speech recording captured and evaluated."
+                                : "No recording submitted for this prompt — review the model response below."}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -782,7 +968,7 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                       {evalObj?.traits && typeof evalObj.traits === "object" ? (
                         <div className="rounded-xl border border-border bg-background p-4 space-y-3">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                            Rubric Breakdown (Pronunciation, Fluency & Grammar)
+                            Speaking Rubric Breakdown (Pronunciation, Fluency &amp; Language Use)
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {Object.entries(evalObj.traits).map(([trait, val]) => (
@@ -794,10 +980,8 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                                   {typeof val === "number"
                                     ? val.toFixed(1)
                                     : typeof val === "string"
-                                    ? val
-                                    : typeof (val as Record<string, unknown>)?.score === "number"
-                                    ? ((val as Record<string, unknown>).score as number).toFixed(1)
-                                    : ""}
+                                      ? val
+                                      : ""}
                                 </span>
                               </div>
                             ))}
@@ -806,13 +990,13 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                       ) : null}
 
                       {/* Polished Model Transcript */}
-                      {evalObj?.improved_response ? (
-                        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2 text-xs">
-                          <span className="font-bold text-primary uppercase text-[10px] flex items-center gap-1.5">
-                            <Sparkles className="size-3" /> Model Response
+                      {modelResponseText ? (
+                        <div className="rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/30 dark:bg-blue-950/10 p-4 space-y-2 text-xs">
+                          <span className="font-bold text-[#0f3b82] dark:text-blue-400 uppercase text-[10px] flex items-center gap-1.5">
+                            <Sparkles className="size-3.5" /> Official High-Scoring Model Response
                           </span>
                           <p className="text-foreground/90 leading-relaxed font-serif">
-                            {evalObj.improved_response}
+                            {modelResponseText}
                           </p>
                         </div>
                       ) : null}
@@ -858,11 +1042,11 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                 Priority 1
               </span>
               <h4 className="text-sm font-bold text-foreground mt-2">
-                Inference & Academic Reading
+                Inference &amp; Academic Reading
               </h4>
               <p className="text-xs text-muted-foreground leading-relaxed mt-1">
                 Strengthen paragraph synthesis, pronoun reference comprehension, and scientific
-                context clues.
+                context clues across all 8 mock tests.
               </p>
             </div>
             <Button asChild size="sm" variant="outline" className="w-full mt-4 text-xs">
@@ -878,10 +1062,11 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                 Priority 2
               </span>
               <h4 className="text-sm font-bold text-foreground mt-2">
-                Academic Discussion Expansion
+                Build a Sentence &amp; Discussion
               </h4>
               <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-                Expand complex subordinate clauses and counter-argument synthesis in writing tasks.
+                Master embedded question word order and complex subordinate clauses in academic
+                discussion posts.
               </p>
             </div>
             <Button asChild size="sm" variant="outline" className="w-full mt-4 text-xs">
@@ -897,10 +1082,11 @@ export function UnifiedScoreReportView({ reportData }: UnifiedScoreReportProps) 
                 Priority 3
               </span>
               <h4 className="text-sm font-bold text-foreground mt-2">
-                Speaking Fluency & Natural Pacing
+                Speaking Fluency &amp; Pacing
               </h4>
               <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-                Practice immediate 7-second response initiation and coherent transitional signposts.
+                Practice immediate 7-second Listen &amp; Repeat recall and 45-second interview
+                responses using the PEEL framework.
               </p>
             </div>
             <Button asChild size="sm" variant="outline" className="w-full mt-4 text-xs">
