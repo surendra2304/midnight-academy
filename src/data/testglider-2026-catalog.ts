@@ -23,6 +23,8 @@ import {
   SEED_COMPREHENSION_QUESTIONS,
 } from "./practice-datasets";
 
+export const SEED_STRATEGY_LESSONS = SEED_LESSONS;
+
 export {
   MOON_BLUEPRINT_ID,
   MARS_BLUEPRINT_ID,

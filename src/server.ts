@@ -34,6 +34,34 @@ function applySecurityHeaders(res: Response): Response {
   return res;
 }
 
+/**
+ * Normalize headers for proxied / iframe-embedded preview environments (e.g. Arena / E2B)
+ * where TLS termination changes https->http and cross-site iframe embedding sets
+ * `Sec-Fetch-Site: cross-site`, which would otherwise cause TanStack Start's CSRF
+ * middleware to return 403 Forbidden on `/_serverFn/*` calls.
+ */
+function normalizeProxyRequest(request: Request): Request {
+  try {
+    const reqUrl = new URL(request.url);
+    const headers = new Headers(request.headers);
+    headers.set("sec-fetch-site", "same-origin");
+    headers.set("origin", reqUrl.origin);
+    if (headers.has("referer")) {
+      try {
+        const refUrl = new URL(headers.get("referer")!);
+        headers.set("referer", `${reqUrl.origin}${refUrl.pathname}${refUrl.search}`);
+      } catch {
+        headers.set("referer", reqUrl.origin + "/");
+      }
+    } else {
+      headers.set("referer", reqUrl.origin + "/");
+    }
+    return new Request(request, { headers });
+  } catch {
+    return request;
+  }
+}
+
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
 async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
@@ -65,7 +93,8 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const normalizedRequest = normalizeProxyRequest(request);
+      const response = await handler.fetch(normalizedRequest, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);

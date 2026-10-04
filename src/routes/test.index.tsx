@@ -22,7 +22,49 @@ import { Button } from "@/components/ui/button";
 import { getPublishedTests } from "@/lib/practice.functions";
 import { startToeflAttempt } from "@/lib/tests/engine.functions";
 import { toast } from "sonner";
+import { ALL_TESTGLIDER_BLUEPRINTS, ALL_TESTGLIDER_QUESTION_ITEMS } from "@/data/testglider-2026-catalog";
+import { toDeterministicUuid } from "@/data/tests/types";
 import type { ToeflSectionType, ToeflExamMode } from "@/types/toefl";
+
+const INITIAL_PUBLISHED_TESTS: PublishedTestItem[] = ALL_TESTGLIDER_BLUEPRINTS.map((bp) => {
+  const planetUpper = (bp.blueprint_Json.planetName || "MOON").toUpperCase();
+  const count = ALL_TESTGLIDER_QUESTION_ITEMS.filter((it) => it.blueprint_Id === bp.id).length;
+  return {
+    id: bp.id,
+    testVersionId: bp.id,
+    name: bp.title,
+    category: "Full Mock",
+    difficulty: bp.blueprint_Json.difficultyLabel || "Medium",
+    code: `TOEFL-MOCK-${planetUpper}`,
+    questionCount: count || 48,
+    sections: [
+      {
+        id: toDeterministicUuid(`${bp.id}-section-reading`),
+        sectionType: "reading",
+        sectionOrder: 0,
+        timingSeconds: 1800,
+      },
+      {
+        id: toDeterministicUuid(`${bp.id}-section-listening`),
+        sectionType: "listening",
+        sectionOrder: 1,
+        timingSeconds: 1740,
+      },
+      {
+        id: toDeterministicUuid(`${bp.id}-section-writing`),
+        sectionType: "writing",
+        sectionOrder: 2,
+        timingSeconds: 1380,
+      },
+      {
+        id: toDeterministicUuid(`${bp.id}-section-speaking`),
+        sectionType: "speaking",
+        sectionOrder: 3,
+        timingSeconds: 480,
+      },
+    ],
+  };
+});
 
 export const Route = createFileRoute("/test/")({
   beforeLoad: ({ location }) => requireAuth({ role: "STUDENT", location }),
@@ -146,26 +188,27 @@ function getShortPlanetName(name: string) {
   return part || name;
 }
 
-function TestCatalog() {
+export function TestCatalog() {
   const navigate = useNavigate();
-  const [tests, setTests] = useState<PublishedTestItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tests, setTests] = useState<PublishedTestItem[]>(INITIAL_PUBLISHED_TESTS);
+  const [loading, setLoading] = useState(false);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [selectedModalTest, setSelectedModalTest] = useState<PublishedTestItem | null>(null);
-  const [selectedSectionTestId, setSelectedSectionTestId] = useState<string>("");
+  const [selectedSectionTestId, setSelectedSectionTestId] = useState<string>(
+    INITIAL_PUBLISHED_TESTS[0]?.testVersionId || DEFAULT_MOON_VERSION_ID,
+  );
 
   useEffect(() => {
     async function loadCatalog() {
       try {
         const res = await getPublishedTests();
         const items = (res as PublishedTestItem[]) || [];
-        setTests(items);
         if (items.length > 0) {
-          setSelectedSectionTestId(items[0].testVersionId);
+          setTests(items);
+          setSelectedSectionTestId((prev) => prev || items[0].testVersionId);
         }
       } catch (err) {
-        console.error("Failed to load catalog:", err);
-        toast.error("Could not load test catalog. Please try refreshing.");
+        console.error("Failed to refresh catalog from server, using pre-seeded catalog:", err);
       } finally {
         setLoading(false);
       }
@@ -207,6 +250,13 @@ function TestCatalog() {
         (res as { attemptId?: string })?.attemptId;
 
       if (attemptId) {
+        try {
+          if (typeof sessionStorage !== "undefined") {
+            sessionStorage.setItem(`tg_session_${attemptId}`, JSON.stringify(res));
+          }
+        } catch {
+          // ignore storage quota errors
+        }
         navigate({ to: "/test/run", search: { attemptId } });
       } else {
         toast.error("Failed to initialize test session. Please try again.");
