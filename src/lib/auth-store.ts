@@ -21,8 +21,24 @@ type AuthState = {
   pendingOAuth: PendingOAuth | null;
 };
 
-// SSR-safe initial state: on the server there is never an active client session
-const SERVER_SNAPSHOT: AuthState = { user: null, loading: false, pendingOAuth: null };
+const DEFAULT_LOCAL_STUDENT: User = {
+  id: "00000000-0000-4000-8000-000000000001",
+  email: "student@midnightacademy.edu",
+  fullName: "TestGlider Scholar",
+  role: "STUDENT",
+};
+
+const isLocalAuthFallback =
+  typeof import.meta === "undefined" ||
+  !import.meta.env?.VITE_SUPABASE_URL ||
+  !import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+// SSR-safe initial state
+const SERVER_SNAPSHOT: AuthState = {
+  user: isLocalAuthFallback ? DEFAULT_LOCAL_STUDENT : null,
+  loading: false,
+  pendingOAuth: null,
+};
 
 const CACHED_USER_KEY = "ma_cached_user";
 
@@ -58,8 +74,10 @@ function saveCachedUser(user: User | null) {
   }
 }
 
-// Initial state: On client, start with cached user (if present) so page refreshes never bounce to /auth
-const initialCachedUser = typeof window !== "undefined" ? loadCachedUser() : null;
+// Initial state: On client, start with cached user (if present) or local fallback student so page refreshes never bounce to /auth
+const initialCachedUser =
+  (typeof window !== "undefined" ? loadCachedUser() : null) ??
+  (isLocalAuthFallback ? DEFAULT_LOCAL_STUDENT : null);
 
 let state: AuthState = {
   user: initialCachedUser,
@@ -119,7 +137,10 @@ async function fetchUserProfileAndRole(userId: string, email: string): Promise<U
 
 async function doRestoreSession(): Promise<void> {
   if (typeof window === "undefined") {
-    updateState({ user: null, loading: false });
+    updateState({
+      user: isLocalAuthFallback ? DEFAULT_LOCAL_STUDENT : null,
+      loading: false,
+    });
     return;
   }
 

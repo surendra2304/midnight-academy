@@ -138,12 +138,15 @@ export function CompleteWordsRenderer({
       const explicitPrefix = blankData?.prefix;
 
       // Extract prefix from pendingPreText
-      let prefixToRender = explicitPrefix || "";
+      let prefixToRender = explicitPrefix ?? "";
       let textBeforePrefix = pendingPreText;
 
-      if (prefixToRender && pendingPreText.endsWith(prefixToRender)) {
+      if (
+        prefixToRender &&
+        pendingPreText.toLowerCase().endsWith(prefixToRender.toLowerCase())
+      ) {
         textBeforePrefix = pendingPreText.slice(0, pendingPreText.length - prefixToRender.length);
-      } else if (!prefixToRender) {
+      } else if (explicitPrefix === undefined) {
         // Fallback: extract letters immediately preceding [blankIdx]
         const trailingWordMatch = pendingPreText.match(/([a-zA-Z]+)$/);
         if (trailingWordMatch && trailingWordMatch[1]) {

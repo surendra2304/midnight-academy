@@ -1,10 +1,10 @@
 /**
  * Deterministic Sentence Building Scoring Service
- * Evaluates Build a Sentence task types (token/word ordering).
+ * Evaluates Build a Sentence task types (token/word/phrase ordering).
  */
 
 export interface SentenceScoringRule {
-  acceptedSequences: string[][]; // Array of acceptable token index or word arrays
+  acceptedSequences: string[][]; // Array of acceptable token index or word/phrase arrays
   tokenList: string[];
 }
 
@@ -15,6 +15,16 @@ export interface SentenceScoreResult {
   maxPoints: number;
   matchedSequence?: string[];
   feedback?: string;
+}
+
+function normalizeSentenceComparisonString(tokensOrText: string | string[]): string {
+  const joined = Array.isArray(tokensOrText) ? tokensOrText.join(" ") : tokensOrText;
+  return joined
+    .trim()
+    .replace(/[.?!]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 }
 
 export class SentenceScoringService {
@@ -29,7 +39,21 @@ export class SentenceScoringService {
     if (Array.isArray(response)) {
       tokens = response;
     } else if (typeof response === "string") {
-      tokens = response.trim().split(/\s+/).filter(Boolean);
+      const trimmed = response.trim();
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            tokens = parsed.map((item) => String(item));
+          } else {
+            tokens = trimmed.split(/\s+/).filter(Boolean);
+          }
+        } catch {
+          tokens = trimmed.split(/\s+/).filter(Boolean);
+        }
+      } else {
+        tokens = trimmed.split(/\s+/).filter(Boolean);
+      }
     }
     return this.scoreSentence(tokens, {
       acceptedSequences: rule.acceptedSequences,
@@ -51,11 +75,20 @@ export class SentenceScoringService {
       };
     }
 
-    const studentStr = studentOrder.map((s) => s.trim().toLowerCase()).join(" ");
+    const studentStr = normalizeSentenceComparisonString(studentOrder);
+    if (!studentStr) {
+      return {
+        isCorrect: false,
+        score: 0,
+        earnedPoints: 0,
+        maxPoints: 1,
+        feedback: "No sentence words were selected or ordered.",
+      };
+    }
 
     const isMatch = rule.acceptedSequences.some((seq) => {
-      const targetStr = seq.map((s) => s.trim().toLowerCase()).join(" ");
-      return targetStr === studentStr;
+      const targetStr = normalizeSentenceComparisonString(seq);
+      return Boolean(targetStr) && targetStr === studentStr;
     });
 
     if (isMatch) {
@@ -73,12 +106,12 @@ export class SentenceScoringService {
     let bestAdjacentPairsMatch = 0;
     for (const seq of rule.acceptedSequences) {
       let pairsCount = 0;
+      const seqStr = normalizeSentenceComparisonString(seq);
       for (let i = 0; i < studentOrder.length - 1; i++) {
-        const first = studentOrder[i]?.toLowerCase() || "";
-        const second = studentOrder[i + 1]?.toLowerCase() || "";
+        const first = normalizeSentenceComparisonString(studentOrder[i] || "");
+        const second = normalizeSentenceComparisonString(studentOrder[i + 1] || "");
         const pair = `${first} ${second}`;
-        const seqStr = seq.map((s) => s.toLowerCase()).join(" ");
-        if (seqStr.includes(pair)) {
+        if (first && second && seqStr.includes(pair)) {
           pairsCount += 1;
         }
       }

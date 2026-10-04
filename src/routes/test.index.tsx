@@ -1,14 +1,7 @@
 import { requireAuth } from "@/lib/auth-guard";
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Calendar,
-  Briefcase,
-  Puzzle,
-  ClipboardList,
-  PlaySquare,
-  Mic,
-  AudioLines,
   Check,
   X,
   FileText,
@@ -17,6 +10,11 @@ import {
   Loader2,
   Play,
   LayoutGrid,
+  BookOpen,
+  Volume2,
+  Mic,
+  PenTool,
+  Globe2,
 } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
 import { TestGliderSubNav } from "@/components/TestGliderSubNav";
@@ -34,7 +32,7 @@ export const Route = createFileRoute("/test/")({
       {
         name: "description",
         content:
-          "Official TOEFL Full-Length Mock Exams and Single Section Mode practice with instant AI grading.",
+          "Official TOEFL 2026 Full-Length Mock Exams (Moon, Mars, Venus, Jupiter, Saturn, Mercury, Neptune, Uranus) and Single Section Mode practice with instant AI grading.",
       },
     ],
   }),
@@ -57,21 +55,114 @@ export interface PublishedTestItem {
   }>;
 }
 
-const DEFAULT_MOON_VERSION_ID = "f2000000-0000-0000-0000-000000000000";
+const DEFAULT_MOON_VERSION_ID = "f2000000-0000-4000-8000-000000000000";
+
+const PLANET_THEMES: Record<
+  string,
+  {
+    subtitle: string;
+    badgeColor: string;
+    orbGradient: string;
+    ringColor?: string;
+    description: string;
+  }
+> = {
+  moon: {
+    subtitle: "Mock Test #1 • Official 2026 Format",
+    badgeColor: "bg-slate-100 text-slate-800 border-slate-300",
+    orbGradient: "from-slate-200 via-slate-400 to-slate-600",
+    description:
+      "The Power of Music, Sin Taxes Discussion, Elevator Maintenance, Campus Café & Library Orientation",
+  },
+  mars: {
+    subtitle: "Mock Test #2 • Official 2026 Format",
+    badgeColor: "bg-orange-50 text-orange-800 border-orange-200",
+    orbGradient: "from-orange-300 via-red-500 to-rose-800",
+    description:
+      "3D-Printed Coral Reefs, Roman Concrete, Remote Work Debate, Parking Permit & Gym Orientation",
+  },
+  venus: {
+    subtitle: "Mock Test #3 • Official 2026 Format",
+    badgeColor: "bg-amber-50 text-amber-800 border-amber-200",
+    orbGradient: "from-amber-200 via-yellow-500 to-amber-700",
+    description:
+      "Svalbard Global Seed Vault, Bioluminescence, Cashless Society Discussion & Botanical Garden Tour",
+  },
+  jupiter: {
+    subtitle: "Mock Test #4 • Official 2026 Format",
+    badgeColor: "bg-orange-50 text-amber-900 border-amber-300",
+    orbGradient: "from-amber-300 via-orange-500 to-stone-700",
+    ringColor: "border-amber-400/50",
+    description:
+      "Urban Heat Islands, Behavioral Economics & Decoy Effect, Mandatory Volunteering & Art Museum Tour",
+  },
+  saturn: {
+    subtitle: "Mock Test #5 • Official 2026 Format",
+    badgeColor: "bg-yellow-50 text-yellow-900 border-yellow-300",
+    orbGradient: "from-yellow-200 via-amber-400 to-yellow-700",
+    ringColor: "border-yellow-500/60",
+    description:
+      "Pando Aspen Clone, Rosetta Stone & Champollion, AI in Education Discussion & Chemistry Lab Safety",
+  },
+  mercury: {
+    subtitle: "Mock Test #6 • Official 2026 Format",
+    badgeColor: "bg-zinc-100 text-zinc-800 border-zinc-300",
+    orbGradient: "from-zinc-300 via-stone-500 to-neutral-800",
+    description:
+      "Mycorrhizal Fungal Networks, Antikythera Mechanism, 4-Day Workweek Debate & Planetarium Show",
+  },
+  neptune: {
+    subtitle: "Mock Test #7 • Official 2026 Format",
+    badgeColor: "bg-blue-50 text-blue-800 border-blue-200",
+    orbGradient: "from-sky-300 via-blue-600 to-indigo-900",
+    description:
+      "Handmade Crafts & Blues Music, Centipedes vs. Millipedes, Phonofiddle, Chiaroscuro & Studying History",
+  },
+  uranus: {
+    subtitle: "Mock Test #8 • Official 2026 Format",
+    badgeColor: "bg-cyan-50 text-cyan-800 border-cyan-200",
+    orbGradient: "from-cyan-200 via-teal-400 to-cyan-700",
+    ringColor: "border-cyan-400/60",
+    description:
+      "Early Silent Cinema & Sleep Science, Yellowstone Wolves, Gut Microbiome, Spiral Jetty & Accounting Conference",
+  },
+};
+
+function getPlanetMeta(name: string) {
+  const lower = name.toLowerCase();
+  for (const [key, meta] of Object.entries(PLANET_THEMES)) {
+    if (lower.includes(key)) {
+      return { key, ...meta };
+    }
+  }
+  return {
+    key: "moon",
+    ...PLANET_THEMES.moon,
+  };
+}
+
+function getShortPlanetName(name: string) {
+  const part = name.split("|")[0]?.trim();
+  return part || name;
+}
 
 function TestCatalog() {
   const navigate = useNavigate();
   const [tests, setTests] = useState<PublishedTestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [activeNavTab, setActiveNavTab] = useState("mock-tests");
+  const [selectedModalTest, setSelectedModalTest] = useState<PublishedTestItem | null>(null);
+  const [selectedSectionTestId, setSelectedSectionTestId] = useState<string>("");
 
   useEffect(() => {
     async function loadCatalog() {
       try {
         const res = await getPublishedTests();
-        setTests((res as PublishedTestItem[]) || []);
+        const items = (res as PublishedTestItem[]) || [];
+        setTests(items);
+        if (items.length > 0) {
+          setSelectedSectionTestId(items[0].testVersionId);
+        }
       } catch (err) {
         console.error("Failed to load catalog:", err);
         toast.error("Could not load test catalog. Please try refreshing.");
@@ -83,42 +174,12 @@ function TestCatalog() {
   }, []);
 
   const moonTest =
-    tests.find(
-      (t) =>
-        t.name.toLowerCase().includes("moon") ||
-        t.category.toLowerCase().includes("mock") ||
-        t.sections.length >= 4,
-    ) || tests[0];
+    tests.find((t) => t.name.toLowerCase().includes("moon")) || tests[0];
 
   const moonVersionId = moonTest?.testVersionId || DEFAULT_MOON_VERSION_ID;
 
-  const readingTest =
-    tests.find(
-      (t) =>
-        t.category.toLowerCase() === "reading" ||
-        t.sections.some((s) => s.sectionType === "reading"),
-    ) || moonTest;
-
-  const listeningTest =
-    tests.find(
-      (t) =>
-        t.category.toLowerCase() === "listening" ||
-        t.sections.some((s) => s.sectionType === "listening"),
-    ) || moonTest;
-
-  const writingTest =
-    tests.find(
-      (t) =>
-        t.category.toLowerCase() === "writing" ||
-        t.sections.some((s) => s.sectionType === "writing"),
-    ) || moonTest;
-
-  const speakingTest =
-    tests.find(
-      (t) =>
-        t.category.toLowerCase() === "speaking" ||
-        t.sections.some((s) => s.sectionType === "speaking"),
-    ) || moonTest;
+  const activeSectionTest =
+    tests.find((t) => t.testVersionId === selectedSectionTestId) || moonTest;
 
   const handleStartTest = async (
     testVersionId: string,
@@ -140,7 +201,10 @@ function TestCatalog() {
         },
       });
 
-      const attemptId = (res as any)?.snapshot?.attemptId || (res as any)?.attemptId;
+      const attemptId =
+        (res as { snapshot?: { attemptId?: string }; attemptId?: string })?.snapshot
+          ?.attemptId ||
+        (res as { attemptId?: string })?.attemptId;
 
       if (attemptId) {
         navigate({ to: "/test/run", search: { attemptId } });
@@ -153,7 +217,7 @@ function TestCatalog() {
       toast.error(`Start Error: ${errorMsg}`);
     } finally {
       setStartingId(null);
-      setShowModal(false);
+      setSelectedModalTest(null);
     }
   };
 
@@ -181,7 +245,7 @@ function TestCatalog() {
       {/* TestGlider 7-Category Tab Navigation */}
       <TestGliderSubNav />
 
-      <main className="mx-auto max-w-6xl px-6 py-10 space-y-10">
+      <main className="mx-auto max-w-6xl px-6 py-10 space-y-12">
         {/* Section 1: TestGlider vs. Actual Score */}
         <section className="space-y-4">
           <h2 className="text-xl font-black tracking-tight text-slate-900">
@@ -317,86 +381,245 @@ function TestCatalog() {
           </div>
         </section>
 
-        {/* Section 2: Tests in Progress */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-700">
-              In Progress
-            </span>
-            <h2 className="text-xl font-black text-slate-900">Tests in progress</h2>
-          </div>
-
-          {/* Moon Full Test Card */}
-          <div
-            onClick={() => setShowModal(true)}
-            className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xs transition-all hover:border-blue-400 hover:shadow-md cursor-pointer"
-          >
-            <div className="space-y-3 max-w-md">
-              <span className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">
-                Moon
+        {/* Section 2: Featured Test in Progress (Moon Full Test) */}
+        {moonTest && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-700">
+                Featured 2026 Exam
               </span>
-              <p className="text-sm font-semibold text-slate-500">Full test</p>
-              <div className="pt-2">
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowModal(true);
-                  }}
-                  className="rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-7 py-2.5 text-xs shadow-xs"
-                >
-                  <Play className="size-3 mr-1.5 fill-current" /> Start Full Test
-                </Button>
+              <h2 className="text-xl font-black text-slate-900">Tests in progress</h2>
+            </div>
+
+            <div
+              onClick={() => setSelectedModalTest(moonTest)}
+              className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xs transition-all hover:border-blue-400 hover:shadow-md cursor-pointer"
+            >
+              <div className="space-y-3 max-w-xl">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">
+                    Moon
+                  </span>
+                  <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
+                    Full Test • {moonTest.questionCount || 54} Items
+                  </span>
+                </div>
+                <p className="text-xs font-medium text-slate-500 leading-relaxed">
+                  {PLANET_THEMES.moon.description}
+                </p>
+                <div className="pt-2">
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedModalTest(moonTest);
+                    }}
+                    className="rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-7 py-2.5 text-xs shadow-xs cursor-pointer"
+                  >
+                    <Play className="size-3 mr-1.5 fill-current" /> Start Full Test
+                  </Button>
+                </div>
+              </div>
+
+              <div className="pr-4 shrink-0">
+                <img
+                  src="/images/testglider-moon.png"
+                  alt="Moon Full Test"
+                  className="size-28 object-contain transition-transform group-hover:scale-105"
+                />
               </div>
             </div>
-
-            <div className="pr-4 shrink-0">
-              <img
-                src="/images/testglider-moon.png"
-                alt="Moon Full Test"
-                className="size-28 object-contain transition-transform group-hover:scale-105"
-              />
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Center Pill: Scores in under 1 min */}
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center">
           <div className="rounded-full border border-slate-200/80 bg-slate-100/90 px-6 py-2 text-xs font-semibold text-slate-600 shadow-xs">
-            Scores in under 1 min. Fully automated AI grading
+            Scores in under 1 min • All 8 Complete 2026 Mock Tests • Automated AI Rubric Grading
           </div>
         </div>
 
-        {/* Section 3: Single Section Mode */}
-        <section className="space-y-4 pt-2">
-          <div>
-            <h2 className="text-xl font-black text-slate-900">Single Section Mode</h2>
-            <p className="text-xs font-medium text-slate-500">
-              Take only the section you want to focus on.
-            </p>
+        {/* Section 3: Complete TOEFL 2026 Planetary Mock Test Series (All 8 Tests) */}
+        <section className="space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <Globe2 className="size-5 text-[#0f3b82]" />
+                <h2 className="text-xl font-black text-slate-900">
+                  Official 2026 Full-Length Mock Test Series ({tests.length} Complete Exams)
+                </h2>
+              </div>
+              <p className="text-xs font-medium text-slate-500 mt-1">
+                Every mock exam includes Reading (Modules 1 &amp; 2), Listening (Modules 1 &amp;
+                2), Writing (Build a Sentence, Email &amp; Academic Discussion), and Speaking
+                (Listen &amp; Repeat + Interview).
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {tests.map((testItem, idx) => {
+              const planet = getPlanetMeta(testItem.name);
+              const shortName = getShortPlanetName(testItem.name);
+              const isStartingFull = startingId === `${testItem.testVersionId}-full-all`;
+
+              return (
+                <div
+                  key={testItem.testVersionId}
+                  onClick={() => setSelectedModalTest(testItem)}
+                  className="group relative flex items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs transition-all hover:border-blue-400 hover:shadow-md cursor-pointer"
+                >
+                  <div className="space-y-2.5 flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${planet.badgeColor}`}
+                      >
+                        Set #{idx + 1}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-400">
+                        {testItem.questionCount || 48} Questions • 4 Sections
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">
+                      {shortName}{" "}
+                      <span className="text-sm font-semibold text-slate-400">
+                        | Full Mock Test
+                      </span>
+                    </h3>
+
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                      {planet.description}
+                    </p>
+
+                    <div className="pt-2 flex flex-wrap items-center gap-2">
+                      <Button
+                        size="sm"
+                        disabled={Boolean(startingId)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedModalTest(testItem);
+                        }}
+                        className="rounded-full bg-[#0f3b82] hover:bg-[#154694] text-white font-bold px-5 text-xs cursor-pointer"
+                      >
+                        {isStartingFull ? (
+                          <>
+                            <Loader2 className="size-3 mr-1.5 animate-spin" /> Launching...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="size-3 mr-1.5 fill-current" /> Start Full Test
+                          </>
+                        )}
+                      </Button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedSectionTestId(testItem.testVersionId);
+                          const el = document.getElementById("single-section-mode");
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3.5 py-1.5 text-[11px] font-semibold text-slate-700 transition-colors cursor-pointer"
+                      >
+                        Section Mode
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Planetary Illustration */}
+                  <div className="shrink-0 flex items-center justify-center pr-2">
+                    {planet.key === "moon" ? (
+                      <img
+                        src="/images/testglider-moon.png"
+                        alt={shortName}
+                        className="size-20 object-contain transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="relative flex items-center justify-center size-20">
+                        {planet.ringColor && (
+                          <div
+                            className={`absolute w-24 h-7 rounded-full border-4 ${planet.ringColor} -rotate-12 pointer-events-none`}
+                          />
+                        )}
+                        <div
+                          className={`size-16 rounded-full bg-gradient-to-br ${planet.orbGradient} shadow-inner transition-transform group-hover:scale-105 flex items-center justify-center`}
+                        >
+                          <div className="size-12 rounded-full bg-white/10 backdrop-blur-[1px]" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Section 4: Single Section Mode */}
+        <section id="single-section-mode" className="space-y-5 pt-2">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black text-slate-900">Single Section Mode</h2>
+              <p className="text-xs font-medium text-slate-500">
+                Take only the section you want to focus on from any of the 8 mock tests.
+              </p>
+            </div>
+
+            {/* Planetary Mock Selector Pills */}
+            <div className="flex flex-wrap items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200 shadow-2xs">
+              {tests.map((t) => {
+                const shortName = getShortPlanetName(t.name);
+                const isSelected = activeSectionTest?.testVersionId === t.testVersionId;
+                return (
+                  <button
+                    key={t.testVersionId}
+                    type="button"
+                    onClick={() => setSelectedSectionTestId(t.testVersionId)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-[#0f3b82] text-white shadow-xs"
+                        : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {shortName}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Reading Section Card */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4 hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Reading</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Take only the Reading section of the Moon Mock
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-900">Reading</h3>
+                  <BookOpen className="size-4 text-[#0f3b82]" />
+                </div>
+                <p className="text-xs text-slate-500">
+                  Take only the Reading section of the{" "}
+                  <strong className="text-slate-800">
+                    {getShortPlanetName(activeSectionTest?.name || "Moon")}
+                  </strong>{" "}
+                  Mock
                 </p>
               </div>
               <Button
                 variant="outline"
-                className="w-full rounded-xl border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 font-bold text-xs"
-                disabled={startingId === `${readingTest?.testVersionId}-section-reading`}
+                className="w-full rounded-xl border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 font-bold text-xs cursor-pointer"
+                disabled={
+                  startingId === `${activeSectionTest?.testVersionId}-section-reading`
+                }
                 onClick={() =>
                   handleStartTest(
-                    readingTest?.testVersionId || moonVersionId,
+                    activeSectionTest?.testVersionId || moonVersionId,
                     "section",
                     "reading",
                   )
                 }
               >
-                {startingId === `${readingTest?.testVersionId}-section-reading` ? (
+                {startingId === `${activeSectionTest?.testVersionId}-section-reading` ? (
                   <>
                     <Loader2 className="size-3 mr-1 animate-spin" /> Starting...
                   </>
@@ -408,25 +631,34 @@ function TestCatalog() {
 
             {/* Listening Section Card */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4 hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Listening</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Take only the Listening section of the Moon Mock
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-900">Listening</h3>
+                  <Volume2 className="size-4 text-[#0f3b82]" />
+                </div>
+                <p className="text-xs text-slate-500">
+                  Take only the Listening section of the{" "}
+                  <strong className="text-slate-800">
+                    {getShortPlanetName(activeSectionTest?.name || "Moon")}
+                  </strong>{" "}
+                  Mock
                 </p>
               </div>
               <Button
                 variant="outline"
-                className="w-full rounded-xl border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 font-bold text-xs"
-                disabled={startingId === `${listeningTest?.testVersionId}-section-listening`}
+                className="w-full rounded-xl border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 font-bold text-xs cursor-pointer"
+                disabled={
+                  startingId === `${activeSectionTest?.testVersionId}-section-listening`
+                }
                 onClick={() =>
                   handleStartTest(
-                    listeningTest?.testVersionId || moonVersionId,
+                    activeSectionTest?.testVersionId || moonVersionId,
                     "section",
                     "listening",
                   )
                 }
               >
-                {startingId === `${listeningTest?.testVersionId}-section-listening` ? (
+                {startingId === `${activeSectionTest?.testVersionId}-section-listening` ? (
                   <>
                     <Loader2 className="size-3 mr-1 animate-spin" /> Starting...
                   </>
@@ -438,25 +670,34 @@ function TestCatalog() {
 
             {/* Writing Section Card */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4 hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Writing</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Take only the Writing section of the Moon Mock
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-900">Writing</h3>
+                  <PenTool className="size-4 text-[#0f3b82]" />
+                </div>
+                <p className="text-xs text-slate-500">
+                  Take only the Writing section of the{" "}
+                  <strong className="text-slate-800">
+                    {getShortPlanetName(activeSectionTest?.name || "Moon")}
+                  </strong>{" "}
+                  Mock
                 </p>
               </div>
               <Button
                 variant="outline"
-                className="w-full rounded-xl border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 font-bold text-xs"
-                disabled={startingId === `${writingTest?.testVersionId}-section-writing`}
+                className="w-full rounded-xl border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 font-bold text-xs cursor-pointer"
+                disabled={
+                  startingId === `${activeSectionTest?.testVersionId}-section-writing`
+                }
                 onClick={() =>
                   handleStartTest(
-                    writingTest?.testVersionId || moonVersionId,
+                    activeSectionTest?.testVersionId || moonVersionId,
                     "section",
                     "writing",
                   )
                 }
               >
-                {startingId === `${writingTest?.testVersionId}-section-writing` ? (
+                {startingId === `${activeSectionTest?.testVersionId}-section-writing` ? (
                   <>
                     <Loader2 className="size-3 mr-1 animate-spin" /> Starting...
                   </>
@@ -468,25 +709,34 @@ function TestCatalog() {
 
             {/* Speaking Section Card */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4 hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">Speaking</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Take only the Speaking section of the Moon Mock
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-900">Speaking</h3>
+                  <Mic className="size-4 text-[#0f3b82]" />
+                </div>
+                <p className="text-xs text-slate-500">
+                  Take only the Speaking section of the{" "}
+                  <strong className="text-slate-800">
+                    {getShortPlanetName(activeSectionTest?.name || "Moon")}
+                  </strong>{" "}
+                  Mock
                 </p>
               </div>
               <Button
                 variant="outline"
-                className="w-full rounded-xl border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 font-bold text-xs"
-                disabled={startingId === `${speakingTest?.testVersionId}-section-speaking`}
+                className="w-full rounded-xl border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 font-bold text-xs cursor-pointer"
+                disabled={
+                  startingId === `${activeSectionTest?.testVersionId}-section-speaking`
+                }
                 onClick={() =>
                   handleStartTest(
-                    speakingTest?.testVersionId || moonVersionId,
+                    activeSectionTest?.testVersionId || moonVersionId,
                     "section",
                     "speaking",
                   )
                 }
               >
-                {startingId === `${speakingTest?.testVersionId}-section-speaking` ? (
+                {startingId === `${activeSectionTest?.testVersionId}-section-speaking` ? (
                   <>
                     <Loader2 className="size-3 mr-1 animate-spin" /> Starting...
                   </>
@@ -499,18 +749,21 @@ function TestCatalog() {
         </section>
       </main>
 
-      {/* 'What is included?' Modal — 100% Free Forever */}
-      {showModal && (
+      {/* 'What is included?' Modal */}
+      {selectedModalTest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in select-none">
           <div className="relative w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl space-y-6">
             <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
+              onClick={() => setSelectedModalTest(null)}
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
             >
               <X className="size-5" />
             </button>
 
-            <div className="flex items-center justify-between pr-8">
+            <div className="space-y-1 pr-8">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0f3b82]">
+                {selectedModalTest.name}
+              </span>
               <h3 className="text-lg font-bold text-slate-900">What is included?</h3>
             </div>
 
@@ -521,7 +774,6 @@ function TestCatalog() {
                 <span className="text-center font-bold text-blue-600">Included</span>
               </div>
 
-              {/* Row 1: Test Attempts */}
               <div className="grid grid-cols-[1fr_130px] items-center py-2 border-b border-slate-50">
                 <div className="flex items-center gap-2.5 text-slate-700">
                   <FileText className="size-4 text-slate-500" />
@@ -530,18 +782,16 @@ function TestCatalog() {
                 <span className="text-center font-bold text-blue-600">Unlimited</span>
               </div>
 
-              {/* Row 2: View Total Score */}
               <div className="grid grid-cols-[1fr_130px] items-center py-2 border-b border-slate-50">
                 <div className="flex items-center gap-2.5 text-slate-700">
                   <BarChart2 className="size-4 text-slate-500" />
-                  <span>View Total Score</span>
+                  <span>View Total Score (1.0–6.0)</span>
                 </div>
                 <div className="flex justify-center items-center gap-1 text-blue-600 font-bold">
                   <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
               </div>
 
-              {/* Row 3: View Section Scores */}
               <div className="grid grid-cols-[1fr_130px] items-center py-2 border-b border-slate-50">
                 <div className="flex items-center gap-2.5 text-slate-700">
                   <LayoutGrid className="size-4 text-slate-500" />
@@ -552,22 +802,20 @@ function TestCatalog() {
                 </div>
               </div>
 
-              {/* Row 4: View Explanations */}
               <div className="grid grid-cols-[1fr_130px] items-center py-2 border-b border-slate-50">
                 <div className="flex items-center gap-2.5 text-slate-700">
                   <Sparkles className="size-4 text-slate-500" />
-                  <span>View Explanations</span>
+                  <span>Answer Key &amp; Explanations</span>
                 </div>
                 <div className="flex justify-center items-center gap-1 text-blue-600 font-bold">
                   <Check className="size-4 stroke-[2.5]" /> Included
                 </div>
               </div>
 
-              {/* Row 5: AI Evaluation */}
               <div className="grid grid-cols-[1fr_130px] items-center py-2">
                 <div className="flex items-center gap-2.5 text-slate-700">
                   <Check className="size-4 text-slate-500" />
-                  <span>AI Rubric Scoring</span>
+                  <span>AI Writing &amp; Speaking Grading</span>
                 </div>
                 <div className="flex justify-center items-center gap-1 text-blue-600 font-bold">
                   <Check className="size-4 stroke-[2.5]" /> Included
@@ -580,7 +828,7 @@ function TestCatalog() {
               <button
                 type="button"
                 disabled={Boolean(startingId)}
-                onClick={() => handleStartTest(moonVersionId, "full")}
+                onClick={() => handleStartTest(selectedModalTest.testVersionId, "full")}
                 className="w-full rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {startingId ? (
@@ -589,7 +837,8 @@ function TestCatalog() {
                   </>
                 ) : (
                   <>
-                    <Play className="size-3.5 fill-current text-white" /> Start Test
+                    <Play className="size-3.5 fill-current text-white" /> Start{" "}
+                    {getShortPlanetName(selectedModalTest.name)} Full Test
                   </>
                 )}
               </button>

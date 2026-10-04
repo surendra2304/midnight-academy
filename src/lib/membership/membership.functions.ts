@@ -28,11 +28,11 @@ export const getUserMembership = createServerFn({ method: "GET" })
     if (!usage) {
       usage = {
         userId: context.userId,
-        tier: "free",
+        tier: "member",
         fullMocksUsedThisMonth: 0,
         sectionTestsUsedThisMonth: 0,
-        practiceQuestionsUsedToday: 2,
-        aiEvaluationsUsedToday: 1,
+        practiceQuestionsUsedToday: 0,
+        aiEvaluationsUsedToday: 0,
       };
       usageStore.set(context.userId, usage);
     }
@@ -43,9 +43,9 @@ export const getUserMembership = createServerFn({ method: "GET" })
     const aiQuota = checkActionQuota(usage, "ai_evaluation");
 
     return {
-      tier: "free",
-      planExpiresAt: null,
-      isUnlimited: true,
+      tier: usage.tier,
+      planExpiresAt: usage.planExpiresAt ?? null,
+      isUnlimited: usage.tier === "member",
       quotas: {
         fullMocks: fullMockQuota,
         sectionTests: sectionTestQuota,

@@ -6,14 +6,14 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, Volume2, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
+import { Play, Pause, Volume2, RotateCcw } from "lucide-react";
 import type { AudioInteractionLog } from "@/lib/audio/audio-service";
 
 export interface AudioPlayerProps {
   audioUrl?: string | undefined;
   speechText?: string | undefined;
   gender?: "female" | "male" | "auto" | undefined;
-  maxPlays?: number | undefined; // e.g. 1 or 2 (TOEFL listening items limit replays)
+  maxPlays?: number | undefined;
   onInteractionChange?: ((log: AudioInteractionLog) => void) | undefined;
   onEnded?: (() => void) | undefined;
   disabled?: boolean | undefined;
@@ -31,12 +31,12 @@ export function AudioPlayer({
   audioUrl,
   speechText,
   gender = "auto",
-  maxPlays = 1,
+  maxPlays = 2,
   onInteractionChange,
   onEnded,
   disabled = false,
   autoPlay = true,
-  allowControls = false,
+  allowControls = true,
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speechTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -108,7 +108,7 @@ export function AudioPlayer({
     return Math.max(4, Math.round((wordCount / 140) * 60));
   }, []);
 
-  // Parse multi-speaker dialogue
+  // Parse multi-speaker dialogue and strip speaker tags so "Speaker 1:" / "Man:" is never spoken aloud
   const parseDialogueTurns = useCallback(
     (text: string): DialogueTurn[] => {
       const lines = text
@@ -117,22 +117,48 @@ export function AudioPlayer({
         .filter(Boolean);
 
       const turns: DialogueTurn[] = [];
+      const speakerGenderMap = new Map<string, "male" | "female">();
+      let nextFallbackGender: "male" | "female" = gender === "male" ? "male" : "female";
 
       for (const line of lines) {
-        const maleMatch = line.match(/^(Man|Male|Boy|Professor|Dr\.|Mr\.\s*\w+):\s*(.*)/i);
-        const femaleMatch = line.match(/^(Woman|Female|Girl|Student|Ms\.\s*\w+|Mrs\.\s*\w+):\s*(.*)/i);
+        const genericLabelMatch = line.match(
+          /^([A-Za-z][A-Za-z0-9\s.]{0,24}):\s*(.+)$/,
+        );
 
-        if (maleMatch) {
+        if (genericLabelMatch) {
+          const rawSpeaker = genericLabelMatch[1]!.trim();
+          const spokenContent = genericLabelMatch[2]!.trim();
+          const lowerSpeaker = rawSpeaker.toLowerCase();
+
+          let resolvedGender: "male" | "female";
+          if (speakerGenderMap.has(lowerSpeaker)) {
+            resolvedGender = speakerGenderMap.get(lowerSpeaker)!;
+          } else if (
+            /\b(man|male|boy|mr\.|dr\.|father|brother|husband|son|speaker 1)\b/i.test(
+              lowerSpeaker,
+            )
+          ) {
+            resolvedGender = "male";
+            speakerGenderMap.set(lowerSpeaker, resolvedGender);
+            nextFallbackGender = "female";
+          } else if (
+            /\b(woman|female|girl|ms\.|mrs\.|mother|sister|wife|daughter|speaker 2)\b/i.test(
+              lowerSpeaker,
+            )
+          ) {
+            resolvedGender = "female";
+            speakerGenderMap.set(lowerSpeaker, resolvedGender);
+            nextFallbackGender = "male";
+          } else {
+            resolvedGender = nextFallbackGender;
+            speakerGenderMap.set(lowerSpeaker, resolvedGender);
+            nextFallbackGender = resolvedGender === "male" ? "female" : "male";
+          }
+
           turns.push({
-            speaker: maleMatch[1] || "Man",
-            gender: "male",
-            text: maleMatch[2] || line,
-          });
-        } else if (femaleMatch) {
-          turns.push({
-            speaker: femaleMatch[1] || "Woman",
-            gender: "female",
-            text: femaleMatch[2] || line,
+            speaker: rawSpeaker,
+            gender: resolvedGender,
+            text: spokenContent,
           });
         } else {
           const chosenGender = gender === "male" ? "male" : "female";
@@ -302,8 +328,28 @@ export function AudioPlayer({
 
   // Multi-Turn Sequential Speech Synthesis Playback
   const startSpeechSynthesis = () => {
+    const estDuration = estimateSpeechDuration(speechText || "");
+    setDuration(estDuration);
+
     if (typeof window === "undefined" || !("speechSynthesis" in window) || !speechText) {
-      setError("Speech synthesis is not supported on this browser.");
+      // Simulate timer progression if browser lacks speechSynthesis
+      isPlayingRef.current = true;
+      setIsPlaying(true);
+      setCurrentTime(0);
+      let elapsed = 0;
+      if (speechTimerRef.current) clearInterval(speechTimerRef.current);
+      speechTimerRef.current = setInterval(() => {
+        elapsed += 0.5;
+        if (elapsed >= estDuration) {
+          if (speechTimerRef.current) clearInterval(speechTimerRef.current);
+          setIsPlaying(false);
+          isPlayingRef.current = false;
+          setCurrentTime(estDuration);
+          if (onEnded) onEnded();
+        } else {
+          setCurrentTime(elapsed);
+        }
+      }, 500);
       return;
     }
 
@@ -313,8 +359,6 @@ export function AudioPlayer({
     setCurrentTime(0);
 
     const turns = parseDialogueTurns(speechText);
-    const estDuration = estimateSpeechDuration(speechText);
-    setDuration(estDuration);
 
     let elapsed = 0;
     if (speechTimerRef.current) clearInterval(speechTimerRef.current);
@@ -349,7 +393,7 @@ export function AudioPlayer({
       }
 
       const utterance = new SpeechSynthesisUtterance(turn.text);
-      utterance.rate = 0.93; // Natural pacing
+      utterance.rate = 0.95;
       utterance.pitch = turn.gender === "female" ? 1.05 : 0.95;
       utterance.lang = "en-US";
 
@@ -360,12 +404,12 @@ export function AudioPlayer({
 
       utterance.onend = () => {
         currentTurnIndex += 1;
-        setTimeout(playNextTurn, 350);
+        setTimeout(playNextTurn, 300);
       };
 
       utterance.onerror = (e) => {
         if (e.error !== "canceled" && e.error !== "interrupted") {
-          setError("Speech playback was interrupted.");
+          setError(null);
         }
         setIsPlaying(false);
         isPlayingRef.current = false;
@@ -390,9 +434,6 @@ export function AudioPlayer({
   };
 
   const handlePlay = () => {
-    const remainingPlays = maxPlays - playCount;
-    if (remainingPlays <= 0) return;
-
     setError(null);
     setCurrentTime(0);
 
@@ -432,26 +473,26 @@ export function AudioPlayer({
           setMode("speech");
           startSpeechSynthesis();
         } else {
-          setError("Click play to listen.");
+          setError("Click Play to listen.");
           setIsPlaying(false);
         }
       });
   };
 
-  // Automatic single playback after a short settling delay (650ms)
+  // Automatic single playback after a short settling delay (550ms)
   const hasAutoPlayedRef = useRef(false);
   useEffect(() => {
-    if (disabled || hasAutoPlayedRef.current) return;
+    if (disabled || !autoPlay || hasAutoPlayedRef.current) return;
 
     const timer = setTimeout(() => {
       if (!hasAutoPlayedRef.current && !isPlayingRef.current && playCount === 0) {
         hasAutoPlayedRef.current = true;
         handlePlay();
       }
-    }, 650);
+    }, 550);
 
     return () => clearTimeout(timer);
-  }, [disabled, playCount]);
+  }, [disabled, autoPlay, playCount]);
 
   const handlePause = () => {
     stopAll();
@@ -463,11 +504,10 @@ export function AudioPlayer({
     return `${m}:${String(s).padStart(2, "0")}`;
   };
 
-  const remainingPlays = Math.max(0, maxPlays - playCount);
   const progressPercent = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
   return (
-    <div className="hidden">
+    <div className="w-full">
       <audio
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
@@ -484,9 +524,50 @@ export function AudioPlayer({
           interactionRef.current.lastPlayedAt = new Date().toISOString();
         }}
         preload="auto"
-        autoPlay={autoPlay}
+        className="hidden"
       />
-      {/* No UI rendered because the user wants it hidden */}
+
+      {allowControls && (
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200/90 bg-white/90 px-3.5 py-2.5 shadow-xs">
+          <button
+            type="button"
+            disabled={disabled || isLoading}
+            onClick={isPlaying ? handlePause : handlePlay}
+            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0f3b82] text-white hover:bg-[#154694] transition-colors cursor-pointer disabled:opacity-40"
+            title={isPlaying ? "Stop Audio" : playCount > 0 ? "Replay Audio" : "Play Audio"}
+          >
+            {isPlaying ? (
+              <Pause className="size-3.5" />
+            ) : playCount > 0 ? (
+              <RotateCcw className="size-3.5" />
+            ) : (
+              <Play className="size-3.5 ml-0.5" />
+            )}
+          </button>
+
+          <div className="flex-1 space-y-1">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
+              <span className="flex items-center gap-1.5">
+                <Volume2 className={`size-3.5 text-[#0f3b82] ${isPlaying ? "animate-pulse" : ""}`} />
+                {isPlaying
+                  ? "Playing audio..."
+                  : playCount > 0
+                    ? "Audio completed (Click to replay)"
+                    : "Click Play to listen"}
+              </span>
+              <span className="font-mono text-[10px] text-slate-500">
+                {formatSeconds(currentTime)} / {formatSeconds(duration)}
+              </span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full bg-[#0f3b82] transition-all duration-200"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

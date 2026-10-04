@@ -3,13 +3,13 @@
  * Supports:
  * 1. Dark Teal Box for Emails (Marketing Coordinator, Elevator Maintenance) - Matches q21.jpg & Screen 4
  * 2. Dark Smartphone Bezel Frame for Text Chains (Sanjay, Emily, Carlos, Yuki) - Matches ts_750.jpg & Screen 5
- * 3. Academic Passages (The Power of Music) - Matches Screen 6 & 7
+ * 3. Academic Passages (The Power of Music, etc.) with highlighted vocabulary words - Matches Screen 6 & 7
  * 4. Borderless circular radio choices with bold text selection matching authentic exams
  */
 
 import React from "react";
 import type { ClientContentItem } from "@/lib/tests/session-state";
-import { Flag, ChevronUp, ChevronDown } from "lucide-react";
+import { Flag } from "lucide-react";
 
 export interface SplitReadingRendererProps {
   item: ClientContentItem;
@@ -20,6 +20,27 @@ export interface SplitReadingRendererProps {
   onNext?: () => void;
   nextLabel?: string;
   disabled?: boolean;
+}
+
+function renderPassageWithHighlight(text: string, highlightedWord?: string): React.ReactNode {
+  if (!highlightedWord || !highlightedWord.trim()) {
+    return text;
+  }
+  const escaped = highlightedWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(\\b${escaped}\\b)`, "gi");
+  const parts = text.split(regex);
+  return parts.map((part, idx) =>
+    part.toLowerCase() === highlightedWord.toLowerCase() ? (
+      <mark
+        key={idx}
+        className="bg-amber-200 text-slate-900 font-bold px-1 py-0.5 rounded-xs"
+      >
+        {part}
+      </mark>
+    ) : (
+      <React.Fragment key={idx}>{part}</React.Fragment>
+    ),
+  );
 }
 
 export function SplitReadingRenderer({
@@ -41,15 +62,24 @@ export function SplitReadingRenderer({
     (payload.prompt as string) ||
     (payload.questionText as string) ||
     "Choose the best answer:";
+  const highlightedWord = payload.highlightedWord as string | undefined;
+
+  const isChat =
+    payload.format === "chat" ||
+    payload.contextType === "phone_chat" ||
+    Boolean(payload.chatMessages) ||
+    passageTitle.toLowerCase().includes("text chain") ||
+    passageTitle.toLowerCase().includes("chat");
 
   const isEmail =
-    payload.format === "email" ||
-    payload.contextType === "email" ||
-    Boolean(payload.emailHeader) ||
-    Boolean(payload.email) ||
-    passageTitle.toLowerCase().includes("email") ||
-    rawPassage.includes("Subject:") ||
-    rawPassage.includes("Dear ");
+    !isChat &&
+    (payload.format === "email" ||
+      payload.contextType === "email" ||
+      Boolean(payload.emailHeader) ||
+      Boolean(payload.email) ||
+      passageTitle.toLowerCase().includes("email") ||
+      rawPassage.includes("Subject:") ||
+      rawPassage.includes("Dear "));
 
   // Extract Email Headers if embedded in text
   const emailHeaderData = React.useMemo(() => {
@@ -64,7 +94,6 @@ export function SplitReadingRenderer({
     let subject = headerObj.subject;
     let to = headerObj.to;
     let from = headerObj.from;
-    let body = rawPassage;
 
     // If passage contains Date: or Subject: at beginning, parse them out
     const lines = rawPassage.split("\n");
@@ -108,13 +137,40 @@ export function SplitReadingRenderer({
     };
   }, [payload, rawPassage]);
 
-  const isChat =
-    payload.format === "chat" ||
-    Boolean(payload.chatMessages) ||
-    passageTitle.toLowerCase().includes("text chain");
+  const chatMessages = React.useMemo(() => {
+    if (Array.isArray(payload.chatMessages) && payload.chatMessages.length > 0) {
+      return payload.chatMessages as Array<{ sender: string; time: string; text: string }>;
+    }
+    if (!isChat) return [];
 
-  const chatMessages =
-    (payload.chatMessages as Array<{ sender: string; time: string; text: string }>) || [];
+    // Parse lines like "Sanjay (9:15 AM): Hey team..." or "Name: Text"
+    const parsed: Array<{ sender: string; time: string; text: string }> = [];
+    const lines = rawPassage
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    for (const line of lines) {
+      const matchWithTime = line.match(/^([^:(]+?)\s*\(([^)]+)\)\s*:\s*(.+)$/);
+      if (matchWithTime) {
+        parsed.push({
+          sender: matchWithTime[1].trim(),
+          time: matchWithTime[2].trim(),
+          text: matchWithTime[3].trim(),
+        });
+        continue;
+      }
+      const matchSimple = line.match(/^([^:]{1,35}):\s*(.+)$/);
+      if (matchSimple) {
+        parsed.push({
+          sender: matchSimple[1].trim(),
+          time: "",
+          text: matchSimple[2].trim(),
+        });
+      }
+    }
+    return parsed;
+  }, [payload.chatMessages, isChat, rawPassage]);
 
   return (
     <div className="flex flex-col h-full space-y-4 max-w-6xl mx-auto w-full">
@@ -162,7 +218,7 @@ export function SplitReadingRenderer({
 
               {/* Email Body Card */}
               <div className="bg-white rounded-xs p-4 text-xs sm:text-sm leading-relaxed text-slate-800 whitespace-pre-line border border-[#1b4e5a] min-h-[220px]">
-                {emailHeaderData.body}
+                {renderPassageWithHighlight(emailHeaderData.body, highlightedWord)}
               </div>
             </div>
           ) : isChat ? (
@@ -178,17 +234,26 @@ export function SplitReadingRenderer({
               <div className="rounded-[22px] bg-[#eef3f7] p-4 space-y-3 overflow-y-auto max-h-[350px] text-xs shadow-inner">
                 {chatMessages.length > 0 ? (
                   chatMessages.map((msg, idx) => (
-                    <div key={idx} className="space-y-0.5 border-b border-slate-200/80 pb-2 last:border-0">
+                    <div
+                      key={idx}
+                      className="space-y-0.5 border-b border-slate-200/80 pb-2 last:border-0"
+                    >
                       <div className="flex items-center justify-between font-bold text-slate-900">
                         <span>{msg.sender}</span>
-                        <span className="text-[11px] font-normal text-slate-500 font-mono">({msg.time})</span>
+                        {msg.time && (
+                          <span className="text-[11px] font-normal text-slate-500 font-mono">
+                            ({msg.time})
+                          </span>
+                        )}
                       </div>
-                      <p className="text-slate-800 leading-relaxed text-[12px]">{msg.text}</p>
+                      <p className="text-slate-800 leading-relaxed text-[12px]">
+                        {renderPassageWithHighlight(msg.text, highlightedWord)}
+                      </p>
                     </div>
                   ))
                 ) : (
                   <div className="text-slate-800 whitespace-pre-line leading-relaxed text-xs sm:text-sm">
-                    {rawPassage}
+                    {renderPassageWithHighlight(rawPassage, highlightedWord)}
                   </div>
                 )}
               </div>
@@ -203,7 +268,7 @@ export function SplitReadingRenderer({
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs max-h-[420px] overflow-y-auto space-y-4">
               <h3 className="text-lg font-black text-slate-900">{passageTitle}</h3>
               <div className="text-sm leading-relaxed text-slate-800 whitespace-pre-line">
-                {rawPassage}
+                {renderPassageWithHighlight(rawPassage, highlightedWord)}
               </div>
             </div>
           )}
@@ -273,7 +338,9 @@ export function SplitReadingRenderer({
                 <Flag className="size-3.5" />
                 {isFlagged ? "Flagged for Review" : "Flag Question"}
               </button>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
 
             {onNext && (
               <button
