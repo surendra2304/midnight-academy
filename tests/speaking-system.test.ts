@@ -21,7 +21,7 @@ describe("TOEFL Speaking System & Audio Pipeline Suite", () => {
       const result = await speechToTextProvider.transcribe({});
       expect(result.transcript).toBe("");
       expect(result.confidence).toBe(0);
-      expect(result.provider).toBe("gemini");
+      expect(result.provider).toBe("none");
     });
   });
 

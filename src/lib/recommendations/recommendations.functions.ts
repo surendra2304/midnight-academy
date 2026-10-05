@@ -53,15 +53,32 @@ export const getStudentPracticeQueue = createServerFn({ method: "GET" })
       };
     });
 
-    const adaptedReports = (scoreReports || []).map((sr) => ({
-      attemptId: sr.attempt_id,
-      generatedAt: sr.generated_at,
-      overallBand: sr.overall_band,
-      readingBand: sr.reading_band,
-      listeningBand: sr.listening_band,
-      writingBand: sr.writing_band,
-      speakingBand: sr.speaking_band,
-    }));
+    const adaptedReports = (scoreReports || [])
+      .filter(
+        (
+          report,
+        ): report is typeof report & {
+          overall_band: number;
+          reading_band: number;
+          listening_band: number;
+          writing_band: number;
+          speaking_band: number;
+        } =>
+          typeof report.overall_band === "number" &&
+          typeof report.reading_band === "number" &&
+          typeof report.listening_band === "number" &&
+          typeof report.writing_band === "number" &&
+          typeof report.speaking_band === "number",
+      )
+      .map((report) => ({
+        attemptId: report.attempt_id,
+        generatedAt: report.generated_at,
+        overallBand: report.overall_band,
+        readingBand: report.reading_band,
+        listeningBand: report.listening_band,
+        writingBand: report.writing_band,
+        speakingBand: report.speaking_band,
+      }));
 
     const profile = analyticsEngine.computeStudentProfile(studentId, rawMetrics, adaptedReports);
 

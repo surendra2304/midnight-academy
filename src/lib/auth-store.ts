@@ -23,8 +23,8 @@ type AuthState = {
 
 const DEFAULT_LOCAL_STUDENT: User = {
   id: "00000000-0000-4000-8000-000000000001",
-  email: "student@midnightacademy.edu",
-  fullName: "TestGlider Scholar",
+  email: "student@midnight.academy",
+  fullName: "Midnight Academy Student",
   role: "STUDENT",
 };
 

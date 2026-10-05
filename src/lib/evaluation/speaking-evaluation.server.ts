@@ -45,6 +45,26 @@ You MUST respond ONLY with a valid JSON object strictly matching this schema:
 }
 `;
 
+function wordSequenceAccuracy(targetWords: string[], studentWords: string[]): number {
+  if (targetWords.length === 0) return 0;
+  const previous = Array.from({ length: studentWords.length + 1 }, (_, index) => index);
+  for (let targetIndex = 1; targetIndex <= targetWords.length; targetIndex++) {
+    const current = [targetIndex];
+    for (let studentIndex = 1; studentIndex <= studentWords.length; studentIndex++) {
+      const substitutionCost =
+        targetWords[targetIndex - 1] === studentWords[studentIndex - 1] ? 0 : 1;
+      current[studentIndex] = Math.min(
+        (current[studentIndex - 1] ?? 0) + 1,
+        (previous[studentIndex] ?? 0) + 1,
+        (previous[studentIndex - 1] ?? 0) + substitutionCost,
+      );
+    }
+    for (let index = 0; index < current.length; index++) previous[index] = current[index] ?? 0;
+  }
+  const editDistance = previous[studentWords.length] ?? targetWords.length;
+  return Math.max(0, 1 - editDistance / targetWords.length);
+}
+
 function buildDeterministicSpeakingEvaluation(
   request: SpeakingEvaluationRequest,
 ): StructuredEvaluationResult {
@@ -64,33 +84,22 @@ function buildDeterministicSpeakingEvaluation(
     .filter(Boolean);
 
   if (isRepeat && targetWords.length > 0) {
-    const targetSet = new Set(targetWords);
-    let matched = 0;
-    for (const w of studentWords) {
-      if (targetSet.has(w)) matched++;
-    }
-    const accuracy = Math.min(1, matched / Math.max(1, targetWords.length));
-    const band = Math.max(1.5, Math.min(6.0, Math.round((1.0 + accuracy * 5.0) * 2) / 2));
+    const accuracy = wordSequenceAccuracy(targetWords, studentWords);
+    const band = Math.max(1.0, Math.min(6.0, Math.round((1.0 + accuracy * 5.0) * 2) / 2));
 
     return {
       score_band: band,
       task_score: Math.round((band / 6) * 100),
-      traits: {
-        task_fulfillment: band,
-        delivery: band,
-        language_use: band,
-        pronunciation: band,
-      },
+      traits: { task_fulfillment: band, language_use: band },
       strengths:
         accuracy >= 0.85
-          ? [
-              "High word-level repetition accuracy and clear phonetic recall.",
-              "Natural rhythm and pacing across the target sentence.",
-            ]
-          : ["Captured key content words from the prompt sentence."],
+          ? ["The transcript closely matches the target wording."]
+          : accuracy > 0
+            ? ["Several target words appear in the transcript."]
+            : [],
       issues:
         accuracy < 0.85
-          ? ["Some function words or endings were omitted or altered during repetition."]
+          ? ["Compare the transcript with the target to find omitted or changed words."]
           : [],
       corrections:
         accuracy < 0.95 && modelAnswer
@@ -98,73 +107,55 @@ function buildDeterministicSpeakingEvaluation(
               {
                 original: transcript,
                 improved: modelAnswer,
-                explanation: "Repeat the exact wording and grammatical structure of the prompt.",
+                explanation: "Compare the transcript with the target wording and grammar.",
               },
             ]
           : [],
       improved_response: modelAnswer,
-      next_actions: [
-        "Focus on chunking the sentence into 2–3 meaningful thought groups as you listen.",
-      ],
-      confidence: 0.92,
+      next_actions: ["Practice reproducing the complete sentence, including short function words."],
+      confidence: 0.4,
       rubric_version: request.rubricVersion ?? "2026.1",
-      model: "testglider-speaking-evaluator-2026",
+      model: "midnight-rule-based-speaking-v1",
     };
   }
 
-  // Interview task evaluation
+  // Transcript-only estimate: audio delivery and pronunciation are deliberately not scored here.
   const wordCount = studentWords.length;
   const targetWordsMin = 45;
-  const lengthFactor = Math.min(1.15, wordCount / targetWordsMin);
-
-  const taskFulfillment = Math.max(
-    2.0,
-    Math.min(6.0, Math.round((2.0 + lengthFactor * 3.5) * 2) / 2),
-  );
-  const delivery = Math.max(2.0, Math.min(6.0, Math.round((2.2 + lengthFactor * 3.3) * 2) / 2));
+  const lengthFactor = Math.min(1, wordCount / targetWordsMin);
+  const uniqueRatio = wordCount > 0 ? new Set(studentWords).size / wordCount : 0;
+  const taskFulfillment = Math.max(1, Math.min(6, Math.round((1 + lengthFactor * 5) * 2) / 2));
   const languageUse = Math.max(
-    2.0,
-    Math.min(6.0, Math.round((2.0 + lengthFactor * 3.4) * 2) / 2),
+    1,
+    Math.min(6, Math.round((2 + Math.min(1, uniqueRatio / 0.75) * 4) * 2) / 2),
   );
-  const pronunciation = Math.max(
-    2.5,
-    Math.min(6.0, Math.round((2.5 + lengthFactor * 3.0) * 2) / 2),
-  );
-
   const { scoreBand } = traitsToBand({
     task_fulfillment: taskFulfillment,
-    delivery,
     language_use: languageUse,
-    pronunciation,
   });
 
   return {
     score_band: scoreBand,
     task_score: Math.round((scoreBand / 6) * 100),
-    traits: {
-      task_fulfillment: taskFulfillment,
-      delivery,
-      language_use: languageUse,
-      pronunciation,
-    },
-    strengths: [
-      "Direct and relevant response addressing the interviewer's question.",
-      "Clear vocal projection and intelligible pacing.",
-    ],
+    traits: { task_fulfillment: taskFulfillment, language_use: languageUse },
+    strengths:
+      wordCount >= targetWordsMin
+        ? ["The transcript meets the suggested response length."]
+        : ["A transcript was available for review."],
     issues:
       wordCount < targetWordsMin
-        ? ["Expand your response with a specific personal example or concrete detail."]
-        : ["Continue refining transitional phrases between your main point and supporting example."],
+        ? [
+            `The transcript is ${wordCount} words; the practice target is about ${targetWordsMin} words.`,
+          ]
+        : [
+            "This transcript-only estimate does not assess coherence, grammar accuracy, voice quality, or pronunciation.",
+          ],
     corrections: [],
-    improved_response:
-      modelAnswer ||
-      "In my experience, this is important because it builds practical skills and long-term consistency. For example, when I applied this approach last semester, my productivity and results improved significantly.",
-    next_actions: [
-      "Use the PEEL structure (Point, Explanation, Example, Link) to fill the 45-second interview window smoothly.",
-    ],
-    confidence: 0.9,
+    improved_response: modelAnswer,
+    next_actions: ["Support your main point with one specific example and a brief conclusion."],
+    confidence: 0.35,
     rubric_version: request.rubricVersion ?? "2026.1",
-    model: "testglider-speaking-evaluator-2026",
+    model: "midnight-rule-based-speaking-v1",
   };
 }
 
@@ -188,7 +179,7 @@ export class SpeakingEvaluationService {
         corrections: [],
         improved_response: request.referenceModelAnswer ?? "",
         next_actions: ["Record a clear spoken response and submit it."],
-        confidence: 1,
+        confidence: 0,
         rubric_version: request.rubricVersion ?? "2026.1",
         model: "deterministic-empty",
       };
@@ -246,7 +237,7 @@ export class SpeakingEvaluationService {
           "",
         next_actions: Array.isArray(raw["next_actions"])
           ? raw["next_actions"]
-          : (raw["nextActions"] as string[]) ?? [],
+          : ((raw["nextActions"] as string[]) ?? []),
         confidence:
           typeof raw["confidence"] === "number"
             ? Math.max(0, Math.min(1, raw["confidence"]))

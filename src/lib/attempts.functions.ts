@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isAttemptEvaluationFinished } from "@/lib/evaluation/report-access";
 
 export const startAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -479,6 +480,9 @@ export const processAttemptEvaluation = createServerFn({ method: "POST" })
     const isStudent = attempt.student_id === context.userId;
     const isInstructor = attempt.tests?.owner_id === context.userId;
     if (!isStudent && !isInstructor) throw new Error("Attempt not found or unauthorized.");
+    if (attempt.status !== "evaluating") {
+      throw new Error("Attempt must be submitted before evaluation can run.");
+    }
 
     const { data: answers } = await supabaseAdmin
       .from("attempt_answers")
@@ -619,12 +623,6 @@ export const getResult = createServerFn({ method: "GET" })
 
     if (!attempt) throw new Error("Attempt not found.");
 
-    const { data: studentProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("full_name, code_number")
-      .eq("id", attempt.student_id)
-      .maybeSingle();
-
     const isOwner = attempt.student_id === context.userId;
     if (!isOwner) {
       const { data: test } = await supabaseAdmin
@@ -634,6 +632,27 @@ export const getResult = createServerFn({ method: "GET" })
         .maybeSingle();
       if (test?.owner_id !== context.userId) throw new Error("Attempt not found.");
     }
+
+    // Reference answers and review feedback are available only after evaluation.
+    if (!isAttemptEvaluationFinished(attempt.status)) {
+      return {
+        id: attempt.id,
+        status: attempt.status,
+        student: null,
+        score: null,
+        axes: null,
+        blurCount: attempt.blur_count,
+        completedAt: attempt.completed_at,
+        test: attempt.tests ? { ...attempt.tests, id: attempt.test_id } : null,
+        answers: [],
+      };
+    }
+
+    const { data: studentProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name, code_number")
+      .eq("id", attempt.student_id)
+      .maybeSingle();
 
     const { data: answers } = await supabaseAdmin
       .from("attempt_answers")

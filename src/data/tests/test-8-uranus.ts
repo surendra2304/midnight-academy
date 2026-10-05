@@ -83,7 +83,8 @@ export const URANUS_ITEMS: SeedQuestionItemRow[] = [
     title: "Keystone Species in Yellowstone National Park (Q21)",
     stimulusText: KEYSTONE_SPECIES_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 2, how did the eradication of gray wolves in the 1920s affect Yellowstone's river valleys?",
+    questionStem:
+      "According to paragraph 2, how did the eradication of gray wolves in the 1920s affect Yellowstone's river valleys?",
     options: [
       "Beavers multiplied rapidly and flooded the entire park.",
       "Unchecked elk herds lingered along river valleys and overbrowsed young willow, aspen, and cottonwood saplings.",
@@ -91,7 +92,8 @@ export const URANUS_ITEMS: SeedQuestionItemRow[] = [
       "Elk migrated permanently out of Yellowstone National Park.",
     ],
     correctOptionId: "B",
-    explanation: "Paragraph 2 states that without wolves, 'large herds of elk lingered along river valleys and overbrowsed young willow, aspen, and cottonwood saplings' (B).",
+    explanation:
+      "Paragraph 2 states that without wolves, 'large herds of elk lingered along river valleys and overbrowsed young willow, aspen, and cottonwood saplings' (B).",
   }),
 
   // =========================================================================
@@ -126,7 +128,8 @@ export const URANUS_ITEMS: SeedQuestionItemRow[] = [
     title: "Robert Smithson's Spiral Jetty and Land Art (M2 Q11)",
     stimulusText: SPIRAL_JETTY_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 2, what is ironic about how most people experience Robert Smithson's Spiral Jetty?",
+    questionStem:
+      "According to paragraph 2, what is ironic about how most people experience Robert Smithson's Spiral Jetty?",
     options: [
       "Although Smithson designed the work to be experienced firsthand as a changing natural site, most people know it only through static photographs and films.",
       "The sculpture was dismantled and moved inside a commercial art gallery in New York.",
@@ -134,7 +137,8 @@ export const URANUS_ITEMS: SeedQuestionItemRow[] = [
       "Visitors are only allowed to view the sculpture at midnight.",
     ],
     correctOptionId: "A",
-    explanation: "Paragraph 2 points out the irony that although Spiral Jetty was meant to be experienced firsthand in nature, 'most people experience the earthwork only through static aerial photographs' (A).",
+    explanation:
+      "Paragraph 2 points out the irony that although Spiral Jetty was meant to be experienced firsthand in nature, 'most people experience the earthwork only through static aerial photographs' (A).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -152,7 +156,8 @@ export const URANUS_ITEMS: SeedQuestionItemRow[] = [
       "Poured concrete and painted fiberglass",
     ],
     correctOptionId: "B",
-    explanation: "Paragraph 1 states that Spiral Jetty 'consists of more than six thousand tons of black basalt boulders and earth arranged in a counterclockwise coil' (B).",
+    explanation:
+      "Paragraph 1 states that Spiral Jetty 'consists of more than six thousand tons of black basalt boulders and earth arranged in a counterclockwise coil' (B).",
   }),
 
   // =========================================================================
@@ -172,7 +177,8 @@ Man: Really? That sounds amazing!
 Woman: There's just one catch, though: the house comes with two dogs.
 Man: Even better! I love dogs.`,
     campusContext: "Off-Campus Housing",
-    questionStem: "What 'catch' does the woman mention about her friend's house, and how does the man react?",
+    questionStem:
+      "What 'catch' does the woman mention about her friend's house, and how does the man react?",
     options: [
       "The rent is very high, so the man declines the offer.",
       "The house comes with two dogs that need care, which makes the man even happier because he loves dogs.",
@@ -180,7 +186,8 @@ Man: Even better! I love dogs.`,
       "The house is located in Italy, so the man would have to drop his classes.",
     ],
     correctOptionId: "B",
-    explanation: "The woman says 'the house comes with two dogs,' and the man responds 'Even better! I love dogs' (B).",
+    explanation:
+      "The woman says 'the house comes with two dogs,' and the man responds 'Even better! I love dogs' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -204,7 +211,8 @@ Man: I know what I'll be doing tonight!`,
       "He forgot to invite the author to the meeting.",
     ],
     correctOptionId: "B",
-    explanation: "The woman realizes he read Subtle Changes, which is on the schedule for next month, instead of Carver's Canyon (B).",
+    explanation:
+      "The woman realizes he read Subtle Changes, which is on the schedule for next month, instead of Carver's Canyon (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -216,7 +224,8 @@ Man: I know what I'll be doing tonight!`,
     transcript: `Narrator: Listen to an announcement at a student club meeting.
 Speaker: The Creative Writing Club has a challenge for students! We want you to write amazing stories, but they must be under 700 words. Every submission must have a beginning, middle, and ending. Judging will be based on originality, writing quality, emotional impact, and technical skill. Winning entries with the greatest emotional impact will be published in the university's literary magazine, and winners will also get a gift card. For details, visit the Creative Writing Club's webpage.`,
     campusContext: "Creative Writing Club",
-    questionStem: "What is the length requirement for stories submitted to the Creative Writing Club contest?",
+    questionStem:
+      "What is the length requirement for stories submitted to the Creative Writing Club contest?",
     options: [
       "At least 2,000 words",
       "Exactly ten pages long",
@@ -224,7 +233,8 @@ Speaker: The Creative Writing Club has a challenge for students! We want you to 
       "Between five and十 chapters",
     ],
     correctOptionId: "C",
-    explanation: "The speaker states: 'We want you to write amazing stories, but they must be under 700 words' (C).",
+    explanation:
+      "The speaker states: 'We want you to write amazing stories, but they must be under 700 words' (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -235,7 +245,8 @@ Speaker: The Creative Writing Club has a challenge for students! We want you to 
     title: "Literature Class — The Motif of Isolation (Q4)",
     transcript: ISOLATION_LITERATURE_TRANSCRIPT,
     academicDomain: "English Literature",
-    questionStem: "Why does the professor mention Charlotte Bronte's novel Jane Eyre at the end of the talk?",
+    questionStem:
+      "Why does the professor mention Charlotte Bronte's novel Jane Eyre at the end of the talk?",
     options: [
       "To show that the portrayal of isolation in literature is not always negative, as Jane grows resilient, strong, and independent",
       "To give an example of a character whose obsession leads to the destruction of a ship",
@@ -243,7 +254,8 @@ Speaker: The Creative Writing Club has a challenge for students! We want you to 
       "To compare science fiction monsters with modern detectives",
     ],
     correctOptionId: "A",
-    explanation: "The professor contrasts Frankenstein, The Catcher in the Rye, and Moby-Dick with Jane Eyre to show that isolation is not always negative—Jane becomes resilient, strong, and independent (A).",
+    explanation:
+      "The professor contrasts Frankenstein, The Catcher in the Rye, and Moby-Dick with Jane Eyre to show that isolation is not always negative—Jane becomes resilient, strong, and independent (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -265,7 +277,8 @@ Woman: I'm sure there will be other productions this year.`,
       "He is performing in a music recital on the same night.",
     ],
     correctOptionId: "B",
-    explanation: "The woman reminds him: 'Won't you be in Chicago for the journalism awards?' and he realizes he completely forgot about the trip (B).",
+    explanation:
+      "The woman reminds him: 'Won't you be in Chicago for the journalism awards?' and he realizes he completely forgot about the trip (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -289,7 +302,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
       "He is no longer a member of the photography club.",
     ],
     correctOptionId: "B",
-    explanation: "The man says some members are really talented, like his friend John who is a photojournalist for the university paper, so he's not sure anyone else stands a chance (B).",
+    explanation:
+      "The man says some members are really talented, like his friend John who is a photojournalist for the university paper, so he's not sure anyone else stands a chance (B).",
   }),
 
   // =========================================================================
@@ -301,14 +315,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     questionNumber: 1,
     speakerAName: "Classmate",
     contextPrompt: "How was your appointment at the career services center?",
-    targetSentence:
-      "The feedback that the career advisor gave me was really helpful.",
-    wordBank: [
-      "that the career advisor",
-      "The feedback",
-      "was really helpful",
-      "gave me",
-    ],
+    targetSentence: "The feedback that the career advisor gave me was really helpful.",
+    wordBank: ["that the career advisor", "The feedback", "was really helpful", "gave me"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -317,12 +325,7 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     speakerAName: "Friend",
     contextPrompt: "What did your academic dean ask you about your transcript?",
     targetSentence: "He wanted to know why I decided to change my major.",
-    wordBank: [
-      "why I decided",
-      "He wanted to know",
-      "my major",
-      "to change",
-    ],
+    wordBank: ["why I decided", "He wanted to know", "my major", "to change"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -330,14 +333,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     questionNumber: 3,
     speakerAName: "New Student",
     contextPrompt: "Excuse me, I just arrived for the freshman welcome event.",
-    targetSentence:
-      "Can you tell me where the orientation session is being held?",
-    wordBank: [
-      "where",
-      "Can you tell me",
-      "is being held",
-      "the orientation session",
-    ],
+    targetSentence: "Can you tell me where the orientation session is being held?",
+    wordBank: ["where", "Can you tell me", "is being held", "the orientation session"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -345,14 +342,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     questionNumber: 4,
     speakerAName: "Roommate",
     contextPrompt: "I need to buy a notebook before Monday morning.",
-    targetSentence:
-      "I am not sure whether the bookstore is open on Sundays.",
-    wordBank: [
-      "whether",
-      "I am not sure",
-      "on Sundays",
-      "the bookstore is open",
-    ],
+    targetSentence: "I am not sure whether the bookstore is open on Sundays.",
+    wordBank: ["whether", "I am not sure", "on Sundays", "the bookstore is open"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -360,14 +351,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     questionNumber: 5,
     speakerAName: "Friend",
     contextPrompt: "Did you and your roommate sign a lease yet?",
-    targetSentence:
-      "The apartment that we looked at yesterday was too expensive.",
-    wordBank: [
-      "that we looked at",
-      "The apartment",
-      "was too expensive",
-      "yesterday",
-    ],
+    targetSentence: "The apartment that we looked at yesterday was too expensive.",
+    wordBank: ["that we looked at", "The apartment", "was too expensive", "yesterday"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -375,14 +360,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     questionNumber: 6,
     speakerAName: "Partner",
     contextPrompt: "I'm reading through your presentation draft right now.",
-    targetSentence:
-      "Could you let me know when you finish reviewing the slides?",
-    wordBank: [
-      "when you finish",
-      "Could you let me know",
-      "the slides",
-      "reviewing",
-    ],
+    targetSentence: "Could you let me know when you finish reviewing the slides?",
+    wordBank: ["when you finish", "Could you let me know", "the slides", "reviewing"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -391,12 +370,7 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     speakerAName: "Lab Partner",
     contextPrompt: "Why did Rachel come back to the biology classroom?",
     targetSentence: "She asked if anyone had seen her notebook in the lab.",
-    wordBank: [
-      "if anyone",
-      "She asked",
-      "her notebook in the lab",
-      "had seen",
-    ],
+    wordBank: ["if anyone", "She asked", "her notebook in the lab", "had seen"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -404,14 +378,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     questionNumber: 8,
     speakerAName: "Student",
     contextPrompt: "I'm thinking about adding a minor in data science.",
-    targetSentence:
-      "Do you know how many credits are required for this minor?",
-    wordBank: [
-      "how many credits",
-      "Do you know",
-      "for this minor",
-      "are required",
-    ],
+    targetSentence: "Do you know how many credits are required for this minor?",
+    wordBank: ["how many credits", "Do you know", "for this minor", "are required"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -419,14 +387,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     questionNumber: 9,
     speakerAName: "Traveler",
     contextPrompt: "My flight departs at six o'clock this evening.",
-    targetSentence:
-      "I was wondering what time the shuttle leaves for the airport.",
-    wordBank: [
-      "what time",
-      "I was wondering",
-      "for the airport",
-      "the shuttle leaves",
-    ],
+    targetSentence: "I was wondering what time the shuttle leaves for the airport.",
+    wordBank: ["what time", "I was wondering", "for the airport", "the shuttle leaves"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -434,14 +396,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     questionNumber: 10,
     speakerAName: "Classmate",
     contextPrompt: "Who is supervising the coastal ecology excursion?",
-    targetSentence:
-      "The professor who teaches marine biology is leading the trip.",
-    wordBank: [
-      "who teaches",
-      "The professor",
-      "is leading the trip",
-      "marine biology",
-    ],
+    targetSentence: "The professor who teaches marine biology is leading the trip.",
+    wordBank: ["who teaches", "The professor", "is leading the trip", "marine biology"],
   }),
   buildWriteEmailItem({
     id: nextId(),
@@ -449,7 +405,8 @@ Man: Yeah, some of my friends think they have a shot. I guess I could try to be 
     title: "Write an Email — Requesting Communication Seminar Materials from Ms. Johnson",
     scenarioContext:
       "Yesterday afternoon you attended a professional communication skills seminar organized by Ms. Johnson. Because you had a mandatory university exam at 4:00 PM, you had to leave thirty minutes before the seminar ended.",
-    recipientRole: "To: Ms. Johnson, Seminar Organizer | Subject: Request for Communication Seminar Slides & Recording",
+    recipientRole:
+      "To: Ms. Johnson, Seminar Organizer | Subject: Request for Communication Seminar Slides & Recording",
     bulletPoints: [
       "Thank Ms. Johnson for organizing the communication skills seminar and mention what you found valuable.",
       "Explain why you had to leave the session thirty minutes early.",
@@ -546,8 +503,7 @@ As Claire points out, younger children in elementary school are still developing
     blueprintId: URANUS_BLUEPRINT_ID,
     questionNumber: 6,
     scenarioTitle: "Accounting Conference Staff Orientation",
-    sentence:
-      "There is a dining hall in the back that is open all day if you get hungry.",
+    sentence: "There is a dining hall in the back that is open all day if you get hungry.",
     responseSeconds: 11,
   }),
   buildListenRepeatItem({
@@ -555,8 +511,7 @@ As Claire points out, younger children in elementary school are still developing
     blueprintId: URANUS_BLUEPRINT_ID,
     questionNumber: 7,
     scenarioTitle: "Accounting Conference Staff Orientation",
-    sentence:
-      "A full schedule of all conference events is included in your information packet.",
+    sentence: "A full schedule of all conference events is included in your information packet.",
     responseSeconds: 12,
   }),
   buildTakeInterviewItem({
@@ -610,7 +565,7 @@ export const URANUS_BLUEPRINT: SeedBlueprintRow = {
   title: "Uranus | Full Test",
   slug: "uranus-full-test-2026",
   description:
-    "Official TOEFL iBT 2026 TestGlider Mock Exam #8 (Uranus — Video cxB2YNapEA0 & Eqv8sVGDRDM). Features Adaptive Reading (Early Silent Cinema, Sleep & Brain Restoration, Yellowstone Keystone Species, Robert Smithson's Spiral Jetty), Listening (House-Sitting in Italy, Book Club Mix-Up, Motif of Isolation in Literature, Theater Play vs. Journalism Awards), Writing (10 Build a Sentence, Email to Ms. Johnson, Parental Involvement Discussion), and Speaking (Accounting Conference & Museums/Cinema Interview).",
+    "Independent TOEFL iBT 2026-Style Practice Test #8 (Uranus — Video cxB2YNapEA0 & Eqv8sVGDRDM). Features Reading (Early Silent Cinema, Sleep & Brain Restoration, Yellowstone Keystone Species, Robert Smithson's Spiral Jetty), Listening (House-Sitting in Italy, Book Club Mix-Up, Motif of Isolation in Literature, Theater Play vs. Journalism Awards), Writing (10 Build a Sentence, Email to Ms. Johnson, Parental Involvement Discussion), and Speaking (Accounting Conference & Museums/Cinema Interview).",
   exam_Type: "full_mock",
   total_Duration_Seconds: 5160,
   blueprint_Json: {
@@ -652,9 +607,8 @@ export const URANUS_BLUEPRINT: SeedBlueprintRow = {
     planetName: "Uranus",
     videoUrl: "https://youtu.be/cxB2YNapEA0",
     videoId: "cxB2YNapEA0",
-    playlistUrl:
-      "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
-    difficultyLabel: "Standard 2026 Adaptive",
+    playlistUrl: "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
+    difficultyLabel: "Standard 2026 Practice",
   },
   is_Published: true,
   created_At: "2026-09-08T10:00:00.000Z",

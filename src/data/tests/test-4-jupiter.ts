@@ -83,7 +83,8 @@ export const JUPITER_ITEMS: SeedQuestionItemRow[] = [
     subject: "Annual Wellness Screening & Immunization Deadline",
     dateLabel: "September 28",
     stimulusText: CLINIC_NOTICE_STIMULUS,
-    questionStem: "What consequence will students face if they fail to submit their immunization records by October 15?",
+    questionStem:
+      "What consequence will students face if they fail to submit their immunization records by October 15?",
     options: [
       "A registration hold will be placed on their Spring semester course enrollment.",
       "Their campus housing contract will be terminated immediately.",
@@ -91,7 +92,8 @@ export const JUPITER_ITEMS: SeedQuestionItemRow[] = [
       "Their library borrowing privileges will be suspended.",
     ],
     correctOptionId: "A",
-    explanation: "The notice states: 'Students who do not submit their immunization documentation by October 15 will have a registration hold placed on their Spring semester course enrollment' (A).",
+    explanation:
+      "The notice states: 'Students who do not submit their immunization documentation by October 15 will have a registration hold placed on their Spring semester course enrollment' (A).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -101,7 +103,8 @@ export const JUPITER_ITEMS: SeedQuestionItemRow[] = [
     title: "Beringia and Pleistocene Migration (Q12)",
     stimulusText: BERINGIA_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 1, what caused the landmass of Beringia to become exposed during the Last Glacial Maximum?",
+    questionStem:
+      "According to paragraph 1, what caused the landmass of Beringia to become exposed during the Last Glacial Maximum?",
     options: [
       "Volcanic eruptions along the Aleutian Islands created new mountain chains.",
       "Tectonic uplift pushed the Pacific Ocean floor above sea level.",
@@ -109,7 +112,8 @@ export const JUPITER_ITEMS: SeedQuestionItemRow[] = [
       "Ancient rivers deposited thick layers of desert sand between Siberia and Alaska.",
     ],
     correctOptionId: "C",
-    explanation: "Paragraph 1 explains that 'vast continental ice sheets locked up immense volumes of ocean water, causing global sea levels to drop by more than one hundred meters. This dramatic marine regression exposed a wide, ice-free landmass' (C).",
+    explanation:
+      "Paragraph 1 explains that 'vast continental ice sheets locked up immense volumes of ocean water, causing global sea levels to drop by more than one hundred meters. This dramatic marine regression exposed a wide, ice-free landmass' (C).",
   }),
 
   // =========================================================================
@@ -165,7 +169,8 @@ export const JUPITER_ITEMS: SeedQuestionItemRow[] = [
     title: "Cold-Chain Logistics and Global Agriculture (M2 Q11)",
     stimulusText: COLD_CHAIN_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 2, how does cold-chain infrastructure benefit global public health beyond food distribution?",
+    questionStem:
+      "According to paragraph 2, how does cold-chain infrastructure benefit global public health beyond food distribution?",
     options: [
       "By eliminating the need for agricultural irrigation",
       "By preserving temperature-sensitive vaccines and biologics during international transport",
@@ -173,7 +178,8 @@ export const JUPITER_ITEMS: SeedQuestionItemRow[] = [
       "By replacing vitamin supplements with salted meats",
     ],
     correctOptionId: "B",
-    explanation: "Paragraph 2 states that 'cold-chain infrastructure plays a vital role in global public health by preserving temperature-sensitive vaccines and biologics during international transport' (B).",
+    explanation:
+      "Paragraph 2 states that 'cold-chain infrastructure plays a vital role in global public health by preserving temperature-sensitive vaccines and biologics during international transport' (B).",
   }),
 
   // =========================================================================
@@ -200,7 +206,8 @@ Man: Good point.`,
       "It is closer to the football stadium.",
     ],
     correctOptionId: "B",
-    explanation: "The woman says: 'the library is much quieter, and it has printers and a copier if you need them' (B).",
+    explanation:
+      "The woman says: 'the library is much quieter, and it has printers and a copier if you need them' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -222,7 +229,8 @@ Man: Not really. We can just take the campus shuttle. It'll take us right there.
       "The entrance gate is broken.",
     ],
     correctOptionId: "C",
-    explanation: "The man explains: 'There's a football game this evening. Remember, after 3:00, it's reserved for fans' (C).",
+    explanation:
+      "The man explains: 'There's a football game this evening. Remember, after 3:00, it's reserved for fans' (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -234,7 +242,8 @@ Man: Not really. We can just take the campus shuttle. It'll take us right there.
     transcript: `Narrator: Listen to an announcement on a campus radio station.
 Announcer: The Facilities Management Office is pleased to announce that new solar-powered lights will soon be installed along all of the campus's main footpaths. These energy-efficient lights will improve safety while promoting sustainability. The project was made possible thanks to a generous grant from a charity called the Avery Environmental Foundation. A work crew is scheduled to set up the lights beginning on April 4th. The work will be carried out in phases to limit disruptions during peak campus hours.`,
     campusContext: "Campus Facilities",
-    questionStem: "Why will the installation of the new solar-powered lights be carried out in phases?",
+    questionStem:
+      "Why will the installation of the new solar-powered lights be carried out in phases?",
     options: [
       "Because the solar panels have not been manufactured yet",
       "To limit disruptions during peak campus hours",
@@ -242,7 +251,8 @@ Announcer: The Facilities Management Office is pleased to announce that new sola
       "To train engineering students how to wire streetlights",
     ],
     correctOptionId: "B",
-    explanation: "The announcer states: 'The work will be carried out in phases to limit disruptions during peak campus hours' (B).",
+    explanation:
+      "The announcer states: 'The work will be carried out in phases to limit disruptions during peak campus hours' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -253,7 +263,8 @@ Announcer: The Facilities Management Office is pleased to announce that new sola
     title: "Social Psychology Lecture — Avoiding Groupthink (Q4)",
     transcript: GROUPTHINK_TRANSCRIPT,
     academicDomain: "Social Psychology",
-    questionStem: "According to the professor, what role does a 'devil's advocate' play in preventing groupthink?",
+    questionStem:
+      "According to the professor, what role does a 'devil's advocate' play in preventing groupthink?",
     options: [
       "Enforcing strict loyalty to the group leader's initial plan",
       "Challenging ideas so the group explores multiple perspectives and contradictory evidence",
@@ -261,7 +272,8 @@ Announcer: The Facilities Management Office is pleased to announce that new sola
       "Preventing outsiders from sharing their opinions",
     ],
     correctOptionId: "B",
-    explanation: "The professor states: 'Input from outsiders should be invited, and a devil's advocate should be assigned to challenge ideas and help explore all perspectives' (B).",
+    explanation:
+      "The professor states: 'Input from outsiders should be invited, and a devil's advocate should be assigned to challenge ideas and help explore all perspectives' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -288,7 +300,8 @@ Woman: That makes sense. I'll revise accordingly.`,
       "Wait another year before applying to graduate school",
     ],
     correctOptionId: "B",
-    explanation: "The man advises her to tailor each application to the specific program by referencing unique aspects such as research opportunities or faculty (B).",
+    explanation:
+      "The man advises her to tailor each application to the specific program by referencing unique aspects such as research opportunities or faculty (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -307,7 +320,8 @@ Woman: That makes sense. I'll revise accordingly.`,
       "It colors rain clouds so pilots can track wind speed.",
     ],
     correctOptionId: "B",
-    explanation: "The professor explains: 'One of the most common substances used is silver iodide, which has a crystalline structure similar to that of ice. When it is released into clouds... moisture collects on the surface and forms ice crystals' (B).",
+    explanation:
+      "The professor explains: 'One of the most common substances used is silver iodide, which has a crystalline structure similar to that of ice. When it is released into clouds... moisture collects on the surface and forms ice crystals' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -318,7 +332,8 @@ Woman: That makes sense. I'll revise accordingly.`,
     title: "Psychology Class — Neuroplasticity & London Taxi Drivers (M2 Lower Q1)",
     transcript: NEUROPLASTICITY_TRANSCRIPT,
     academicDomain: "Cognitive Neuroscience",
-    questionStem: "What did researchers discover about the brains of London taxi drivers compared with London bus drivers?",
+    questionStem:
+      "What did researchers discover about the brains of London taxi drivers compared with London bus drivers?",
     options: [
       "Taxi drivers had a significantly larger hippocampus due to memorizing thousands of streets.",
       "Bus drivers had a larger visual cortex because they drove larger vehicles.",
@@ -326,7 +341,8 @@ Woman: That makes sense. I'll revise accordingly.`,
       "Taxi drivers relied exclusively on satellite navigation systems.",
     ],
     correctOptionId: "A",
-    explanation: "The professor states: 'Researchers found that the hippocampus—an area of the brain involved in spatial memory—was significantly larger in these taxi drivers compared to London bus drivers' (A).",
+    explanation:
+      "The professor states: 'Researchers found that the hippocampus—an area of the brain involved in spatial memory—was significantly larger in these taxi drivers compared to London bus drivers' (A).",
   }),
 
   // =========================================================================
@@ -338,14 +354,8 @@ Woman: That makes sense. I'll revise accordingly.`,
     questionNumber: 1,
     speakerAName: "Nurse",
     contextPrompt: "Why did the medical clinic reception desk call you this morning?",
-    targetSentence:
-      "They wanted to know when I would like to have my checkup.",
-    wordBank: [
-      "when I",
-      "They wanted to know",
-      "to have my checkup",
-      "would like",
-    ],
+    targetSentence: "They wanted to know when I would like to have my checkup.",
+    wordBank: ["when I", "They wanted to know", "to have my checkup", "would like"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -354,12 +364,7 @@ Woman: That makes sense. I'll revise accordingly.`,
     speakerAName: "Coworker",
     contextPrompt: "Who is going to moderate the alumni panel on Friday?",
     targetSentence: "I have not heard who is going to be doing that.",
-    wordBank: [
-      "who is",
-      "I have not heard",
-      "doing that",
-      "going to be",
-    ],
+    wordBank: ["who is", "I have not heard", "doing that", "going to be"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -385,14 +390,8 @@ Woman: That makes sense. I'll revise accordingly.`,
     questionNumber: 5,
     speakerAName: "Teammate",
     contextPrompt: "Did the media librarian stop by our study room?",
-    targetSentence:
-      "Yes, he wanted to know if we needed help finding visual aids.",
-    wordBank: [
-      "if we needed",
-      "Yes, he wanted to know",
-      "finding visual aids",
-      "help",
-    ],
+    targetSentence: "Yes, he wanted to know if we needed help finding visual aids.",
+    wordBank: ["if we needed", "Yes, he wanted to know", "finding visual aids", "help"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -400,14 +399,8 @@ Woman: That makes sense. I'll revise accordingly.`,
     questionNumber: 6,
     speakerAName: "Advisor",
     contextPrompt: "Did Kevin ask about the upcoming orientation workshop?",
-    targetSentence:
-      "He was wondering if he needs to prepare anything for it.",
-    wordBank: [
-      "if he needs",
-      "He was wondering",
-      "anything for it",
-      "to prepare",
-    ],
+    targetSentence: "He was wondering if he needs to prepare anything for it.",
+    wordBank: ["if he needs", "He was wondering", "anything for it", "to prepare"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -415,14 +408,8 @@ Woman: That makes sense. I'll revise accordingly.`,
     questionNumber: 7,
     speakerAName: "Manager",
     contextPrompt: "Were there any network glitches during the software rollout?",
-    targetSentence:
-      "Yes, there was, but Ellen from IT was able to resolve them.",
-    wordBank: [
-      "but Ellen from IT",
-      "Yes, there was,",
-      "to resolve them",
-      "was able",
-    ],
+    targetSentence: "Yes, there was, but Ellen from IT was able to resolve them.",
+    wordBank: ["but Ellen from IT", "Yes, there was,", "to resolve them", "was able"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -449,12 +436,7 @@ Woman: That makes sense. I'll revise accordingly.`,
     speakerAName: "Partner",
     contextPrompt: "What did the CFO ask at the end of the quarterly forecast?",
     targetSentence: "She wanted to know how much profit we can expect.",
-    wordBank: [
-      "how much",
-      "She wanted to know",
-      "we can expect",
-      "profit",
-    ],
+    wordBank: ["how much", "She wanted to know", "we can expect", "profit"],
   }),
   buildWriteEmailItem({
     id: nextId(),
@@ -557,8 +539,7 @@ Freedom of speech is a fundamental right, and limiting it may lead to further re
     blueprintId: JUPITER_BLUEPRINT_ID,
     questionNumber: 6,
     scenarioTitle: "Bank Branch Customer Welcome",
-    sentence:
-      "If you would like to pay bills, you can use the kiosks along the left wall.",
+    sentence: "If you would like to pay bills, you can use the kiosks along the left wall.",
     responseSeconds: 11,
   }),
   buildListenRepeatItem({
@@ -566,8 +547,7 @@ Freedom of speech is a fundamental right, and limiting it may lead to further re
     blueprintId: JUPITER_BLUEPRINT_ID,
     questionNumber: 7,
     scenarioTitle: "Bank Branch Customer Welcome",
-    sentence:
-      "You may also enjoy some complimentary coffee in our lounge while you wait for help.",
+    sentence: "You may also enjoy some complimentary coffee in our lounge while you wait for help.",
     responseSeconds: 12,
   }),
   buildTakeInterviewItem({
@@ -588,7 +568,13 @@ Freedom of speech is a fundamental right, and limiting it may lead to further re
     interviewTopic: "Consumer Shopping Habits & Retail Trends",
     questionText:
       "Where do you usually do your shopping—at department stores, specialty shops, or online stores—and why do you prefer those options?",
-    expectedKeyPhrases: ["department stores", "online shopping", "variety", "reviews", "convenience"],
+    expectedKeyPhrases: [
+      "department stores",
+      "online shopping",
+      "variety",
+      "reviews",
+      "convenience",
+    ],
     sampleAnswer:
       "I usually do my shopping at department stores and online shops because they offer a wide variety of products in one place. Department stores are convenient since I can compare different brands, check quality directly, and find good discounts. I also like online shopping because it saves time and allows me to read customer reviews before buying.",
   }),
@@ -599,7 +585,13 @@ Freedom of speech is a fundamental right, and limiting it may lead to further re
     interviewTopic: "Consumer Shopping Habits & Retail Trends",
     questionText:
       "Some retail analysts predict that internet retail will completely replace physical brick-and-mortar stores in the coming decades. Do you agree or disagree with this prediction?",
-    expectedKeyPhrases: ["disagree", "physical stores", "try products", "immediate service", "coexist"],
+    expectedKeyPhrases: [
+      "disagree",
+      "physical stores",
+      "try products",
+      "immediate service",
+      "coexist",
+    ],
     sampleAnswer:
       "I disagree that internet retail will completely replace physical stores. Although online shopping is convenient and often cheaper, many people still prefer to see and try on products like shoes, furniture, or fresh groceries before buying them. Physical stores also provide immediate service, so both online and in-store shopping will continue to coexist.",
   }),
@@ -618,10 +610,10 @@ Freedom of speech is a fundamental right, and limiting it may lead to further re
 
 export const JUPITER_BLUEPRINT: SeedBlueprintRow = {
   id: JUPITER_BLUEPRINT_ID,
-  title: "Jupiter | Adaptive Test",
-  slug: "jupiter-adaptive-test-2026",
+  title: "Jupiter | Full Test",
+  slug: "jupiter-full-test-2026",
   description:
-    "Official TOEFL iBT 2026 TestGlider Mock Exam #4 (Jupiter — Video YpI_qLiymXs). Features Multi-Stage Adaptive Reading (Beringia Migration, Geostationary Satellites, Cold-Chain Perishable Logistics), Listening (Groupthink, Solar Footpath Lights, Cloud Seeding, Neuroplasticity), Writing (10 Build a Sentence, Email to Dr. Rojas, Book Bans & Free Expression Discussion), and Speaking (Bank Customer Orientation & Retail Shopping Interview).",
+    "Independent TOEFL iBT 2026-Style Practice Test #4 (Jupiter — Video YpI_qLiymXs). Features Reading (Beringia Migration, Geostationary Satellites, Cold-Chain Perishable Logistics), Listening (Groupthink, Solar Footpath Lights, Cloud Seeding, Neuroplasticity), Writing (10 Build a Sentence, Email to Dr. Rojas, Book Bans & Free Expression Discussion), and Speaking (Bank Customer Orientation & Retail Shopping Interview).",
   exam_Type: "full_mock",
   total_Duration_Seconds: 5160,
   blueprint_Json: {
@@ -663,9 +655,8 @@ export const JUPITER_BLUEPRINT: SeedBlueprintRow = {
     planetName: "Jupiter",
     videoUrl: "https://youtu.be/YpI_qLiymXs",
     videoId: "YpI_qLiymXs",
-    playlistUrl:
-      "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
-    difficultyLabel: "Multi-Stage Adaptive",
+    playlistUrl: "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
+    difficultyLabel: "Standard 2026 Practice",
   },
   is_Published: true,
   created_At: "2026-09-04T10:00:00.000Z",

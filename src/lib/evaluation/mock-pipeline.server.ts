@@ -8,19 +8,21 @@
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
 import { readingScoringService } from "@/lib/scoring/reading-scoring";
 import { sentenceScoringService } from "@/lib/scoring/sentence-scoring";
 import { evaluationService } from "@/lib/evaluation/evaluation-service.server";
 import { speakingEvaluationService } from "@/lib/evaluation/speaking-evaluation.server";
 import { speechToTextProvider } from "@/lib/speaking/transcription-service.server";
 import { bandToComparable120 } from "@/types/toefl";
+import { hasFullToeflSectionCoverage } from "./score-coverage";
 import type { ToeflItemType, ToeflSectionType } from "@/types/toefl";
 
 export interface SectionScoreSummary {
   sectionType: ToeflSectionType;
   rawScore: number;
   maxScore: number;
-  bandScore: number; // 1.0 - 6.0 in half-point increments
+  bandScore: number | null; // null means this section could not be scored
 }
 
 export class MockEvaluationPipelineService {
@@ -84,7 +86,7 @@ export class MockEvaluationPipelineService {
 
       const answeredItemIds = new Set((existingResps ?? []).map((r) => r.content_item_id));
 
-      const missingPayloads: Array<Record<string, unknown>> = [];
+      const missingPayloads: Database["public"]["Tables"]["responses"]["Insert"][] = [];
       for (const item of allSectionItems ?? []) {
         if (!answeredItemIds.has(item.id) && item.module_id) {
           const secId = moduleToSectionId.get(item.module_id);
@@ -141,10 +143,10 @@ export class MockEvaluationPipelineService {
 
     // 3. Process Item by Item
     const sectionSummaries: Record<ToeflSectionType, SectionScoreSummary> = {
-      reading: { sectionType: "reading", rawScore: 0, maxScore: 0, bandScore: 1.0 },
-      listening: { sectionType: "listening", rawScore: 0, maxScore: 0, bandScore: 1.0 },
-      writing: { sectionType: "writing", rawScore: 0, maxScore: 0, bandScore: 1.0 },
-      speaking: { sectionType: "speaking", rawScore: 0, maxScore: 0, bandScore: 1.0 },
+      reading: { sectionType: "reading", rawScore: 0, maxScore: 0, bandScore: null },
+      listening: { sectionType: "listening", rawScore: 0, maxScore: 0, bandScore: null },
+      writing: { sectionType: "writing", rawScore: 0, maxScore: 0, bandScore: null },
+      speaking: { sectionType: "speaking", rawScore: 0, maxScore: 0, bandScore: null },
     };
 
     const sectionBands: Record<ToeflSectionType, number[]> = {
@@ -184,7 +186,36 @@ export class MockEvaluationPipelineService {
         itemType === "listen_academic_talk"
       ) {
         const itemPayload = (rawItem.payload as Record<string, unknown>) ?? {};
-        const blanksList = (itemPayload["blanks"] as any[]) ?? undefined;
+        const answerKey = (itemPayload["answerKey"] as Record<string, unknown> | undefined) ?? {};
+        const publicBlanks = Array.isArray(itemPayload["blanks"])
+          ? (itemPayload["blanks"] as Array<Record<string, unknown>>)
+          : [];
+        const keyedBlanks = Array.isArray(answerKey["blanks"])
+          ? (answerKey["blanks"] as Array<Record<string, unknown>>)
+          : [];
+        const correctAnswers = Array.isArray(answerKey["correctAnswers"])
+          ? (answerKey["correctAnswers"] as string[])
+          : [];
+        const fullWords = Array.isArray(answerKey["fullWords"])
+          ? (answerKey["fullWords"] as string[])
+          : [];
+        const blanksList = publicBlanks.map((blank, index) => {
+          const blankIndex = Number(blank["blankIndex"] ?? index);
+          const key =
+            keyedBlanks.find((candidate) => Number(candidate["blankIndex"]) === blankIndex) ??
+            keyedBlanks[index];
+          const keyedAnswers = Array.isArray(key?.["acceptedAnswers"])
+            ? (key["acceptedAnswers"] as string[])
+            : [];
+          const fallbackAnswers = [correctAnswers[index], fullWords[index]].filter(
+            (answer): answer is string => typeof answer === "string" && answer.length > 0,
+          );
+          return {
+            blankIndex,
+            acceptedAnswers: keyedAnswers.length > 0 ? keyedAnswers : fallbackAnswers,
+            weight: Number(blank["weight"] ?? key?.["weight"] ?? 1),
+          };
+        });
         const scoreRes = readingScoringService.scoreItem(resp.raw_answer, {
           itemType,
           options: itemOpts.map((o) => ({
@@ -193,8 +224,8 @@ export class MockEvaluationPipelineService {
             isCorrect: o.is_correct,
             distractorRationale: o.distractor_rationale,
           })),
-          blanks: blanksList,
-          acceptedAnswers: (itemPayload["acceptedAnswers"] as string[]) ?? undefined,
+          ...(blanksList.length > 0 ? { blanks: blanksList } : {}),
+          acceptedAnswers: (answerKey["acceptedAnswers"] as string[]) ?? undefined,
         });
 
         // For complete_words when unanswered, ensure maxPoints reflects number of blanks
@@ -216,11 +247,10 @@ export class MockEvaluationPipelineService {
       }
       // B. Build Sentence (Writing Deterministic)
       else if (itemType === "build_sentence") {
-        const itemPayload = rawItem.payload ?? {};
+        const itemPayload = (rawItem.payload as Record<string, unknown>) ?? {};
+        const answerKey = (itemPayload["answerKey"] as Record<string, unknown> | undefined) ?? {};
         const sentScore = sentenceScoringService.scoreResponse(resp.raw_answer, {
-          acceptedSequences: (itemPayload["acceptedSequences"] as string[][]) ?? [
-            (itemPayload["wordBank"] as string[]) ?? [],
-          ],
+          acceptedSequences: (answerKey["acceptedSequences"] as string[][]) ?? [],
           wordBank: (itemPayload["wordBank"] as string[]) ?? [],
         });
 
@@ -309,23 +339,57 @@ export class MockEvaluationPipelineService {
           }
         }
 
-        if (audioBase64) {
-          const trResult = await speechToTextProvider.transcribe({
-            audioBase64,
-            mimeType: (normAnswer.mimeType as string) ?? "audio/webm",
-            taskType: itemType,
-            fallbackText: modelAns,
-          });
-          transcript = trResult.transcript;
-        } else if (
+        if (!audioBase64 && resp.raw_answer?.startsWith("data:audio/")) {
+          audioBase64 = resp.raw_answer;
+        }
+        if (
+          !audioBase64 &&
+          !storagePath &&
+          typeof normAnswer.mimeType === "string" &&
+          normAnswer.mimeType.startsWith("audio/") &&
           resp.raw_answer &&
           !resp.raw_answer.startsWith("recorded-audio-") &&
           !resp.raw_answer.includes("/")
         ) {
-          transcript = resp.raw_answer;
-        } else if (resp.raw_answer) {
-          transcript = modelAns || "Spoken response recorded.";
+          audioBase64 = resp.raw_answer;
         }
+
+        let transcriptionUnavailable = false;
+        if (audioBase64) {
+          try {
+            const trResult = await speechToTextProvider.transcribe({
+              audioBase64,
+              mimeType: (normAnswer.mimeType as string) ?? "audio/webm",
+              taskType: itemType,
+            });
+            transcript = trResult.transcript.trim();
+            transcriptionUnavailable = transcript.length === 0;
+          } catch (error) {
+            console.warn(
+              `[EvaluationPipeline] Speech transcription unavailable for response ${resp.id}:`,
+              error instanceof Error ? error.message : error,
+            );
+            transcriptionUnavailable = true;
+          }
+        } else if (resp.raw_answer) {
+          const rawAnswer = resp.raw_answer.trim();
+          const isTextEntry = normAnswer.mimeType === "text/plain";
+          const looksLikeAudioReference =
+            rawAnswer.startsWith("recorded-audio-") ||
+            rawAnswer.startsWith("http://") ||
+            rawAnswer.startsWith("https://") ||
+            rawAnswer.startsWith("data:audio/") ||
+            rawAnswer.includes("/");
+          if (isTextEntry || !looksLikeAudioReference) {
+            transcript = rawAnswer;
+          } else {
+            transcriptionUnavailable = true;
+          }
+        }
+
+        // A saved recording without a transcript cannot receive a defensible
+        // transcript-based score. Keep the report, but leave this item unscored.
+        if (transcriptionUnavailable) continue;
 
         const evalResult = await speakingEvaluationService.evaluateSpeaking({
           taskType: itemType,
@@ -367,32 +431,42 @@ export class MockEvaluationPipelineService {
     const rdRatio =
       sectionSummaries.reading.maxScore > 0
         ? sectionSummaries.reading.rawScore / sectionSummaries.reading.maxScore
-        : 0;
-    sectionSummaries.reading.bandScore = Math.max(
-      1.0,
-      Math.min(6.0, Math.round((1.0 + rdRatio * 5.0) * 2) / 2),
-    );
+        : null;
+    if (rdRatio !== null) {
+      sectionSummaries.reading.bandScore = Math.max(
+        1.0,
+        Math.min(6.0, Math.round((1.0 + rdRatio * 5.0) * 2) / 2),
+      );
+    }
 
     const lsRatio =
       sectionSummaries.listening.maxScore > 0
         ? sectionSummaries.listening.rawScore / sectionSummaries.listening.maxScore
-        : 0;
-    sectionSummaries.listening.bandScore = Math.max(
-      1.0,
-      Math.min(6.0, Math.round((1.0 + lsRatio * 5.0) * 2) / 2),
-    );
+        : null;
+    if (lsRatio !== null) {
+      sectionSummaries.listening.bandScore = Math.max(
+        1.0,
+        Math.min(6.0, Math.round((1.0 + lsRatio * 5.0) * 2) / 2),
+      );
+    }
 
     const wrBands = sectionBands.writing;
-    sectionSummaries.writing.bandScore =
-      wrBands.length > 0
-        ? Math.round((wrBands.reduce((a, b) => a + b, 0) / wrBands.length) * 2) / 2
-        : 1.0;
+    if (wrBands.length > 0) {
+      sectionSummaries.writing.bandScore =
+        Math.round((wrBands.reduce((a, b) => a + b, 0) / wrBands.length) * 2) / 2;
+    }
 
+    const expectedSpeakingResponses = (responses ?? []).filter((response) => {
+      const contentItem = (
+        response as unknown as { content_items: { section_type?: string } | null }
+      ).content_items;
+      return contentItem?.section_type === "speaking";
+    }).length;
     const spBands = sectionBands.speaking;
-    sectionSummaries.speaking.bandScore =
-      spBands.length > 0
-        ? Math.round((spBands.reduce((a, b) => a + b, 0) / spBands.length) * 2) / 2
-        : 1.0;
+    if (expectedSpeakingResponses > 0 && spBands.length === expectedSpeakingResponses) {
+      sectionSummaries.speaking.bandScore =
+        Math.round((spBands.reduce((a, b) => a + b, 0) / spBands.length) * 2) / 2;
+    }
 
     // 5. Update attempt_sections with scores
     for (const sec of attemptSections) {
@@ -416,15 +490,25 @@ export class MockEvaluationPipelineService {
       .map((s) => (s.sections as { section_type: ToeflSectionType } | null)?.section_type)
       .filter((t): t is ToeflSectionType => Boolean(t));
 
-    const activeBands = activeSectionTypes.map((t) => sectionSummaries[t].bandScore);
+    const activeBands = activeSectionTypes
+      .map((type) => sectionSummaries[type].bandScore)
+      .filter((band): band is number => band !== null);
+    const scoredSectionTypes = activeSectionTypes.filter(
+      (type) => sectionSummaries[type].bandScore !== null,
+    );
     const overallBand =
       activeBands.length > 0
         ? Math.round((activeBands.reduce((a, b) => a + b, 0) / activeBands.length) * 2) / 2
-        : 1.0;
+        : null;
+    const hasFullScoreCoverage = hasFullToeflSectionCoverage(scoredSectionTypes);
+    const comparableScore =
+      hasFullScoreCoverage && overallBand !== null ? bandToComparable120(overallBand) : null;
+    const reportSummary = hasFullScoreCoverage
+      ? `Practice estimate based on all four scored sections: ${overallBand?.toFixed(1)} / 6.0 (comparison ${comparableScore} / 120).`
+      : `Practice report includes ${scoredSectionTypes.length} of ${activeSectionTypes.length} scored sections. Full-test comparison is unavailable.`;
 
-    const comparableScore = bandToComparable120(overallBand);
-
-    // 7. Upsert Score Report
+    // 7. Upsert Score Report. Unscored sections remain NULL; the client can
+    // distinguish unavailable scores from the TOEFL scale's minimum band.
     await supabaseAdmin.from("score_reports").upsert(
       {
         attempt_id: attemptId,
@@ -435,15 +519,17 @@ export class MockEvaluationPipelineService {
         writing_band: sectionSummaries.writing.bandScore,
         speaking_band: sectionSummaries.speaking.bandScore,
         comparable_score: comparableScore,
-        target_score: 5.0,
-        target_gap: Math.max(0, 5.0 - overallBand),
-        summary: `Assessment finalized. Overall Band: ${overallBand.toFixed(1)} / 6.0 (Estimated 0-120 TOEFL Score: ${comparableScore}).`,
+        target_score: null,
+        target_gap: null,
+        summary: reportSummary,
         skill_breakdown: JSON.parse(
           JSON.stringify({
             reading: sectionSummaries.reading,
             listening: sectionSummaries.listening,
             writing: sectionSummaries.writing,
             speaking: sectionSummaries.speaking,
+            scoredSectionTypes,
+            hasFullScoreCoverage,
           }),
         ),
         generated_at: new Date().toISOString(),
@@ -457,7 +543,7 @@ export class MockEvaluationPipelineService {
       .update({
         status: "evaluated",
         evaluation_status: "completed",
-        score: Math.round(comparableScore),
+        score: comparableScore === null ? null : Math.round(comparableScore),
         completed_at: new Date().toISOString(),
       })
       .eq("id", attemptId);

@@ -7,6 +7,7 @@ import { sentenceScoringService } from "@/lib/scoring/sentence-scoring";
 import { evaluationService } from "@/lib/evaluation/evaluation-service.server";
 import { speakingEvaluationService } from "@/lib/evaluation/speaking-evaluation.server";
 import { speechToTextProvider } from "@/lib/speaking/transcription-service.server";
+import { sanitizeStudentPayload } from "@/lib/tests/blueprint-sanitizer";
 import type { ToeflItemType, ToeflSectionType } from "@/types/toefl";
 
 const taskTypeSchema = z.enum([
@@ -69,7 +70,7 @@ export const getPracticeTaskItems = createServerFn({ method: "GET" })
 
     const itemIds = (items ?? []).map((i) => i.id);
 
-    const { data: options } = await supabaseAdmin
+    const { data: options, error: optionsError } = await supabaseAdmin
       .from("question_options")
       .select("id, content_item_id, option_key, option_text, option_order")
       .in(
@@ -77,6 +78,9 @@ export const getPracticeTaskItems = createServerFn({ method: "GET" })
         itemIds.length > 0 ? itemIds : ["00000000-0000-0000-0000-000000000000"],
       )
       .order("option_order", { ascending: true });
+    if (optionsError) {
+      throw new Error(`Failed to load practice answer choices: ${optionsError.message}`);
+    }
 
     const optionsByItem = new Map<
       string,
@@ -99,7 +103,7 @@ export const getPracticeTaskItems = createServerFn({ method: "GET" })
       sectionType: item.section_type as ToeflSectionType,
       difficulty: item.difficulty,
       skillTags: item.skill_tags ?? [],
-      payload: (item.payload as Record<string, unknown>) ?? {},
+      payload: sanitizeStudentPayload(item.payload),
       options: optionsByItem.get(item.id) ?? [],
     })) as unknown as PracticeItemDetail[];
   });
@@ -130,11 +134,17 @@ export const submitPracticeTaskAnswer = createServerFn({ method: "POST" })
     if (itemErr || !item) {
       throw new Error("Practice content item not found.");
     }
+    if (item.item_type !== taskType) {
+      throw new Error("The requested task type does not match this practice item.");
+    }
 
-    const { data: options } = await supabaseAdmin
+    const { data: options, error: optionsError } = await supabaseAdmin
       .from("question_options")
       .select("id, option_key, option_text, is_correct, distractor_rationale")
       .eq("content_item_id", contentItemId);
+    if (optionsError) {
+      throw new Error(`Failed to load practice answer choices: ${optionsError.message}`);
+    }
 
     const itemPayload = (item.payload as Record<string, unknown>) ?? {};
 
@@ -148,6 +158,35 @@ export const submitPracticeTaskAnswer = createServerFn({ method: "POST" })
       taskType === "listen_announcement" ||
       taskType === "listen_academic_talk"
     ) {
+      const answerKey = (itemPayload["answerKey"] as Record<string, unknown> | undefined) ?? {};
+      const publicBlanks = Array.isArray(itemPayload["blanks"])
+        ? (itemPayload["blanks"] as Array<Record<string, unknown>>)
+        : [];
+      const keyedBlanks = Array.isArray(answerKey["blanks"])
+        ? (answerKey["blanks"] as Array<Record<string, unknown>>)
+        : [];
+      const correctAnswers = Array.isArray(answerKey["correctAnswers"])
+        ? (answerKey["correctAnswers"] as string[])
+        : [];
+      const fullWords = Array.isArray(answerKey["fullWords"])
+        ? (answerKey["fullWords"] as string[])
+        : [];
+      const blanks = publicBlanks.map((blank, index) => {
+        const blankIndex = Number(blank["blankIndex"] ?? index);
+        const key =
+          keyedBlanks.find((candidate) => Number(candidate["blankIndex"]) === blankIndex) ??
+          keyedBlanks[index];
+        const acceptedAnswers = Array.isArray(key?.["acceptedAnswers"])
+          ? (key["acceptedAnswers"] as string[])
+          : [correctAnswers[index], fullWords[index]].filter(
+              (answer): answer is string => typeof answer === "string" && answer.length > 0,
+            );
+        return {
+          blankIndex,
+          acceptedAnswers,
+          weight: Number(blank["weight"] ?? key?.["weight"] ?? 1),
+        };
+      });
       const scoreRes = readingScoringService.scoreItem(rawAnswer, {
         itemType: taskType,
         options: (options ?? []).map((o) => ({
@@ -156,6 +195,10 @@ export const submitPracticeTaskAnswer = createServerFn({ method: "POST" })
           isCorrect: o.is_correct,
           distractorRationale: o.distractor_rationale,
         })),
+        ...(blanks.length ? { blanks } : {}),
+        ...(Array.isArray(answerKey["acceptedAnswers"])
+          ? { acceptedAnswers: answerKey["acceptedAnswers"] as string[] }
+          : {}),
       });
 
       const correctOpt = (options ?? []).find((o) => o.is_correct);
@@ -175,10 +218,10 @@ export const submitPracticeTaskAnswer = createServerFn({ method: "POST" })
 
     // 2. Build Sentence (Writing Deterministic)
     if (taskType === "build_sentence") {
+      const answerKey = (itemPayload["answerKey"] as Record<string, unknown> | undefined) ?? {};
+      const acceptedSequences = (answerKey["acceptedSequences"] as string[][] | undefined) ?? [];
       const sentScore = sentenceScoringService.scoreResponse(rawAnswer, {
-        acceptedSequences: (itemPayload["acceptedSequences"] as string[][]) ?? [
-          (itemPayload["wordBank"] as string[]) ?? [],
-        ],
+        acceptedSequences,
         wordBank: (itemPayload["wordBank"] as string[]) ?? [],
       });
 
@@ -189,19 +232,27 @@ export const submitPracticeTaskAnswer = createServerFn({ method: "POST" })
         earnedPoints: sentScore.earnedPoints,
         maxPoints: sentScore.maxPoints,
         correctSequence:
-          ((itemPayload["acceptedSequences"] as string[][]) ?? [])[0]?.join(" ") ?? "",
+          (
+            (itemPayload["answerKey"] as Record<string, unknown> | undefined)?.[
+              "acceptedSequences"
+            ] as string[][] | undefined
+          )?.[0]?.join(" ") ??
+          ((itemPayload["answerKey"] as Record<string, unknown> | undefined)?.["targetSentence"] as
+            string | undefined) ??
+          "",
         submittedAt: new Date().toISOString(),
       };
     }
 
     // 3. Writing Tasks (Write an Email, Academic Discussion)
     if (taskType === "write_email" || taskType === "academic_discussion") {
+      const answerKey = (itemPayload["answerKey"] as Record<string, unknown> | undefined) ?? {};
       const evalResult = await evaluationService.evaluateWriting({
         taskType,
         promptText: (itemPayload["prompt"] as string) ?? (itemPayload["title"] as string) ?? "",
         contextData: itemPayload,
         studentResponse: rawAnswer ?? "",
-        referenceModelAnswer: itemPayload["modelAnswer"] as string | undefined,
+        referenceModelAnswer: answerKey["sampleHighScoringResponse"] as string | undefined,
       });
 
       return {
@@ -213,6 +264,11 @@ export const submitPracticeTaskAnswer = createServerFn({ method: "POST" })
 
     // 4. Speaking Tasks (Listen & Repeat, Take an Interview)
     if (taskType === "listen_repeat" || taskType === "take_interview") {
+      const answerKey = (itemPayload["answerKey"] as Record<string, unknown> | undefined) ?? {};
+      const modelAnswer =
+        (answerKey["sampleHighScoringResponse"] as string | undefined) ||
+        (answerKey["targetSentence"] as string | undefined) ||
+        "";
       let transcript = "";
       const storagePath = normalizedAnswer.storagePath as string | undefined;
       let audioBase64 = normalizedAnswer.audioBase64 as string | undefined;
@@ -258,7 +314,7 @@ export const submitPracticeTaskAnswer = createServerFn({ method: "POST" })
           (itemPayload["prompt"] as string) ?? (itemPayload["questionText"] as string) ?? "",
         transcript,
         audioDurationSeconds: (normalizedAnswer.durationSeconds as number) ?? undefined,
-        referenceModelAnswer: itemPayload["modelAnswer"] as string | undefined,
+        referenceModelAnswer: modelAnswer,
       });
 
       return {

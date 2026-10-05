@@ -16,8 +16,8 @@ import {
   ALL_TESTGLIDER_QUESTION_ITEMS,
   SEED_COMPREHENSION_QUESTIONS,
   SEED_DICTATION_PASSAGES,
+  SEED_LESSONS,
   SEED_SHADOWING_DRILLS,
-  SEED_STRATEGY_LESSONS,
   SEED_VOCABULARY_WORDS,
 } from "@/data/testglider-2026-catalog";
 import { toDeterministicUuid } from "@/data/tests/types";
@@ -29,7 +29,7 @@ export const DEFAULT_LOCAL_USER = {
   id: DEFAULT_LOCAL_USER_ID,
   aud: "authenticated",
   role: "authenticated",
-  email: "student@testglider.com",
+  email: "student@midnight.academy",
   email_confirmed_at: "2026-09-01T00:00:00.000Z",
   phone: "",
   confirmed_at: "2026-09-01T00:00:00.000Z",
@@ -66,6 +66,7 @@ export const DEFAULT_ADMIN_USER = {
   user_metadata: {
     full_name: "Course Instructor",
     role: "admin",
+    membership_tier: "member",
   },
   identities: [],
   created_at: "2026-09-01T00:00:00.000Z",
@@ -177,20 +178,25 @@ function createInitialStore(): LocalDatabaseStore {
     ];
 
     for (const secDef of sectionDefs) {
+      const blueprintSection = bp.blueprint_Json.sections.find(
+        (section) => section.section === secDef.sectionType,
+      );
       const sectionId = toDeterministicUuid(`${bp.id}-section-${secDef.sectionType}`);
       sectionsTable.push({
         id: sectionId,
         test_version_id: bp.id,
         section_type: secDef.sectionType,
         section_order: secDef.sectionOrder,
-        timing_seconds: secDef.timingSeconds,
+        timing_seconds: blueprintSection?.durationSeconds ?? secDef.timingSeconds,
         instructions: secDef.instructions,
         config: {
-          isAdaptive: secDef.sectionType === "reading" || secDef.sectionType === "listening",
+          isAdaptive: false,
+          moduleCount: blueprintSection?.moduleCount ?? 1,
         },
         created_at: bp.created_At,
       });
 
+      const secItems = bpItems.filter((it) => it.section === secDef.sectionType);
       const mod1Id = toDeterministicUuid(`${bp.id}-module-${secDef.sectionType}-1`);
       modulesTable.push({
         id: mod1Id,
@@ -203,18 +209,21 @@ function createInitialStore(): LocalDatabaseStore {
       });
 
       const mod2Id = toDeterministicUuid(`${bp.id}-module-${secDef.sectionType}-2`);
-      modulesTable.push({
-        id: mod2Id,
-        section_id: sectionId,
-        stage_index: 2,
-        difficulty_band: "upper",
-        routing_rule: {},
-        module_order: 1,
-        created_at: bp.created_At,
-      });
+      const hasSecondModule =
+        (blueprintSection?.moduleCount ?? 1) > 1 || secItems.some((item) => item.module_Number === 2);
+      if (hasSecondModule) {
+        modulesTable.push({
+          id: mod2Id,
+          section_id: sectionId,
+          stage_index: 2,
+          difficulty_band: "upper",
+          routing_rule: {},
+          module_order: 1,
+          created_at: bp.created_At,
+        });
+      }
 
       // 4. `content_items` and `question_options` for this section
-      const secItems = bpItems.filter((it) => it.section === secDef.sectionType);
       secItems.forEach((item, idx) => {
         const targetModId = item.module_Number === 2 ? mod2Id : mod1Id;
         const normalizedItemType =
@@ -311,32 +320,7 @@ function createInitialStore(): LocalDatabaseStore {
       responses: [],
       evaluations: [],
       score_reports: [],
-      recommendations: [
-        {
-          id: "rec-default-1",
-          student_id: DEFAULT_LOCAL_USER_ID,
-          reason:
-            "Practice Academic Reading inference and rhetorical purpose questions across Moon, Mars, and Neptune tests.",
-          priority: 1,
-          created_at: "2026-09-01T00:00:00.000Z",
-        },
-        {
-          id: "rec-default-2",
-          student_id: DEFAULT_LOCAL_USER_ID,
-          reason:
-            "Review Build a Sentence embedded question word order (e.g., 'Could you tell me why the event was postponed?').",
-          priority: 2,
-          created_at: "2026-09-01T00:00:00.000Z",
-        },
-        {
-          id: "rec-default-3",
-          student_id: DEFAULT_LOCAL_USER_ID,
-          reason:
-            "Shadow Listen & Repeat 7-sentence sequences to build immediate vocal recall under the 7-second timer.",
-          priority: 3,
-          created_at: "2026-09-01T00:00:00.000Z",
-        },
-      ],
+      recommendations: [],
       questions: legacyQuestionsTable,
       attempt_answers: [],
       notifications: [],
@@ -347,7 +331,7 @@ function createInitialStore(): LocalDatabaseStore {
       dictation_Passages: structuredClone(SEED_DICTATION_PASSAGES),
       shadowing_Drills: structuredClone(SEED_SHADOWING_DRILLS),
       vocabulary_Words: structuredClone(SEED_VOCABULARY_WORDS),
-      strategy_Lessons: structuredClone(SEED_STRATEGY_LESSONS),
+      strategy_Lessons: structuredClone(SEED_LESSONS),
       comprehension_Questions: structuredClone(SEED_COMPREHENSION_QUESTIONS),
       test_attempts: [],
       test_section_attempts: [],
@@ -365,11 +349,11 @@ function createInitialStore(): LocalDatabaseStore {
           user_id: DEFAULT_LOCAL_USER_ID,
           total_questions_answered: 0,
           correct_answers: 0,
-          current_streak: 4,
-          longest_streak: 7,
-          total_study_minutes: 180,
-          estimated_toefl_score: 104,
-          estimated_band_score: 5.0,
+          current_streak: 0,
+          longest_streak: 0,
+          total_study_minutes: 0,
+          estimated_toefl_score: null,
+          estimated_band_score: null,
           updated_at: new Date().toISOString(),
         },
       ],
@@ -445,7 +429,7 @@ function createInitialStore(): LocalDatabaseStore {
   };
 }
 
-const PERSIST_FILE_PATH = "/tmp/midnight-academy-local-db-v3.json";
+const PERSIST_FILE_PATH = "/tmp/midnight-academy-local-db-v4.json";
 
 function isNodeRuntime(): boolean {
   return (
@@ -1310,7 +1294,7 @@ export function createLocalSupabaseClient(): any {
               typeof crypto !== "undefined" && crypto.randomUUID
                 ? crypto.randomUUID()
                 : toDeterministicUuid(`admin-created-${Date.now()}`),
-            email: attrs.email || "user@testglider.com",
+            email: attrs.email || "user@midnight.academy",
             user_metadata: {
               ...DEFAULT_LOCAL_USER.user_metadata,
               ...(attrs.user_metadata || {}),

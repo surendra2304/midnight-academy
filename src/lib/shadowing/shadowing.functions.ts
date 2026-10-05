@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Shadowing Practice Service & Evaluator
  * Manages 40+ multi-difficulty shadowing sentences, speech evaluation with 5-trait rubric,
  * word-by-word repetition transcript diffs, and AI pronunciation feedback.
@@ -422,7 +422,7 @@ export const getShadowingItems = createServerFn({ method: "GET" })
 /**
  * Shadowing Evaluation System Prompt
  */
-const SHADOWING_EVALUATION_PROMPT = `You are the official TOEFL / Standardized English Shadowing and Speaking Coach for Midnight Academy.
+const SHADOWING_EVALUATION_PROMPT = `You are Midnight Academy's TOEFL-aligned shadowing and speaking practice coach.
 You evaluate student speech repetition against the exact reference transcript across:
 1. Pronunciation (1.0 to 6.0 scale): Phoneme accuracy, vowel quality, and consonant clarity.
 2. Rhythm & Intonation (1.0 to 6.0 scale): Natural stress-timing, thought groups, and pitch modulation.

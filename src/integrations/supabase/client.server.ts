@@ -36,6 +36,11 @@ function createSupabaseAdminClient() {
     process.env["SUPABASE_SECRET_KEY"] || process.env["SUPABASE_SERVICE_ROLE_KEY"];
 
   if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "Missing Supabase server configuration. Set SUPABASE_URL and SUPABASE_SECRET_KEY.",
+      );
+    }
     return createLocalSupabaseClient() as ReturnType<typeof createClient<Database>>;
   }
 

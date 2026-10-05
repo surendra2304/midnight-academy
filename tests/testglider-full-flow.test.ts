@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { createLocalSupabaseClient } from "../src/integrations/supabase/local-db";
 import { attemptSessionService } from "../src/lib/tests/session-service.server";
-import { ALL_TESTGLIDER_BLUEPRINTS } from "../src/data/testglider-2026-catalog";
+import {
+  ALL_TESTGLIDER_BLUEPRINTS,
+  ALL_TESTGLIDER_QUESTION_ITEMS,
+} from "../src/data/testglider-2026-catalog";
 import { sentenceScoringService } from "../src/lib/scoring/sentence-scoring";
 import { evaluationService } from "../src/lib/evaluation/evaluation-service.server";
 import { speakingEvaluationService } from "../src/lib/evaluation/speaking-evaluation.server";
@@ -61,12 +64,7 @@ describe("TestGlider 2026 Complete Mock Tests & Evaluation Pipeline", () => {
     expect(res1.score).toBe(1);
 
     const res2 = sentenceScoringService.scoreResponse(
-      JSON.stringify([
-        "The library",
-        "that has",
-        "private study rooms",
-        "is the best",
-      ]),
+      JSON.stringify(["The library", "that has", "private study rooms", "is the best"]),
       {
         acceptedSequences: [["The library that has private study rooms is the best."]],
       },
@@ -98,7 +96,10 @@ describe("TestGlider 2026 Complete Mock Tests & Evaluation Pipeline", () => {
     });
 
     expect(speakingEval.score_band).toBeGreaterThanOrEqual(5.5);
-    expect(speakingEval.traits.delivery).toBeGreaterThanOrEqual(5.5);
+    expect(speakingEval.traits.task_fulfillment).toBeGreaterThanOrEqual(5.5);
+    expect(speakingEval.model).toBe("midnight-rule-based-speaking-v1");
+    expect(speakingEval.traits).not.toHaveProperty("delivery");
+    expect(speakingEval.traits).not.toHaveProperty("pronunciation");
   });
 
   it("runs a complete TestGlider attempt end-to-end (start -> answer -> finalize -> AI evaluation -> score report)", async () => {
@@ -120,10 +121,13 @@ describe("TestGlider 2026 Complete Mock Tests & Evaluation Pipeline", () => {
     const readingItems = blueprint.sections[0].items;
     expect(readingItems.length).toBeGreaterThan(0);
 
-    // Answer the first item (Complete the Words cloze) with the official answers
-    const firstItem = readingItems[0];
-    const blanks = (firstItem.payload.blanks as Array<{ answer: string }>) || [];
-    const correctTokens = blanks.map((b) => b.answer);
+    // Use the server-side seed answer key; answer material is intentionally absent from the client blueprint.
+    const firstItem = readingItems.find((item) => item.itemType === "complete_words");
+    if (!firstItem) throw new Error("The Reading section is missing its Complete the Words item.");
+    const seedItem = ALL_TESTGLIDER_QUESTION_ITEMS.find((item) => item.id === firstItem.id);
+    const correctTokens =
+      (seedItem?.answer_Key_Json["correctAnswers"] as string[] | undefined) ?? [];
+    expect(correctTokens.length).toBeGreaterThan(0);
 
     const saveRes = await attemptSessionService.saveResponse({
       attemptId: snapshot.attemptId,
@@ -152,7 +156,7 @@ describe("TestGlider 2026 Complete Mock Tests & Evaluation Pipeline", () => {
       .from("attempt_sections")
       .select("id")
       .eq("attempt_id", snapshot.attemptId);
-    const secIds = (attemptSec ?? []).map((s: any) => s.id);
+    const secIds = (attemptSec ?? []).map((section) => section.id);
 
     const { data: responses } = await supabase
       .from("responses")
@@ -161,7 +165,7 @@ describe("TestGlider 2026 Complete Mock Tests & Evaluation Pipeline", () => {
     expect(responses).toBeTruthy();
     expect(responses!.length).toBeGreaterThanOrEqual(readingItems.length);
 
-    const clozeResp = responses!.find((r: any) => r.content_item_id === firstItem.id);
+    const clozeResp = responses!.find((response) => response.content_item_id === firstItem.id);
     expect(clozeResp).toBeTruthy();
     expect(clozeResp!.is_correct).toBe(true);
     expect(clozeResp!.score).toBe(1);

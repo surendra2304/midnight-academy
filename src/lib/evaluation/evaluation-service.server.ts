@@ -121,7 +121,10 @@ function buildDeterministicWritingEvaluation(
   const lengthRatio = Math.min(1.15, wordCount / targetMinWords);
   const taskFulfillment = Math.max(
     1.5,
-    Math.min(6.0, Math.round((1.5 + lengthRatio * 3.2 + Math.min(1.3, relevantHits * 0.15)) * 2) / 2),
+    Math.min(
+      6.0,
+      Math.round((1.5 + lengthRatio * 3.2 + Math.min(1.3, relevantHits * 0.15)) * 2) / 2,
+    ),
   );
   const organization = Math.max(
     1.5,
@@ -220,9 +223,9 @@ function buildDeterministicWritingEvaluation(
         ? "Ensure all three bulleted requirements in the email prompt are elaborated with specific details."
         : "Directly reference at least one classmate's post while introducing your own distinct supporting argument.",
     ],
-    confidence: 0.9,
+    confidence: 0.4,
     rubric_version: request.rubricVersion ?? "2026.1",
-    model: "testglider-rubric-evaluator-2026",
+    model: "midnight-rule-based-writing-v1",
   };
 }
 
@@ -248,7 +251,7 @@ export class EvaluationService {
           (request.contextData?.["sampleAnswer"] as string) ||
           "",
         next_actions: ["Write a response that directly addresses the task."],
-        confidence: 1,
+        confidence: 0,
         rubric_version: request.rubricVersion ?? "2026.1",
         model: "deterministic-empty",
       };
@@ -309,7 +312,7 @@ export class EvaluationService {
           "",
         next_actions: Array.isArray(raw["next_actions"])
           ? raw["next_actions"]
-          : (raw["nextActions"] as string[]) ?? [],
+          : ((raw["nextActions"] as string[]) ?? []),
         confidence:
           typeof raw["confidence"] === "number"
             ? Math.max(0, Math.min(1, raw["confidence"]))

@@ -1,6 +1,6 @@
 /**
- * Shared types and deterministic item builders for the 8 TOEFL 2026 TestGlider Mock Tests
- * from the official playlist (https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV)
+ * Shared types and deterministic item builders for eight TOEFL 2026-style practice sets
+ * based on the supplied public mock-test playlist (https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV)
  * and video https://youtu.be/5giZh7nDyfk.
  */
 
@@ -129,20 +129,21 @@ export function buildCompleteWordsItem(params: {
         return `[${Math.max(0, n - 1)}]`;
       });
 
-  const formattedBlanks = params.blanks.map((b, idx) => {
+  const answerBlanks = params.blanks.map((b, idx) => {
     const fullWord = `${b.prefix}${b.answer}`.trim();
-    const accepted = Array.from(new Set([b.answer.trim(), fullWord].filter(Boolean)));
     return {
       blankIndex: idx,
-      index: b.index,
-      prefix: b.prefix,
-      answer: b.answer,
-      hint: b.answer,
-      acceptedAnswers: accepted,
-      charCount: b.answer.length,
+      acceptedAnswers: Array.from(new Set([b.answer.trim(), fullWord].filter(Boolean))),
       weight: 1,
     };
   });
+  const formattedBlanks = params.blanks.map((b, idx) => ({
+    blankIndex: idx,
+    index: b.index,
+    prefix: b.prefix,
+    charCount: b.answer.length,
+    weight: 1,
+  }));
 
   const explanationText =
     params.explanation ??
@@ -169,13 +170,12 @@ export function buildCompleteWordsItem(params: {
       passage: normalizedPassage,
       passageText: normalizedPassage,
       blanks: formattedBlanks,
-      correctTokens: params.blanks.map((b) => b.answer),
-      explanation: explanationText,
     },
     answer_Key_Json: {
       taskType: "complete_words",
       correctAnswers: params.blanks.map((b) => b.answer),
       fullWords: params.blanks.map((b) => `${b.prefix}${b.answer}`),
+      blanks: answerBlanks,
       explanation: explanationText,
     },
     rubric_Json: { maxRawScore: params.blanks.length },
@@ -286,7 +286,6 @@ export function buildDailyLifeItem(params: {
         { id: "C", text: params.options[2] },
         { id: "D", text: params.options[3] },
       ],
-      explanation: params.explanation,
     },
     answer_Key_Json: {
       taskType: "read_daily_life",
@@ -352,7 +351,6 @@ export function buildAcademicReadingItem(params: {
         { id: "C", text: params.options[2] },
         { id: "D", text: params.options[3] },
       ],
-      explanation: params.explanation,
     },
     answer_Key_Json: {
       taskType: "read_academic",
@@ -426,9 +424,7 @@ export function buildListeningItem(params: {
     prompt_Json: {
       taskType: params.taskType,
       title:
-        params.taskType === "listen_choose_response"
-          ? "Choose the best response."
-          : params.title,
+        params.taskType === "listen_choose_response" ? "Choose the best response." : params.title,
       prompt: params.questionStem,
       questionText: params.questionStem,
       questionStem: params.questionStem,
@@ -450,7 +446,6 @@ export function buildListeningItem(params: {
         { id: "C", text: params.options[2] },
         { id: "D", text: params.options[3] },
       ],
-      explanation: params.explanation,
     },
     answer_Key_Json: {
       taskType: params.taskType,
@@ -467,13 +462,19 @@ export function buildListeningItem(params: {
 /**
  * Helper to determine ordered chips from wordBank that reconstruct targetSentence.
  */
-function computeOrderedChipsFromTarget(targetSentence: string, wordBank: string[]): {
+function computeOrderedChipsFromTarget(
+  targetSentence: string,
+  wordBank: string[],
+): {
   orderedChips: string[];
   terminalPunctuation: string;
 } {
   const punctMatch = targetSentence.trim().match(/([.?!]+)$/);
   const terminalPunctuation = punctMatch?.[1] ?? ".";
-  const cleanTarget = targetSentence.trim().replace(/[.?!]+$/, "").trim();
+  const cleanTarget = targetSentence
+    .trim()
+    .replace(/[.?!]+$/, "")
+    .trim();
   const lowerTarget = cleanTarget.toLowerCase();
 
   // Greedily match chips from wordBank along lowerTarget from left to right
@@ -491,7 +492,9 @@ function computeOrderedChipsFromTarget(targetSentence: string, wordBank: string[
     let matchedLen = -1;
 
     for (const idx of remainingIndices) {
-      const chip = wordBank[idx]!.trim().replace(/[.?!]+$/, "").trim();
+      const chip = wordBank[idx]!.trim()
+        .replace(/[.?!]+$/, "")
+        .trim();
       const lowerChip = chip.toLowerCase();
       if (
         lowerTarget.startsWith(lowerChip, cursor) &&
@@ -519,7 +522,12 @@ function computeOrderedChipsFromTarget(targetSentence: string, wordBank: string[
     const withPos = wordBank
       .map((chip) => ({
         chip,
-        pos: lowerTarget.indexOf(chip.toLowerCase().replace(/[.?!]+$/, "").trim()),
+        pos: lowerTarget.indexOf(
+          chip
+            .toLowerCase()
+            .replace(/[.?!]+$/, "")
+            .trim(),
+        ),
       }))
       .filter((x) => x.pos >= 0)
       .sort((a, b) => a.pos - b.pos);
@@ -548,7 +556,10 @@ export function buildSentenceItem(params: {
     params.targetSentence,
     params.wordBank,
   );
-  const cleanTarget = params.targetSentence.trim().replace(/[.?!]+$/, "").trim();
+  const cleanTarget = params.targetSentence
+    .trim()
+    .replace(/[.?!]+$/, "")
+    .trim();
   const explanationText =
     params.explanation ?? `Correct sentence structure: "${params.targetSentence}"`;
 
@@ -576,18 +587,12 @@ export function buildSentenceItem(params: {
       wordBank: params.wordBank,
       slotCount: orderedChips.length,
       terminalPunctuation,
-      targetSentence: params.targetSentence,
-      acceptedSequences: [
-        orderedChips,
-        [cleanTarget],
-        cleanTarget.split(/\s+/).filter(Boolean),
-      ],
-      explanation: explanationText,
     },
     answer_Key_Json: {
       taskType: "build_sentence",
       targetSentence: params.targetSentence,
       orderedChips,
+      acceptedSequences: [orderedChips, [cleanTarget], cleanTarget.split(/\s+/).filter(Boolean)],
       acceptableVariants: [params.targetSentence, cleanTarget],
       explanation: explanationText,
     },
@@ -634,8 +639,6 @@ export function buildWriteEmailItem(params: {
       timeLimitSeconds: 420,
       minWords: 80,
       maxWords: 150,
-      modelAnswer: params.sampleAnswer,
-      sampleAnswer: params.sampleAnswer,
     },
     answer_Key_Json: {
       taskType: "write_email",
@@ -677,7 +680,7 @@ export function buildAcademicDiscussionItem(params: {
   return {
     id: itemId,
     blueprint_Id: params.blueprintId,
-    section: "academic_discussion" === "academic_discussion" ? "writing" : "writing",
+    section: "writing",
     task_Type: "academic_discussion",
     module_Number: 1,
     difficulty_Band: "middle",
@@ -714,8 +717,6 @@ export function buildAcademicDiscussionItem(params: {
       })),
       timeLimitSeconds: 600,
       minWords: 100,
-      modelAnswer: params.sampleAnswer,
-      sampleAnswer: params.sampleAnswer,
     },
     answer_Key_Json: {
       taskType: "academic_discussion",
@@ -760,15 +761,10 @@ export function buildListenRepeatItem(params: {
       scenario: scenarioDescription,
       context: scenarioDescription,
       prompt: "Listen and repeat only once.",
-      targetSentence: params.sentence,
       stimulusText: params.sentence,
-      transcript: params.sentence,
-      sentence: params.sentence,
-      promptSentences: [params.sentence],
       preparationSeconds: 0,
       responseSeconds: params.responseSeconds ?? 10,
       responseLimitSeconds: params.responseSeconds ?? 10,
-      modelAnswer: params.sentence,
     },
     answer_Key_Json: {
       taskType: "listen_repeat",
@@ -821,9 +817,6 @@ export function buildTakeInterviewItem(params: {
       preparationSeconds: 15,
       responseSecondsPerTurn: 45,
       responseLimitSeconds: 45,
-      expectedKeyPhrases: params.expectedKeyPhrases,
-      modelAnswer: params.sampleAnswer,
-      sampleAnswer: params.sampleAnswer,
     },
     answer_Key_Json: {
       taskType: "take_interview",

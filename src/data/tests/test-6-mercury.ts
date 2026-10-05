@@ -80,7 +80,8 @@ export const MERCURY_ITEMS: SeedQuestionItemRow[] = [
     title: "Bioluminescence in Deep-Ocean Ecosystems (Q21)",
     stimulusText: BIOLUMINESCENCE_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 1, how is light chemically produced in bioluminescent marine organisms?",
+    questionStem:
+      "According to paragraph 1, how is light chemically produced in bioluminescent marine organisms?",
     options: [
       "Solar radiation is stored in scales during the day and released at night.",
       "High water pressure heats mineral crystals in the fish's skin.",
@@ -88,7 +89,8 @@ export const MERCURY_ITEMS: SeedQuestionItemRow[] = [
       "A light-emitting molecule called luciferin is oxidized in the presence of the enzyme luciferase.",
     ],
     correctOptionId: "D",
-    explanation: "Paragraph 1 states: 'Light emission occurs when a light-emitting molecule called luciferin is oxidized in the presence of a catalytic enzyme known as luciferase' (D).",
+    explanation:
+      "Paragraph 1 states: 'Light emission occurs when a light-emitting molecule called luciferin is oxidized in the presence of a catalytic enzyme known as luciferase' (D).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -98,7 +100,8 @@ export const MERCURY_ITEMS: SeedQuestionItemRow[] = [
     title: "Bioluminescence in Deep-Ocean Ecosystems (Q22)",
     stimulusText: BIOLUMINESCENCE_PASSAGE,
     questionSubType: "factual",
-    questionStem: "How does counterillumination help mesopelagic squid and lanternfish avoid predators?",
+    questionStem:
+      "How does counterillumination help mesopelagic squid and lanternfish avoid predators?",
     options: [
       "It blinds predators with a sudden flash of red light.",
       "It illuminates the ocean floor so the squid can hide under rocks.",
@@ -106,7 +109,8 @@ export const MERCURY_ITEMS: SeedQuestionItemRow[] = [
       "It attracts larger sharks that scare away smaller predators.",
     ],
     correctOptionId: "C",
-    explanation: "Paragraph 2 explains that ventral photophores emit light on their undersides that matches dim downwelling light, hiding their silhouettes from predators swimming below (C).",
+    explanation:
+      "Paragraph 2 explains that ventral photophores emit light on their undersides that matches dim downwelling light, hiding their silhouettes from predators swimming below (C).",
   }),
 
   // =========================================================================
@@ -141,7 +145,8 @@ export const MERCURY_ITEMS: SeedQuestionItemRow[] = [
     title: "Adaptive Camouflage in Cephalopods (M2 Q11)",
     stimulusText: CEPHALOPOD_CAMOUFLAGE_PASSAGE,
     questionSubType: "factual",
-    questionStem: "Why are cephalopods able to change their skin color much more rapidly than chameleons?",
+    questionStem:
+      "Why are cephalopods able to change their skin color much more rapidly than chameleons?",
     options: [
       "They absorb colored water directly into their bloodstream.",
       "They shed their outer layer of skin every few seconds.",
@@ -149,7 +154,8 @@ export const MERCURY_ITEMS: SeedQuestionItemRow[] = [
       "Their pigment-filled chromatophores are controlled directly by motor neurons in the nervous system rather than slow hormonal signaling.",
     ],
     correctOptionId: "D",
-    explanation: "Paragraphs 1 and 2 explain that unlike chameleons (which rely on hormonal signaling), cephalopods control their chromatophores directly through motor neurons in their nervous system (D).",
+    explanation:
+      "Paragraphs 1 and 2 explain that unlike chameleons (which rely on hormonal signaling), cephalopods control their chromatophores directly through motor neurons in their nervous system (D).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -159,7 +165,8 @@ export const MERCURY_ITEMS: SeedQuestionItemRow[] = [
     title: "Adaptive Camouflage in Cephalopods (M2 Lower Q1)",
     stimulusText: CEPHALOPOD_CAMOUFLAGE_PASSAGE,
     questionSubType: "factual",
-    questionStem: "What happens when the radial muscles surrounding a cephalopod's chromatophore contract?",
+    questionStem:
+      "What happens when the radial muscles surrounding a cephalopod's chromatophore contract?",
     options: [
       "The sac shrinks into an invisible pinpoint.",
       "The sac expands into a flat disc of visible pigment.",
@@ -167,7 +174,8 @@ export const MERCURY_ITEMS: SeedQuestionItemRow[] = [
       "The skin becomes completely transparent.",
     ],
     correctOptionId: "B",
-    explanation: "Paragraph 2 states: 'When the muscles contract, the sac expands into a flat disc of red, yellow, or brown pigment' (B).",
+    explanation:
+      "Paragraph 2 states: 'When the muscles contract, the sac expands into a flat disc of red, yellow, or brown pigment' (B).",
   }),
 
   // =========================================================================
@@ -191,7 +199,8 @@ Speaker: I want to tell you all what to expect on tomorrow's field trip to Goya 
       "Set up tents at the campground",
     ],
     correctOptionId: "A",
-    explanation: "The speaker states: 'You'll start your visit in the auditorium. You'll get to hear from some experts in the field, including an ornithologist and a botanist' (A).",
+    explanation:
+      "The speaker states: 'You'll start your visit in the auditorium. You'll get to hear from some experts in the field, including an ornithologist and a botanist' (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -215,7 +224,8 @@ Man: The campus store's actually offering a discount on them until Friday.`,
       "She wants to give one to her roommate as a gift.",
     ],
     correctOptionId: "B",
-    explanation: "The woman says: 'I guess I need to get myself a new reusable bottle then. My current one is cracked' (B).",
+    explanation:
+      "The woman says: 'I guess I need to get myself a new reusable bottle then. My current one is cracked' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -227,7 +237,8 @@ Man: The campus store's actually offering a discount on them until Friday.`,
     transcript: `Narrator: Listen to part of a talk on a science podcast.
 Host: Have you ever experienced a sudden change in mood after you eat a meal? It's plausible that your gut microbiome played a role in that emotional shift. The microbiome is an intricate network of trillions of bacteria, fungi, and other microorganisms. We used to think of microbes primarily as pathogens, but we now recognize that microbes play an essential role in our health, strengthening the immune system and even shaping emotions. Microbes in the gut synthesize neurotransmitters—chemical messengers such as serotonin, which influences our emotional state. As research advances, doctors may soon prescribe personalized probiotic regimens tailored specifically to a patient's unique microbiome.`,
     academicDomain: "Microbiology & Neurobiology",
-    questionStem: "According to the podcast, how do gut microbes influence a person's emotional state?",
+    questionStem:
+      "According to the podcast, how do gut microbes influence a person's emotional state?",
     options: [
       "By blocking all nutrients from entering the bloodstream",
       "By synthesizing neurotransmitters such as serotonin that communicate with the nervous system",
@@ -235,7 +246,8 @@ Host: Have you ever experienced a sudden change in mood after you eat a meal? It
       "By replacing immune cells in the lymph nodes",
     ],
     correctOptionId: "B",
-    explanation: "The host explains: 'Microbes in the gut synthesize neurotransmitters, chemical messengers, such as serotonin... a neurotransmitter that influences our emotional state' (B).",
+    explanation:
+      "The host explains: 'Microbes in the gut synthesize neurotransmitters, chemical messengers, such as serotonin... a neurotransmitter that influences our emotional state' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -247,7 +259,8 @@ Host: Have you ever experienced a sudden change in mood after you eat a meal? It
     transcript: `Narrator: Listen to a talk in an archaeology class.
 Professor: Let's go back to 1700 BCE to a site now known as Poverty Point, located in what today is Louisiana in the United States. Poverty Point is a testament to the advanced engineering skills of pre-Columbian societies in North America. The builders created massive earthen mounds, including six rows of raised earth arranged in concentric half-circles stretching across 1.2 kilometers, all constructed by hand without draft animals or wheeled vehicles.`,
     academicDomain: "North American Archaeology",
-    questionStem: "What makes the ancient site of Poverty Point in Louisiana remarkable to archaeologists?",
+    questionStem:
+      "What makes the ancient site of Poverty Point in Louisiana remarkable to archaeologists?",
     options: [
       "Its massive earthen mounds arranged in concentric half-circles built around 1700 BCE",
       "Its iron skyscrapers built during the nineteenth century",
@@ -255,7 +268,8 @@ Professor: Let's go back to 1700 BCE to a site now known as Poverty Point, locat
       "Its collection of printed European books",
     ],
     correctOptionId: "A",
-    explanation: "The professor highlights that builders at Poverty Point around 1700 BCE created massive earthen mounds arranged in six concentric half-circles stretching across 1.2 kilometers (A).",
+    explanation:
+      "The professor highlights that builders at Poverty Point around 1700 BCE created massive earthen mounds arranged in six concentric half-circles stretching across 1.2 kilometers (A).",
   }),
 
   // =========================================================================
@@ -309,14 +323,8 @@ Professor: Let's go back to 1700 BCE to a site now known as Poverty Point, locat
     questionNumber: 5,
     speakerAName: "Roommate",
     contextPrompt: "Why is your backpack so heavy today?",
-    targetSentence:
-      "It has some books that I need to return to the campus library.",
-    wordBank: [
-      "that I need",
-      "It has some books",
-      "to the campus library",
-      "to return",
-    ],
+    targetSentence: "It has some books that I need to return to the campus library.",
+    wordBank: ["that I need", "It has some books", "to the campus library", "to return"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -333,14 +341,8 @@ Professor: Let's go back to 1700 BCE to a site now known as Poverty Point, locat
     questionNumber: 7,
     speakerAName: "Lab Partner",
     contextPrompt: "Are you staying for the second panel of the seminar?",
-    targetSentence:
-      "The topic they are discussing is not relevant to my research.",
-    wordBank: [
-      "they are discussing",
-      "The topic",
-      "to my research",
-      "is not relevant",
-    ],
+    targetSentence: "The topic they are discussing is not relevant to my research.",
+    wordBank: ["they are discussing", "The topic", "to my research", "is not relevant"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -358,12 +360,7 @@ Professor: Let's go back to 1700 BCE to a site now known as Poverty Point, locat
     speakerAName: "Friend",
     contextPrompt: "Where should we celebrate after our final exam?",
     targetSentence: "The restaurant that just opened downtown looks promising.",
-    wordBank: [
-      "that just opened",
-      "The restaurant",
-      "looks promising",
-      "downtown",
-    ],
+    wordBank: ["that just opened", "The restaurant", "looks promising", "downtown"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -380,7 +377,8 @@ Professor: Let's go back to 1700 BCE to a site now known as Poverty Point, locat
     title: "Write an Email — Recommending an Online Language Learning Platform",
     scenarioContext:
       "Your school program coordinator, Mrs. White, recently sent a message asking students for suggestions on digital resources to help incoming exchange students practice conversational English.",
-    recipientRole: "To: Mrs. White, Program Coordinator | Subject: Online Language Learning Platform Recommendation",
+    recipientRole:
+      "To: Mrs. White, Program Coordinator | Subject: Online Language Learning Platform Recommendation",
     bulletPoints: [
       "Recommend a specific online language learning platform you have used.",
       "Describe two features of the platform (such as interactive speaking feedback and structured vocabulary drills) that make it effective.",
@@ -475,8 +473,7 @@ In the majority of developed and rapidly industrializing cities, municipal water
     blueprintId: MERCURY_BLUEPRINT_ID,
     questionNumber: 6,
     scenarioTitle: "Culinary Training — Preparing a Fresh Salad",
-    sentence:
-      "Put any leftovers in a food container and place in the fridge for later.",
+    sentence: "Put any leftovers in a food container and place in the fridge for later.",
     responseSeconds: 11,
   }),
   buildListenRepeatItem({
@@ -484,8 +481,7 @@ In the majority of developed and rapidly industrializing cities, municipal water
     blueprintId: MERCURY_BLUEPRINT_ID,
     questionNumber: 7,
     scenarioTitle: "Culinary Training — Preparing a Fresh Salad",
-    sentence:
-      "When you have finished, be sure to clean up so the kitchen stays neat and clean.",
+    sentence: "When you have finished, be sure to clean up so the kitchen stays neat and clean.",
     responseSeconds: 12,
   }),
   buildTakeInterviewItem({
@@ -539,7 +535,7 @@ export const MERCURY_BLUEPRINT: SeedBlueprintRow = {
   title: "Mercury | Full Test",
   slug: "mercury-full-test-2026",
   description:
-    "Official TOEFL iBT 2026 TestGlider Mock Exam #6 (Mercury — Video bFot0R7_SsU). Features Adaptive Reading (Ancient Structures, Literary Influence, Deep-Ocean Bioluminescence, Geological Landforms, Cephalopod Camouflage), Listening (Goya Nature Reserve, Plastic Bottle Ban, Gut Microbiome, Poverty Point Earthworks), Writing (10 Build a Sentence, Email to Mrs. White, Urban Pollution Discussion), and Speaking (Kitchen Salad Prep & Cooking Interview).",
+    "Independent TOEFL iBT 2026-Style Practice Test #6 (Mercury — Video bFot0R7_SsU). Features Reading (Ancient Structures, Literary Influence, Deep-Ocean Bioluminescence, Geological Landforms, Cephalopod Camouflage), Listening (Goya Nature Reserve, Plastic Bottle Ban, Gut Microbiome, Poverty Point Earthworks), Writing (10 Build a Sentence, Email to Mrs. White, Urban Pollution Discussion), and Speaking (Kitchen Salad Prep & Cooking Interview).",
   exam_Type: "full_mock",
   total_Duration_Seconds: 5160,
   blueprint_Json: {
@@ -581,9 +577,8 @@ export const MERCURY_BLUEPRINT: SeedBlueprintRow = {
     planetName: "Mercury",
     videoUrl: "https://youtu.be/bFot0R7_SsU",
     videoId: "bFot0R7_SsU",
-    playlistUrl:
-      "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
-    difficultyLabel: "Standard 2026 Adaptive",
+    playlistUrl: "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
+    difficultyLabel: "Standard 2026 Practice",
   },
   is_Published: true,
   created_At: "2026-09-06T10:00:00.000Z",

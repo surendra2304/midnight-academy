@@ -8,6 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { canRevealScoreReportAnswers } from "./report-access";
 
 const SECTION_ORDER_WEIGHT: Record<string, number> = {
   reading: 0,
@@ -26,7 +27,7 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
     const { data: attempt, error: aErr } = await supabaseAdmin
       .from("attempts")
       .select(
-        "id, test_id, test_version_id, student_id, status, evaluation_status, score, started_at, completed_at, tests(id, name, category, difficulty, code)",
+        "id, test_id, test_version_id, student_id, status, exam_mode, selected_section_type, evaluation_status, score, started_at, completed_at, tests(id, name, category, difficulty, code)",
       )
       .eq("id", attemptId)
       .single();
@@ -40,38 +41,58 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
       throw new Error("Unauthorized: You do not have access to this score report.");
     }
 
+    // The report endpoint also serves the answer key for review. Do not fetch response
+    // payloads, correct options, or explanations while an attempt is active or scoring.
+    if (!canRevealScoreReportAnswers(attempt.status, attempt.evaluation_status)) {
+      return {
+        attempt: { ...attempt, score: null },
+        report: null,
+        userEmail: "Signed-in learner",
+        targetScore: null,
+        attemptSections: [],
+        responses: [],
+        recommendations: [],
+      };
+    }
+
     // 2. Fetch Score Report
-    const { data: report } = await supabaseAdmin
+    const { data: report, error: reportError } = await supabaseAdmin
       .from("score_reports")
       .select("*")
       .eq("attempt_id", attemptId)
       .maybeSingle();
+    if (reportError) throw new Error(`Failed to load score report: ${reportError.message}`);
 
     // 3. Fetch Attempt Sections
-    const { data: attemptSections } = await supabaseAdmin
+    const { data: attemptSections, error: sectionsError } = await supabaseAdmin
       .from("attempt_sections")
       .select(
         "id, section_id, status, raw_score, section_band, time_spent_seconds, sections(id, section_type, timing_seconds, section_order)",
       )
       .eq("attempt_id", attemptId)
       .order("created_at", { ascending: true });
+    if (sectionsError) throw new Error(`Failed to load attempt sections: ${sectionsError.message}`);
 
     // 4. Fetch Responses, Items, and Evaluations
     const attemptSecIds = (attemptSections || []).map((s) => s.id);
 
-    const { data: responses } = await supabaseAdmin
+    const { data: responses, error: responsesError } = await supabaseAdmin
       .from("responses")
       .select(
         "id, attempt_section_id, content_item_id, raw_answer, normalized_answer, is_correct, score, time_spent_ms, flagged, answered_at, content_items(id, section_type, item_type, difficulty, skill_tags, payload, item_order)",
       )
       .in("attempt_section_id", attemptSecIds);
+    if (responsesError)
+      throw new Error(`Failed to load response review: ${responsesError.message}`);
 
     const respIds = (responses || []).map((r) => r.id);
 
-    const { data: evaluations } = await supabaseAdmin
+    const { data: evaluations, error: evaluationsError } = await supabaseAdmin
       .from("evaluations")
       .select("*")
       .in("response_id", respIds.length > 0 ? respIds : ["00000000-0000-0000-0000-000000000000"]);
+    if (evaluationsError)
+      throw new Error(`Failed to load response evaluations: ${evaluationsError.message}`);
 
     const evalByResp = new Map<string, NonNullable<typeof evaluations>[number]>();
     for (const ev of evaluations || []) {
@@ -80,13 +101,14 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
 
     // 5. Fetch Question Options for Objective Items
     const contentItemIds = (responses || []).map((r) => r.content_item_id);
-    const { data: options } = await supabaseAdmin
+    const { data: options, error: optionsError } = await supabaseAdmin
       .from("question_options")
       .select("id, content_item_id, option_key, option_text, is_correct, distractor_rationale")
       .in(
         "content_item_id",
         contentItemIds.length > 0 ? contentItemIds : ["00000000-0000-0000-0000-000000000000"],
       );
+    if (optionsError) throw new Error(`Failed to load answer options: ${optionsError.message}`);
 
     const optionsByItem = new Map<string, NonNullable<typeof options>>();
     for (const opt of options || []) {
@@ -96,14 +118,17 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
     }
 
     // 6. Fetch Practice Recommendations
-    const { data: recommendations } = await supabaseAdmin
+    const { data: recommendations, error: recommendationsError } = await supabaseAdmin
       .from("recommendations")
       .select("*")
       .eq("student_id", context.userId)
       .limit(6);
+    if (recommendationsError) {
+      throw new Error(`Failed to load practice recommendations: ${recommendationsError.message}`);
+    }
 
     // 7. Fetch Candidate Email
-    let userEmail = "student@testglider.com";
+    let userEmail = "Signed-in learner";
     try {
       const { data: userData } = await supabaseAdmin.auth.admin.getUserById(context.userId);
       if (userData?.user?.email) {
@@ -117,16 +142,13 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
     const enhancedResponses = await Promise.all(
       (responses || []).map(async (r) => {
         let audioPlayUrl: string | null = null;
-        if (
-          r.content_items?.section_type === "speaking" &&
-          r.raw_answer &&
-          !r.raw_answer.startsWith("http") &&
-          !r.raw_answer.startsWith("recorded-audio-")
-        ) {
+        const normalizedAnswer = (r.normalized_answer as Record<string, unknown> | null) ?? {};
+        const storagePath = normalizedAnswer["storagePath"];
+        if (r.content_items?.section_type === "speaking" && typeof storagePath === "string") {
           try {
             const { data: signed } = await supabaseAdmin.storage
               .from("speaking-recordings")
-              .createSignedUrl(r.raw_answer, 7200);
+              .createSignedUrl(storagePath, 7200);
             if (signed?.signedUrl) {
               audioPlayUrl = signed.signedUrl;
             }
@@ -159,7 +181,7 @@ export const getToeflScoreReport = createServerFn({ method: "GET" })
       attempt,
       report,
       userEmail,
-      targetScore: report?.target_score || 5.0,
+      targetScore: report?.target_score ?? null,
       attemptSections: attemptSections || [],
       responses: enhancedResponses,
       recommendations: recommendations || [],

@@ -21,10 +21,13 @@ import { explainWeaknessProfileAi } from "@/lib/analytics/analytics.functions";
 
 export interface AnalyticsDashboardViewProps {
   profile: StudentWeaknessProfile;
-  targetBand?: number;
+  targetBand?: number | null;
 }
 
-export function AnalyticsDashboardView({ profile, targetBand = 5.0 }: AnalyticsDashboardViewProps) {
+export function AnalyticsDashboardView({
+  profile,
+  targetBand = null,
+}: AnalyticsDashboardViewProps) {
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
@@ -59,7 +62,8 @@ export function AnalyticsDashboardView({ profile, targetBand = 5.0 }: AnalyticsD
     );
   }
 
-  const targetGap = (profile.latestOverallBand - targetBand).toFixed(1);
+  const targetGap =
+    targetBand === null ? null : (profile.latestOverallBand - targetBand).toFixed(1);
 
   return (
     <div className="space-y-8">
@@ -78,15 +82,28 @@ export function AnalyticsDashboardView({ profile, targetBand = 5.0 }: AnalyticsD
 
         <div className="rounded-xl border border-border bg-surface-2/40 p-5">
           <span className="text-xs font-bold text-muted-foreground uppercase">Target Goal</span>
-          <p className="text-3xl font-black text-foreground mt-1">
-            {targetBand.toFixed(1)}{" "}
-            <span className="text-xs font-semibold text-muted-foreground">Band</span>
-          </p>
-          <p
-            className={`text-[11px] font-semibold mt-1 ${Number(targetGap) >= 0 ? "text-success" : "text-warning"}`}
-          >
-            {Number(targetGap) >= 0 ? `Target Reached (+${targetGap})` : `Gap: ${targetGap} Band`}
-          </p>
+          {targetBand === null ? (
+            <>
+              <p className="text-3xl font-black text-muted-foreground mt-1">—</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                No personal target is configured.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-3xl font-black text-foreground mt-1">
+                {targetBand.toFixed(1)}{" "}
+                <span className="text-xs font-semibold text-muted-foreground">Band</span>
+              </p>
+              <p
+                className={`text-[11px] font-semibold mt-1 ${Number(targetGap) >= 0 ? "text-success" : "text-warning"}`}
+              >
+                {Number(targetGap) >= 0
+                  ? `Target Reached (+${targetGap})`
+                  : `Gap: ${targetGap} Band`}
+              </p>
+            </>
+          )}
         </div>
 
         <div className="rounded-xl border border-border bg-surface-2/40 p-5">

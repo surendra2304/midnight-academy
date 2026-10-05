@@ -1,4 +1,4 @@
-﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -382,6 +382,7 @@ export type Database = {
           corrections: Json;
           evaluated_at: string;
           id: string;
+          improved_response: string;
           issues: string[];
           model_id: string;
           next_actions: string[];
@@ -400,6 +401,7 @@ export type Database = {
           corrections?: Json;
           evaluated_at?: string;
           id?: string;
+          improved_response?: string;
           issues?: string[];
           model_id?: string;
           next_actions?: string[];
@@ -418,6 +420,7 @@ export type Database = {
           corrections?: Json;
           evaluated_at?: string;
           id?: string;
+          improved_response?: string;
           issues?: string[];
           model_id?: string;
           next_actions?: string[];
@@ -839,51 +842,51 @@ export type Database = {
       score_reports: {
         Row: {
           attempt_id: string;
-          comparable_score: number;
+          comparable_score: number | null;
           generated_at: string;
           id: string;
-          listening_band: number;
-          overall_band: number;
-          reading_band: number;
+          listening_band: number | null;
+          overall_band: number | null;
+          reading_band: number | null;
           skill_breakdown: Json;
-          speaking_band: number;
+          speaking_band: number | null;
           student_id: string;
           summary: string | null;
           target_gap: number | null;
           target_score: number | null;
-          writing_band: number;
+          writing_band: number | null;
         };
         Insert: {
           attempt_id: string;
-          comparable_score?: number;
+          comparable_score?: number | null;
           generated_at?: string;
           id?: string;
-          listening_band?: number;
-          overall_band?: number;
-          reading_band?: number;
+          listening_band?: number | null;
+          overall_band?: number | null;
+          reading_band?: number | null;
           skill_breakdown?: Json;
-          speaking_band?: number;
+          speaking_band?: number | null;
           student_id: string;
           summary?: string | null;
           target_gap?: number | null;
           target_score?: number | null;
-          writing_band?: number;
+          writing_band?: number | null;
         };
         Update: {
           attempt_id?: string;
-          comparable_score?: number;
+          comparable_score?: number | null;
           generated_at?: string;
           id?: string;
-          listening_band?: number;
-          overall_band?: number;
-          reading_band?: number;
+          listening_band?: number | null;
+          overall_band?: number | null;
+          reading_band?: number | null;
           skill_breakdown?: Json;
-          speaking_band?: number;
+          speaking_band?: number | null;
           student_id?: string;
           summary?: string | null;
           target_gap?: number | null;
           target_score?: number | null;
-          writing_band?: number;
+          writing_band?: number | null;
         };
         Relationships: [
           {
