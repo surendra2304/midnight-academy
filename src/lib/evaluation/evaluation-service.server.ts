@@ -2,6 +2,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { chatJson } from "@/lib/ai.server";
 import type { ToeflItemType } from "@/types/toefl";
+import { analyzeSubstantiveText } from "./rubric-guards";
 
 export function traitsToBand(traits: Record<string, number>): {
   scoreBand: number;
@@ -115,6 +116,40 @@ function buildDeterministicWritingEvaluation(
   let relevantHits = 0;
   for (const w of uniqueWords) {
     if (promptSet.has(w)) relevantHits++;
+  }
+
+  // Anti-gaming guard: a submission that neither reads as connected English
+  // prose nor touches the prompt cannot earn rubric credit from surface
+  // features (length, rare vocabulary). This closes the "word salad scores a
+  // 5" hole in the fallback evaluator.
+  const substance = analyzeSubstantiveText(text, 12);
+  if (!substance.hasMinimumLength || (!substance.looksCoherent && relevantHits < 2)) {
+    const modelAns =
+      request.referenceModelAnswer ||
+      (request.contextData?.["modelAnswer"] as string | undefined) ||
+      (request.contextData?.["sampleAnswer"] as string | undefined) ||
+      "";
+    return {
+      score_band: 1,
+      task_score: 0,
+      traits: { task_fulfillment: 1, organization: 1, language_use: 1 },
+      strengths: [],
+      issues: [
+        substance.hasMinimumLength
+          ? "The submission does not read as connected, on-topic prose, so no rubric credit could be awarded."
+          : `Response length (${substance.wordCount} words) is too short to develop the task; the rubric minimum band applies.`,
+      ],
+      corrections: [],
+      improved_response: modelAns,
+      next_actions: [
+        isEmail
+          ? "Write at least 80 words covering all three bulleted requirements in complete sentences."
+          : "Write at least 100 words that express and support an opinion in complete sentences.",
+      ],
+      confidence: 0.4,
+      rubric_version: request.rubricVersion ?? "2026.1",
+      model: "midnight-rule-based-writing-v1",
+    };
   }
 
   // Trait calculation (1.0 - 6.0)
@@ -232,8 +267,9 @@ function buildDeterministicWritingEvaluation(
 export class EvaluationService {
   async evaluateWriting(request: EvaluationRequest): Promise<StructuredEvaluationResult> {
     const text = request.studentResponse.trim();
-
-    if (!text) {
+    // Route placeholders ("{}", "[]") and near-empty submissions through the
+    // zero-credit path before any AI call is attempted.
+    if (!text || analyzeSubstantiveText(text, 1).wordCount === 0) {
       return {
         score_band: 1,
         task_score: 0,

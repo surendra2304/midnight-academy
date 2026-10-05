@@ -59,7 +59,9 @@ export class ReadingScoringService {
       const selectedKey = trimmed.toUpperCase();
       const correctOpt = rule.options.find((o) => o.isCorrect);
       const selectedOpt = rule.options.find(
-        (o) => o.optionKey.toUpperCase() === selectedKey || o.optionText.trim() === trimmed,
+        (o) =>
+          o.optionKey.toUpperCase() === selectedKey ||
+          o.optionText.trim().toLowerCase() === trimmed.toLowerCase(),
       );
 
       if (!correctOpt) {
