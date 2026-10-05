@@ -6,6 +6,15 @@ import {
   type ItemResponseState,
 } from "./session-state";
 import type { ToeflExamMode, ToeflSectionType } from "@/types/toefl";
+import type { JsonRecord } from "@/types/serializable";
+import type { SessionStateStatus } from "./session-state";
+
+/**
+ * An attempt whose evaluation never completed (crash, restart, abandoned tab) is
+ * considered stale after this window and may be claimed again by finalize/retry.
+ * A `pending` evaluation younger than this is treated as an active concurrent run.
+ */
+export const PENDING_EVALUATION_STALE_MS = 10 * 60 * 1000;
 
 export interface StartAttemptOptions {
   testVersionId: string;
@@ -187,10 +196,12 @@ export class AttemptSessionService {
       derivedSectionFilter,
     );
 
-    const activeIndex = Math.max(
-      0,
-      attemptSections.findIndex((section) => section.status === "in_progress"),
+    const inProgressIndex = attemptSections.findIndex(
+      (section) => section.status === "in_progress",
     );
+    const allSectionsCompleted = attemptSections.every((section) => section.status === "completed");
+    const activeIndex =
+      inProgressIndex >= 0 ? inProgressIndex : Math.max(0, attemptSections.length - 1);
 
     const currentAttemptSection = attemptSections[activeIndex];
     const currentBlueprintSection = blueprint.sections[activeIndex];
@@ -214,7 +225,8 @@ export class AttemptSessionService {
     for (const response of dbResponses ?? []) {
       responses[response.content_item_id] = {
         rawAnswer: response.raw_answer,
-        normalizedAnswer: (response.normalized_answer as Record<string, unknown>) ?? {},
+        normalizedAnswer:
+          (response.normalized_answer as Record<string, unknown> as JsonRecord) ?? {},
         isAnswered: Boolean(response.raw_answer?.trim()),
         isFlagged: Boolean(response.flagged),
         timeSpentMs: response.time_spent_ms ?? 0,
@@ -228,22 +240,39 @@ export class AttemptSessionService {
       currentBlueprintSection.isTimed,
     );
 
+    // Authoritative client-facing status. An attempt that has been submitted but not
+    // yet scored must never resume as an editable "in_progress" runner, and an attempt
+    // whose sections are all completed while still open resumes as "finalized" so the
+    // client can finish the submission instead of re-opening a dead section.
+    let status: SessionStateStatus;
+    let isSectionLocked = false;
+    if (attempt.status === "evaluated") {
+      status = "completed";
+      isSectionLocked = true;
+    } else if (attempt.status === "evaluating") {
+      status = "scoring";
+      isSectionLocked = true;
+    } else if (allSectionsCompleted) {
+      status = "finalized";
+      isSectionLocked = true;
+    } else if (timing.isExpired) {
+      status = "section_transition";
+      isSectionLocked = true;
+    } else {
+      status = "in_progress";
+    }
+
     return {
       blueprint,
       snapshot: {
         attemptId: attempt.id,
-        status:
-          attempt.status === "evaluated"
-            ? "completed"
-            : timing.isExpired
-              ? "section_transition"
-              : "in_progress",
+        status,
         examMode: attempt.exam_mode as ToeflExamMode,
         currentSectionIndex: activeIndex,
         currentItemIndex: 0,
         sectionStartedAt: currentAttemptSection.started_at,
-        sectionRemainingSeconds: timing.remainingSeconds,
-        isSectionLocked: timing.isExpired || attempt.status === "evaluated",
+        sectionRemainingSeconds: status === "in_progress" ? timing.remainingSeconds : 0,
+        isSectionLocked,
         responses,
       } satisfies SessionSnapshot,
     };
@@ -375,7 +404,7 @@ export class AttemptSessionService {
 
     const { data: rawSections, error: secErr } = await supabaseAdmin
       .from("attempt_sections")
-      .select("id, status, section_id, sections(id, section_order)")
+      .select("id, status, section_id, started_at, sections(id, section_order)")
       .eq("attempt_id", attemptId);
 
     if (secErr || !rawSections || rawSections.length === 0) {
@@ -388,6 +417,16 @@ export class AttemptSessionService {
       return orderA - orderB;
     });
 
+    const authoritative = (): { nextSectionIndex: number; isFinalized: boolean } => {
+      const activeIdx = sortedSections.findIndex((s) => s.status === "in_progress");
+      if (activeIdx >= 0) return { nextSectionIndex: activeIdx, isFinalized: false };
+      const completedCount = sortedSections.filter((s) => s.status === "completed").length;
+      return {
+        nextSectionIndex: completedCount,
+        isFinalized: completedCount >= sortedSections.length,
+      };
+    };
+
     if (currentSectionIndex < 0 || currentSectionIndex >= sortedSections.length) {
       throw new Error(`Invalid section index: ${currentSectionIndex}`);
     }
@@ -396,26 +435,40 @@ export class AttemptSessionService {
     if (!currentSec) {
       throw new Error(`Current section not found at index ${currentSectionIndex}`);
     }
-    await supabaseAdmin
+
+    // Only the section the server considers active may be advanced. A duplicate or
+    // replayed call (double click, retry after network error, scripted skip) returns
+    // the authoritative server position instead of completing/starting another
+    // section — critically, it never re-stamps `started_at`, which used to hand the
+    // student a freshly reset countdown for every replayed request.
+    if (currentSec.status !== "in_progress") {
+      return authoritative();
+    }
+
+    const { data: completedRows, error: completeErr } = await supabaseAdmin
       .from("attempt_sections")
       .update({
         status: "completed",
         completed_at: new Date().toISOString(),
       })
-      .eq("id", currentSec.id);
+      .eq("id", currentSec.id)
+      .eq("status", "in_progress")
+      .select("id");
+
+    if (completeErr) {
+      throw new Error(`Failed to complete section: ${completeErr.message}`);
+    }
+    if (!completedRows || completedRows.length === 0) {
+      // Lost a concurrent race against another advance for the same section.
+      return authoritative();
+    }
 
     const nextSectionIndex = currentSectionIndex + 1;
 
     if (nextSectionIndex >= sortedSections.length) {
-      await supabaseAdmin
-        .from("attempts")
-        .update({
-          status: "evaluating",
-          evaluation_status: "pending",
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", attemptId);
-
+      // Advancing past the final section does NOT submit the attempt. Finalization
+      // (status transition + evaluation) belongs exclusively to finalizeAttempt so
+      // there is exactly one path that can mark an attempt as evaluating.
       return { nextSectionIndex, isFinalized: true };
     }
 
@@ -423,13 +476,18 @@ export class AttemptSessionService {
     if (!nextSec) {
       throw new Error(`Next section not found at index ${nextSectionIndex}`);
     }
-    await supabaseAdmin
-      .from("attempt_sections")
-      .update({
-        status: "in_progress",
-        started_at: new Date().toISOString(),
-      })
-      .eq("id", nextSec.id);
+    if (nextSec.status === "not_started") {
+      // Conditional start: an already-running next section keeps its original
+      // started_at, so a replayed advance can never extend the exam clock.
+      await supabaseAdmin
+        .from("attempt_sections")
+        .update({
+          status: "in_progress",
+          started_at: new Date().toISOString(),
+        })
+        .eq("id", nextSec.id)
+        .eq("status", "not_started");
+    }
 
     return { nextSectionIndex, isFinalized: false };
   }
@@ -452,7 +510,11 @@ export class AttemptSessionService {
       throw new Error(`Attempt cannot be finalized from status '${attempt.status}'.`);
     }
 
-    const { error: updateErr } = await supabaseAdmin
+    // Claim the submission transition atomically (compare-and-swap on status).
+    // Without this, two concurrent "Submit" requests could both pass the status
+    // check above and run the whole evaluation pipeline twice for one attempt
+    // (duplicate AI spend, duplicated/contended score rows).
+    const { data: claimedRows, error: updateErr } = await supabaseAdmin
       .from("attempts")
       .update({
         status: "evaluating",
@@ -461,12 +523,51 @@ export class AttemptSessionService {
       })
       .eq("id", attemptId)
       .eq("student_id", studentId)
-      .eq("status", "in_progress");
+      .eq("status", "in_progress")
+      .select("id");
 
     if (updateErr) {
       throw new Error(`Failed to finalize attempt: ${updateErr.message}`);
     }
 
+    if (!claimedRows || claimedRows.length === 0) {
+      // Someone (or a previous request) already owns this attempt's submission.
+      const { data: fresh, error: freshErr } = await supabaseAdmin
+        .from("attempts")
+        .select("status, evaluation_status, completed_at")
+        .eq("id", attemptId)
+        .maybeSingle();
+      if (freshErr) throw new Error(`Failed to load attempt: ${freshErr.message}`);
+      if (!fresh) throw new Error("Attempt not found.");
+      if (fresh.status === "evaluated") {
+        return { attemptId, status: "evaluated" as const };
+      }
+      const pendingIsStale =
+        fresh.evaluation_status === "pending" &&
+        (fresh.completed_at == null ||
+          Date.now() - new Date(fresh.completed_at).getTime() > PENDING_EVALUATION_STALE_MS);
+      const recoverable =
+        fresh.evaluation_status === "failed" ||
+        fresh.evaluation_status === "not_started" ||
+        pendingIsStale;
+      if (!recoverable) {
+        throw new Error("Evaluation is already in progress for this attempt.");
+      }
+      return this.runEvaluationClaimed(attemptId, studentId);
+    }
+
+    return this.runEvaluationClaimed(attemptId, studentId);
+  }
+
+  /**
+   * Executes the evaluation pipeline for an attempt whose submission status has
+   * already been claimed. On failure the attempt is released back to a retryable
+   * `failed` state instead of silently inventing scores.
+   */
+  private async runEvaluationClaimed(
+    attemptId: string,
+    studentId: string,
+  ): Promise<{ attemptId: string; status: "evaluated" }> {
     try {
       const { mockEvaluationPipelineService } = await import("../evaluation/mock-pipeline.server");
       await mockEvaluationPipelineService.processAttemptEvaluation(attemptId);
@@ -488,7 +589,7 @@ export class AttemptSessionService {
   async retryEvaluation(attemptId: string, studentId: string) {
     const { data: attempt, error: attemptErr } = await supabaseAdmin
       .from("attempts")
-      .select("id, student_id, status, evaluation_status")
+      .select("id, student_id, status, evaluation_status, completed_at")
       .eq("id", attemptId)
       .maybeSingle();
 
@@ -500,31 +601,49 @@ export class AttemptSessionService {
       return { attemptId, status: "evaluated" as const };
     }
 
-    await supabaseAdmin
+    // Retry is for a *previous* failed/not-started evaluation. While an evaluation is
+    // legitimately running, hammering retry must not launch a second concurrent
+    // pipeline for the same attempt.
+    const pendingIsStale =
+      attempt.evaluation_status === "pending" &&
+      (attempt.completed_at == null ||
+        Date.now() - new Date(attempt.completed_at).getTime() > PENDING_EVALUATION_STALE_MS);
+
+    if (attempt.evaluation_status === "pending" && !pendingIsStale) {
+      return { attemptId, status: "evaluating" as const };
+    }
+
+    if (
+      attempt.evaluation_status !== "failed" &&
+      attempt.evaluation_status !== "not_started" &&
+      !pendingIsStale
+    ) {
+      throw new Error(
+        `Evaluation cannot be retried from status '${attempt.evaluation_status ?? "unknown"}'.`,
+      );
+    }
+
+    if (attempt.status !== "evaluating" && attempt.status !== "in_progress") {
+      throw new Error(`Attempt cannot be retried from status '${attempt.status}'.`);
+    }
+
+    const { data: claimRows } = await supabaseAdmin
       .from("attempts")
       .update({
         status: "evaluating",
         evaluation_status: "pending",
+        completed_at: attempt.completed_at ?? new Date().toISOString(),
       })
       .eq("id", attemptId)
-      .eq("student_id", studentId);
+      .eq("student_id", studentId)
+      .eq("evaluation_status", attempt.evaluation_status ?? "not_started")
+      .select("id");
 
-    try {
-      const { mockEvaluationPipelineService } = await import("../evaluation/mock-pipeline.server");
-      await mockEvaluationPipelineService.processAttemptEvaluation(attemptId);
-      return { attemptId, status: "evaluated" as const };
-    } catch (error) {
-      await supabaseAdmin
-        .from("attempts")
-        .update({
-          evaluation_status: "failed",
-        })
-        .eq("id", attemptId)
-        .eq("student_id", studentId);
-
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Evaluation retry failed: ${message}`);
+    if (!claimRows || claimRows.length === 0) {
+      return { attemptId, status: "evaluating" as const };
     }
+
+    return this.runEvaluationClaimed(attemptId, studentId);
   }
 }
 

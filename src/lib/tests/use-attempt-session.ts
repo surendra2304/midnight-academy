@@ -10,6 +10,7 @@ import {
   type ClientTestBlueprint,
   type SessionEvent,
 } from "./session-state";
+import type { JsonRecord } from "@/types/serializable";
 import { saveToeflResponse, advanceToeflSection, finalizeToeflAttempt } from "./engine.functions";
 
 export interface UseAttemptSessionProps {
@@ -26,6 +27,12 @@ export function useAttemptSession({
   const [blueprint] = useState<ClientTestBlueprint>(initialBlueprint);
   const [state, setState] = useState<SessionSnapshot>(initialSnapshot);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Guarantees the server is told about a finalization exactly once, whether the
+  // student clicked "Submit Exam" or the countdown expired on the final section.
+  const finalizedSyncRef = useRef(
+    initialSnapshot.status === "scoring" || initialSnapshot.status === "completed",
+  );
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -68,7 +75,7 @@ export function useAttemptSession({
     attemptId: string;
     contentItemId: string;
     rawAnswer: string;
-    normalizedAnswer?: Record<string, unknown> | undefined;
+    normalizedAnswer?: JsonRecord | undefined;
   } | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -99,9 +106,33 @@ export function useAttemptSession({
     };
   }, []);
 
+  // 1b. Server sync for timer-driven finalization. When the final section's
+  // countdown expires, the reducer marks the session "finalized" locally only;
+  // without this effect the attempt would stay `in_progress` in the database
+  // forever and the evaluation would never start.
+  useEffect(() => {
+    if (state.status !== "finalized") return;
+    if (finalizedSyncRef.current) return;
+    finalizedSyncRef.current = true;
+
+    void (async () => {
+      try {
+        await flushPendingSave();
+        await finalizeToeflAttempt({ data: { attemptId: stateRef.current.attemptId } });
+        if (onFinalized) {
+          onFinalized(stateRef.current.attemptId);
+        }
+      } catch (err) {
+        console.error("Failed to sync finalization with server:", err);
+        // Allow an explicit re-submit through handleFinalize to recover.
+        finalizedSyncRef.current = false;
+      }
+    })();
+  }, [state.status, flushPendingSave, onFinalized]);
+
   // 2. Action: Select / Save Answer for Current Item
   const handleAnswerChange = useCallback(
-    (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => {
+    (rawAnswer: string, normalizedAnswer?: JsonRecord) => {
       const currentSec = blueprint.sections[stateRef.current.currentSectionIndex];
       const currentItem = currentSec?.items[stateRef.current.currentItemIndex];
       if (!currentItem) return;
@@ -177,16 +208,30 @@ export function useAttemptSession({
         },
       });
 
-      if (res.nextSectionIndex !== nextSecIndex && !res.isFinalized) {
-        dispatch({
-          type: "ADVANCE_SECTION",
-          nextSectionIndex: res.nextSectionIndex,
-          timestamp: nowIso,
-        });
+      if (res.isFinalized) {
+        // Advancing past the final section never submits by itself: route through
+        // the single finalize path so the evaluation pipeline actually starts.
+        finalizedSyncRef.current = true;
+        await finalizeToeflAttempt({ data: { attemptId: stateRef.current.attemptId } });
+        if (onFinalized) {
+          onFinalized(stateRef.current.attemptId);
+        }
+        return;
       }
 
-      if (res.isFinalized && onFinalized) {
-        onFinalized(stateRef.current.attemptId);
+      if (res.nextSectionIndex !== nextSecIndex) {
+        // Reconcile with the server's authoritative section when a replay or
+        // race moved the attempt differently than the optimistic transition.
+        try {
+          dispatch({
+            type: "ADVANCE_SECTION",
+            nextSectionIndex: res.nextSectionIndex,
+            timestamp: nowIso,
+          });
+        } catch {
+          // Client is already ahead of the server's view; the reducer guards
+          // backward navigation, so nothing further is safe to do here.
+        }
       }
     } catch (err) {
       console.error("Failed to advance section on server:", err);
@@ -196,6 +241,7 @@ export function useAttemptSession({
   // 6. Action: Finalize Attempt
   const handleFinalize = useCallback(async () => {
     const nowIso = new Date().toISOString();
+    finalizedSyncRef.current = true;
     dispatch({ type: "FINALIZE", timestamp: nowIso });
 
     try {

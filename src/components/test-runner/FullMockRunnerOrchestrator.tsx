@@ -69,7 +69,9 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
   const [showSaveExitModal, setShowSaveExitModal] = useState(false);
   const [showEarlySubmitModal, setShowEarlySubmitModal] = useState(false);
   const [isFinalizingAI, setIsFinalizingAI] = useState(false);
-  const [isTestEnded, setIsTestEnded] = useState(state.status === "completed");
+  const [isTestEnded, setIsTestEnded] = useState(
+    state.status === "completed" || state.status === "scoring",
+  );
 
   const handleEarlySubmit = async () => {
     try {
@@ -358,9 +360,10 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
             </div>
 
             <p className="text-xs leading-relaxed text-slate-600">
-              Please make sure your headset is on. Follow the instructions on each screen. Be sure that
-              your microphone is properly positioned and adjusted to allow for the best possible
-              recording. Speak directly into the microphone and in your normal speaking voice.
+              Please make sure your headset is on. Follow the instructions on each screen. Be sure
+              that your microphone is properly positioned and adjusted to allow for the best
+              possible recording. Speak directly into the microphone and in your normal speaking
+              voice.
             </p>
 
             {/* Diagnostic Controls */}
@@ -406,7 +409,11 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
                     onClick={handleTestMic}
                     className="text-xs"
                   >
-                    {isTestingMic ? "Testing Mic..." : micCheckPassed ? "Mic Verified ✓" : "Test Live Mic"}
+                    {isTestingMic
+                      ? "Testing Mic..."
+                      : micCheckPassed
+                        ? "Mic Verified ✓"
+                        : "Test Live Mic"}
                   </Button>
                 </div>
               </div>
@@ -416,7 +423,11 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
                 <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
                     <span>Microphone Input Level:</span>
-                    <span className={micVolumeLevel > 10 ? "text-emerald-600 font-bold" : "text-slate-400"}>
+                    <span
+                      className={
+                        micVolumeLevel > 10 ? "text-emerald-600 font-bold" : "text-slate-400"
+                      }
+                    >
                       {micVolumeLevel > 10 ? "Sound Detected" : "Speak to test..."}
                     </span>
                   </div>
@@ -729,7 +740,7 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
               </>
             )}
           </button>
-          
+
           {/* Submit Early Dev Button */}
           <button
             type="button"
@@ -940,7 +951,8 @@ export function FullMockRunnerOrchestrator(props: UseAttemptSessionProps) {
           </div>
           <h3 className="text-lg font-bold text-white">Running Gemini AI Evaluation...</h3>
           <p className="text-xs text-slate-300 mt-2 max-w-sm text-center leading-relaxed">
-            Please wait while Gemini evaluates your rubric traits and generates your official score report.
+            Please wait while Gemini evaluates your rubric traits and generates your official score
+            report.
           </p>
         </div>
       )}
