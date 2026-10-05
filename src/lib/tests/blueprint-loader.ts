@@ -3,6 +3,7 @@
  * Never substitutes a synthetic production blueprint.
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sanitizeStudentPayload } from "./blueprint-sanitizer";
 import type {
   ClientTestBlueprint,
   ClientSectionBlueprint,
@@ -120,7 +121,7 @@ export async function loadTestBlueprint(
         itemType: item.item_type as ToeflItemType,
         difficulty: item.difficulty,
         skillTags: item.skill_tags ?? [],
-        payload: (item.payload as Record<string, unknown>) ?? {},
+        payload: sanitizeStudentPayload(item.payload),
         options: (optionsByItem.get(item.id) ?? []).map((option) => ({
           id: option.id,
           optionKey: option.option_key,

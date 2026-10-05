@@ -1,7 +1,7 @@
-// Client-side Supabase client with automatic fallback to the pre-seeded Local Supabase Engine.
+// Client-side Supabase client. Production requires explicit Supabase configuration.
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
-import { createLocalSupabaseClient } from "./local-db";
+import { createLocalSupabaseClient } from "./local-supabase-stub";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -38,7 +38,12 @@ function createSupabaseClient() {
     (typeof process !== "undefined" ? process.env?.["SUPABASE_PUBLISHABLE_KEY"] : undefined);
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    return createLocalSupabaseClient() as ReturnType<typeof createClient<Database>>;
+    if (import.meta.env.PROD) {
+      throw new Error(
+        "Missing Supabase configuration. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.",
+      );
+    }
+    return createLocalSupabaseClient() as unknown as ReturnType<typeof createClient<Database>>;
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {

@@ -12,11 +12,11 @@ export const Route = createFileRoute("/result/$attemptId")({
   beforeLoad: ({ location }) => requireAuth({ location }),
   head: () => ({
     meta: [
-      { title: "Standardized Score Report — Midnight Academy" },
+      { title: "TOEFL Practice Score Report | Midnight Academy" },
       {
         name: "description",
         content:
-          "Detailed official band scores, diagnostic item review, and personalized recommendations.",
+          "Review your TOEFL practice estimates, response feedback, explanations, and next-step recommendations.",
       },
     ],
   }),

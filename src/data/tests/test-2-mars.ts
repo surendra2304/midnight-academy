@@ -111,7 +111,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
     subject: "Fall Semester Textbook Return Policy",
     dateLabel: "September 2",
     stimulusText: BOOKSTORE_NOTICE_STIMULUS,
-    questionStem: "Within what time period must students return a textbook to receive a full refund?",
+    questionStem:
+      "Within what time period must students return a textbook to receive a full refund?",
     options: [
       "Within 7 days of purchasing the book",
       "Within 14 calendar days of the first day of classes",
@@ -119,7 +120,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
       "During Finals Week at the end of the semester",
     ],
     correctOptionId: "B",
-    explanation: "The notice states: 'Students who wish to return or exchange textbooks purchased for the Fall semester must do so within 14 calendar days of the first day of classes' (B).",
+    explanation:
+      "The notice states: 'Students who wish to return or exchange textbooks purchased for the Fall semester must do so within 14 calendar days of the first day of classes' (B).",
   }),
   buildDailyLifeItem({
     id: nextId(),
@@ -141,7 +143,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
       "A shrink-wrapped bundle that has been opened or a scratched-off digital access code",
     ],
     correctOptionId: "D",
-    explanation: "The third bullet point specifies: 'Shrink-wrapped bundles and digital access codes cannot be returned once opened or scratched off' (D).",
+    explanation:
+      "The third bullet point specifies: 'Shrink-wrapped bundles and digital access codes cannot be returned once opened or scratched off' (D).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -151,7 +154,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
     title: "Urban Heat Islands and Green Infrastructure (Q23)",
     stimulusText: URBAN_HEAT_ISLANDS_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 2, why do dark asphalt roads and rooftops contribute to the urban heat island effect?",
+    questionStem:
+      "According to paragraph 2, why do dark asphalt roads and rooftops contribute to the urban heat island effect?",
     options: [
       "They have a low albedo and high thermal heat capacity, absorbing solar radiation and releasing heat slowly after sunset.",
       "They reflect most incoming sunlight directly into upper atmospheric clouds.",
@@ -159,7 +163,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
       "They prevent vehicles from emitting exhaust heat.",
     ],
     correctOptionId: "A",
-    explanation: "Paragraph 2 explains that dark, impermeable surfaces have a low albedo (absorbing solar radiation) and high thermal heat capacity (storing heat and releasing it after sunset) (A).",
+    explanation:
+      "Paragraph 2 explains that dark, impermeable surfaces have a low albedo (absorbing solar radiation) and high thermal heat capacity (storing heat and releasing it after sunset) (A).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -169,7 +174,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
     title: "Urban Heat Islands and Green Infrastructure (Q24)",
     stimulusText: URBAN_HEAT_ISLANDS_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 2, how does replacing vegetation with buildings affect natural cooling?",
+    questionStem:
+      "According to paragraph 2, how does replacing vegetation with buildings affect natural cooling?",
     options: [
       "It increases night-time wind speeds across city streets.",
       "It raises the albedo of downtown sidewalks.",
@@ -177,7 +183,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
       "It drastically reduces evapotranspiration, the process by which plants release cooling water vapor.",
     ],
     correctOptionId: "D",
-    explanation: "Paragraph 2 states that replacing trees and grasslands with buildings 'drastically reduces evapotranspiration—the natural cooling process by which plants release water vapor through their leaves' (D).",
+    explanation:
+      "Paragraph 2 states that replacing trees and grasslands with buildings 'drastically reduces evapotranspiration—the natural cooling process by which plants release water vapor through their leaves' (D).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -187,7 +194,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
     title: "Urban Heat Islands and Green Infrastructure (Q25)",
     stimulusText: URBAN_HEAT_ISLANDS_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 3, what is one documented benefit of expanding urban tree cover by twenty percent?",
+    questionStem:
+      "According to paragraph 3, what is one documented benefit of expanding urban tree cover by twenty percent?",
     options: [
       "Eliminating the need for stormwater drainage systems entirely",
       "Lowering rural temperatures by ten degrees Celsius",
@@ -195,7 +203,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
       "Doubling the lifespan of asphalt roadways",
     ],
     correctOptionId: "C",
-    explanation: "Paragraph 3 states: 'expanding urban tree cover by just twenty percent can reduce neighborhood cooling energy demand by up to fifteen percent' (C).",
+    explanation:
+      "Paragraph 3 states: 'expanding urban tree cover by just twenty percent can reduce neighborhood cooling energy demand by up to fifteen percent' (C).",
   }),
 
   // =========================================================================
@@ -230,7 +239,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
     title: "Ancient Mesopotamian Trade Networks (M2 Q11)",
     stimulusText: MESOPOTAMIAN_TRADE_PASSAGE,
     questionSubType: "factual",
-    questionStem: "Why did ancient Mesopotamian city-states need to establish extensive long-distance trade networks?",
+    questionStem:
+      "Why did ancient Mesopotamian city-states need to establish extensive long-distance trade networks?",
     options: [
       "The region lacked essential raw materials such as timber, building stone, copper, and tin.",
       "The Tigris and Euphrates rivers were too shallow for agriculture.",
@@ -238,7 +248,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
       "Local laws prohibited mining within city boundaries.",
     ],
     correctOptionId: "A",
-    explanation: "Paragraph 1 states that Mesopotamia 'was remarkably scarce in essential raw materials such as timber, building stone, copper, tin, and precious gems' (A).",
+    explanation:
+      "Paragraph 1 states that Mesopotamia 'was remarkably scarce in essential raw materials such as timber, building stone, copper, tin, and precious gems' (A).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -256,7 +267,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
       "Porcelain vessels and silk fabrics",
     ],
     correctOptionId: "C",
-    explanation: "Paragraph 2 identifies 'Bulk commodities such as grain, dried fish, and woven woolen textiles—Mesopotamia's primary exports' (C).",
+    explanation:
+      "Paragraph 2 identifies 'Bulk commodities such as grain, dried fish, and woven woolen textiles—Mesopotamia's primary exports' (C).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -266,7 +278,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
     title: "Ancient Mesopotamian Trade Networks (M2 Lower Q1)",
     stimulusText: MESOPOTAMIAN_TRADE_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 3, what tools did Mesopotamian merchants use to record contracts and verify cargo?",
+    questionStem:
+      "According to paragraph 3, what tools did Mesopotamian merchants use to record contracts and verify cargo?",
     options: [
       "Papyrus scrolls and wax stamps",
       "Cuneiform clay tablets, cylinder seals, and standardized weights",
@@ -274,7 +287,8 @@ export const MARS_ITEMS: SeedQuestionItemRow[] = [
       "Carved wooden tallies",
     ],
     correctOptionId: "B",
-    explanation: "Paragraph 3 states that merchants utilized 'cuneiform clay tablets, cylinder seals, and standardized weights based on the talent and shekel' (B).",
+    explanation:
+      "Paragraph 3 states that merchants utilized 'cuneiform clay tablets, cylinder seals, and standardized weights based on the talent and shekel' (B).",
   }),
 
   // =========================================================================
@@ -300,7 +314,8 @@ Man: No way! You can't keep us away. Let's get there early so we can get a good 
       "A textbook sale and career panel",
     ],
     correctOptionId: "B",
-    explanation: "The speakers specifically mention that there will be food trucks and a dance floor starting at 3:00 p.m. (B).",
+    explanation:
+      "The speakers specifically mention that there will be food trucks and a dance floor starting at 3:00 p.m. (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -312,7 +327,8 @@ Man: No way! You can't keep us away. Let's get there early so we can get a good 
     transcript: `Narrator: Listen to an announcement in a classroom.
 Professor: I want to remind you all that we will have a paper due every Friday. The paper should be a response to the week's reading and should be at least two pages long. Papers should be uploaded to the class portal on Fridays by 5:00 p.m. I will grade them and send you feedback by the end of the weekend. Late papers will be marked down by one letter grade each day unless you speak with me ahead of time and receive an extension.`,
     campusContext: "University Seminar",
-    questionStem: "What is the penalty for submitting a weekly response paper late without a prior extension?",
+    questionStem:
+      "What is the penalty for submitting a weekly response paper late without a prior extension?",
     options: [
       "The paper receives an automatic zero.",
       "The student must write an extra five-page essay.",
@@ -320,7 +336,8 @@ Professor: I want to remind you all that we will have a paper due every Friday. 
       "The student is dropped from the course portal.",
     ],
     correctOptionId: "C",
-    explanation: "The professor states: 'Late papers will be marked down by one letter grade each day unless you speak with me ahead of time and receive an extension' (C).",
+    explanation:
+      "The professor states: 'Late papers will be marked down by one letter grade each day unless you speak with me ahead of time and receive an extension' (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -340,7 +357,8 @@ Announcer: Attention students. We apologize for the inconvenience caused by the 
       "Attend a mandatory orientation on Saturday morning",
     ],
     correctOptionId: "B",
-    explanation: "The announcer instructs students: 'Please resubmit your applications through the updated portal and phone the career center if you encounter any further issues' (B).",
+    explanation:
+      "The announcer instructs students: 'Please resubmit your applications through the updated portal and phone the career center if you encounter any further issues' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -360,7 +378,8 @@ Professor: Good afternoon, students. I'm sorry for the confusion regarding the d
       "They have to take an additional midterm exam on Wednesday.",
     ],
     correctOptionId: "C",
-    explanation: "The professor says: 'On the other hand, this means you have some extra time to complete your assignments' (C).",
+    explanation:
+      "The professor says: 'On the other hand, this means you have some extra time to complete your assignments' (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -371,7 +390,8 @@ Professor: Good afternoon, students. I'm sorry for the confusion regarding the d
     title: "Psychology Podcast — Confirmation Bias (Q5)",
     transcript: CONFIRMATION_BIAS_TRANSCRIPT,
     academicDomain: "Cognitive Psychology",
-    questionStem: "Why does the speaker tell the story about his brother Alex reading the pet article?",
+    questionStem:
+      "Why does the speaker tell the story about his brother Alex reading the pet article?",
     options: [
       "To prove that cats are objectively better pets than dogs",
       "To illustrate how confirmation bias causes people to focus only on information that supports their existing beliefs",
@@ -379,7 +399,8 @@ Professor: Good afternoon, students. I'm sorry for the confusion regarding the d
       "To explain why his brother decided not to adopt a pet",
     ],
     correctOptionId: "B",
-    explanation: "Alex read a balanced article about dogs and cats but focused only on the parts praising cats and dismissed the parts praising dogs—a classic example of confirmation bias (B).",
+    explanation:
+      "Alex read a balanced article about dogs and cats but focused only on the parts praising cats and dismissed the parts praising dogs—a classic example of confirmation bias (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -390,7 +411,8 @@ Professor: Good afternoon, students. I'm sorry for the confusion regarding the d
     title: "Psychology Podcast — Confirmation Bias (Q6)",
     transcript: CONFIRMATION_BIAS_TRANSCRIPT,
     academicDomain: "Cognitive Psychology",
-    questionStem: "According to the speaker, what is one strategy for minimizing confirmation bias?",
+    questionStem:
+      "According to the speaker, what is one strategy for minimizing confirmation bias?",
     options: [
       "Making decisions as quickly as possible based on intuition",
       "Discussing topics only with people who share your opinions",
@@ -398,7 +420,8 @@ Professor: Good afternoon, students. I'm sorry for the confusion regarding the d
       "Avoiding scientific articles altogether",
     ],
     correctOptionId: "C",
-    explanation: "The speaker advises: 'The first step is to recognize the existence of confirmation bias... Then actively seek out information that challenges your beliefs' (C).",
+    explanation:
+      "The speaker advises: 'The first step is to recognize the existence of confirmation bias... Then actively seek out information that challenges your beliefs' (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -409,7 +432,8 @@ Professor: Good afternoon, students. I'm sorry for the confusion regarding the d
     title: "Literature Class — Joseph Campbell's Hero's Journey (Q7)",
     transcript: HEROS_JOURNEY_TRANSCRIPT,
     academicDomain: "Comparative Literature",
-    questionStem: "According to the professor, what makes the hero's journey meaningful for the hero's community?",
+    questionStem:
+      "According to the professor, what makes the hero's journey meaningful for the hero's community?",
     options: [
       "The hero refuses the call to adventure and stays home.",
       "The hero returns from the abyss with a gift—insight, wisdom, or ability that helps others.",
@@ -417,7 +441,8 @@ Professor: Good afternoon, students. I'm sorry for the confusion regarding the d
       "The story is written in ancient verse.",
     ],
     correctOptionId: "B",
-    explanation: "The professor states: 'And here's the key part: they return with a gift—some kind of insight, wisdom, or ability that can help others. That gift is what makes the journey meaningful, not just for the hero, but for their community' (B).",
+    explanation:
+      "The professor states: 'And here's the key part: they return with a gift—some kind of insight, wisdom, or ability that can help others. That gift is what makes the journey meaningful, not just for the hero, but for their community' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -436,7 +461,8 @@ Professor: Good afternoon, students. I'm sorry for the confusion regarding the d
       "It ignores the role of trials and challenges in character growth.",
     ],
     correctOptionId: "C",
-    explanation: "The professor notes: 'some critics argue this model oversimplifies storytelling. It can flatten out cultural differences and force diverse stories into a single mold' (C).",
+    explanation:
+      "The professor notes: 'some critics argue this model oversimplifies storytelling. It can flatten out cultural differences and force diverse stories into a single mold' (C).",
   }),
 
   // =========================================================================
@@ -458,7 +484,8 @@ Professor: Good afternoon, students. I'm sorry for the confusion regarding the d
       "It's in the main auditorium.",
     ],
     correctOptionId: "A",
-    explanation: "'Thanks! I spent a lot of time researching that topic' is the appropriate response to a compliment on a class presentation (A).",
+    explanation:
+      "'Thanks! I spent a lot of time researching that topic' is the appropriate response to a compliment on a class presentation (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -475,7 +502,8 @@ Woman: I heard they're replacing some of the cabinets, too.
 Man: I hope it doesn't take too long. I cook there a lot.
 Woman: Me, too. I think we'll have access to the place in the dorm next door, though.`,
     campusContext: "University Housing",
-    questionStem: "Where does the woman think students will be able to cook while their dorm kitchen is being renovated?",
+    questionStem:
+      "Where does the woman think students will be able to cook while their dorm kitchen is being renovated?",
     options: [
       "In the main campus dining hall kitchen",
       "In the kitchen of the dormitory next door",
@@ -483,7 +511,8 @@ Woman: Me, too. I think we'll have access to the place in the dorm next door, th
       "In the chemistry building lounge",
     ],
     correctOptionId: "B",
-    explanation: "The woman says: 'I think we'll have access to the place in the dorm next door, though' (B).",
+    explanation:
+      "The woman says: 'I think we'll have access to the place in the dorm next door, though' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -507,7 +536,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
       "She taught herself using a book without an instructor.",
     ],
     correctOptionId: "C",
-    explanation: "Lisa explains: 'I took a few lessons in person to get started—it's helpful to have someone show you some basic things—but now we do it online and it works well' (C).",
+    explanation:
+      "Lisa explains: 'I took a few lessons in person to get started—it's helpful to have someone show you some basic things—but now we do it online and it works well' (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -518,7 +548,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     title: "Anthropology Class — Evolution of Pottery & Kilns (M2 Q4)",
     transcript: POTTERY_EVOLUTION_TRANSCRIPT,
     academicDomain: "Anthropology / Archaeology",
-    questionStem: "How did the updraft kiln allow ancient potters to control the color of their pottery?",
+    questionStem:
+      "How did the updraft kiln allow ancient potters to control the color of their pottery?",
     options: [
       "By adding synthetic chemical dyes after the pots cooled",
       "By adjusting the airflow to control how much oxygen reached the fire",
@@ -526,7 +557,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
       "By spinning the clay faster on the potter's wheel",
     ],
     correctOptionId: "B",
-    explanation: "The professor states: 'By adjusting the airflow, potters could control how much oxygen reached the fire. This helped them produce pottery with specific colors, like red or black' (B).",
+    explanation:
+      "The professor states: 'By adjusting the airflow, potters could control how much oxygen reached the fire. This helped them produce pottery with specific colors, like red or black' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -537,7 +569,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     title: "Anthropology Class — Evolution of Pottery & Kilns (M2 Q5)",
     transcript: POTTERY_EVOLUTION_TRANSCRIPT,
     academicDomain: "Anthropology / Archaeology",
-    questionStem: "According to the professor, what was required to produce porcelain in ancient China?",
+    questionStem:
+      "According to the professor, what was required to produce porcelain in ancient China?",
     options: [
       "Firing a special mix of fine clay and minerals at temperatures above 1,200 degrees Celsius",
       "Drying coarse river mud in open pits under the sun",
@@ -545,7 +578,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
       "Baking vessels at low temperatures for several weeks",
     ],
     correctOptionId: "A",
-    explanation: "The professor states: 'Porcelain is made from a special mix of fine clay and minerals and must be fired at temperatures above 1,200 degrees Celsius' (A).",
+    explanation:
+      "The professor states: 'Porcelain is made from a special mix of fine clay and minerals and must be fired at temperatures above 1,200 degrees Celsius' (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -556,7 +590,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     title: "Business Class — Startup Incubators (M2 Lower Q1)",
     transcript: STARTUP_INCUBATORS_TRANSCRIPT,
     academicDomain: "Business & Entrepreneurship",
-    questionStem: "According to the professor, how do business incubators help early-stage startups?",
+    questionStem:
+      "According to the professor, how do business incubators help early-stage startups?",
     options: [
       "By purchasing established corporations on the stock exchange",
       "By providing office space, mentorship, networking, and connections to funding opportunities",
@@ -564,7 +599,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
       "By manufacturing consumer electronics overseas",
     ],
     correctOptionId: "B",
-    explanation: "The professor explains that business incubators provide office space, mentorship, networking, and steer new businesses toward funding opportunities (B).",
+    explanation:
+      "The professor explains that business incubators provide office space, mentorship, networking, and steer new businesses toward funding opportunities (B).",
   }),
 
   // =========================================================================
@@ -592,8 +628,7 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     questionNumber: 2,
     speakerAName: "Hannah",
     contextPrompt: "Should we reserve our festival passes right now?",
-    targetSentence:
-      "Wait until Friday to book the tickets when the festival schedule comes out.",
+    targetSentence: "Wait until Friday to book the tickets when the festival schedule comes out.",
     wordBank: [
       "to book the tickets",
       "Wait until Friday",
@@ -607,14 +642,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     questionNumber: 3,
     speakerAName: "Noah",
     contextPrompt: "I'm helping Sarah set up the dining room for tonight.",
-    targetSentence:
-      "Do you know how many people she invited to the dinner party?",
-    wordBank: [
-      "how many people",
-      "Do you know",
-      "to the dinner party",
-      "she invited",
-    ],
+    targetSentence: "Do you know how many people she invited to the dinner party?",
+    wordBank: ["how many people", "Do you know", "to the dinner party", "she invited"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -623,12 +652,7 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     speakerAName: "Maya",
     contextPrompt: "How was the newly renovated lecture theater?",
     targetSentence: "The seats were much more comfortable than I expected.",
-    wordBank: [
-      "much more",
-      "The seats were",
-      "than I expected",
-      "comfortable",
-    ],
+    wordBank: ["much more", "The seats were", "than I expected", "comfortable"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -636,14 +660,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     questionNumber: 5,
     speakerAName: "Ethan",
     contextPrompt: "What is the main focus of your management research group?",
-    targetSentence:
-      "We want to learn what makes successful companies different from others.",
-    wordBank: [
-      "what makes",
-      "We want to learn",
-      "different from others",
-      "successful companies",
-    ],
+    targetSentence: "We want to learn what makes successful companies different from others.",
+    wordBank: ["what makes", "We want to learn", "different from others", "successful companies"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -651,14 +669,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     questionNumber: 6,
     speakerAName: "Chloe",
     contextPrompt: "Your bibliography on renewable grids was really thorough.",
-    targetSentence:
-      "Could you tell me where you found the articles you used in your paper?",
-    wordBank: [
-      "where you found",
-      "Could you tell me",
-      "you used in your paper",
-      "the articles",
-    ],
+    targetSentence: "Could you tell me where you found the articles you used in your paper?",
+    wordBank: ["where you found", "Could you tell me", "you used in your paper", "the articles"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -676,12 +688,7 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     speakerAName: "Zoe",
     contextPrompt: "Are we ready to pack up the office furniture?",
     targetSentence: "I need to know when the movers are arriving tomorrow.",
-    wordBank: [
-      "when",
-      "I need to know",
-      "are arriving tomorrow",
-      "the movers",
-    ],
+    wordBank: ["when", "I need to know", "are arriving tomorrow", "the movers"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -689,14 +696,8 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     questionNumber: 9,
     speakerAName: "Owen",
     contextPrompt: "What are the engineers doing in the climate chamber?",
-    targetSentence:
-      "They are testing how different temperatures affect the battery.",
-    wordBank: [
-      "how",
-      "They are testing",
-      "affect the battery",
-      "different temperatures",
-    ],
+    targetSentence: "They are testing how different temperatures affect the battery.",
+    wordBank: ["how", "They are testing", "affect the battery", "different temperatures"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -705,12 +706,7 @@ Woman: I took a few lessons in person to get started—it's helpful to have some
     speakerAName: "Aria",
     contextPrompt: "Let's grab lunch at the new bistro near the library.",
     targetSentence: "I am wondering whether the cafe offers any vegan options.",
-    wordBank: [
-      "whether",
-      "I am wondering",
-      "any vegan options",
-      "the cafe offers",
-    ],
+    wordBank: ["whether", "I am wondering", "any vegan options", "the cafe offers"],
   }),
   buildWriteEmailItem({
     id: nextId(),
@@ -807,8 +803,7 @@ Consider the Industrial Revolution or the rise of the internet: neither transfor
     blueprintId: MARS_BLUEPRINT_ID,
     questionNumber: 5,
     scenarioTitle: "Electronics Store Customer Orientation",
-    sentence:
-      "If you need technical support, our service desk is on the second floor.",
+    sentence: "If you need technical support, our service desk is on the second floor.",
     responseSeconds: 10,
   }),
   buildListenRepeatItem({
@@ -816,8 +811,7 @@ Consider the Industrial Revolution or the rise of the internet: neither transfor
     blueprintId: MARS_BLUEPRINT_ID,
     questionNumber: 6,
     scenarioTitle: "Electronics Store Customer Orientation",
-    sentence:
-      "All computers come with a standard one-year manufacturer warranty.",
+    sentence: "All computers come with a standard one-year manufacturer warranty.",
     responseSeconds: 10,
   }),
   buildListenRepeatItem({
@@ -825,8 +819,7 @@ Consider the Industrial Revolution or the rise of the internet: neither transfor
     blueprintId: MARS_BLUEPRINT_ID,
     questionNumber: 7,
     scenarioTitle: "Electronics Store Customer Orientation",
-    sentence:
-      "Please let any of our sales associates know if you would like to test a device.",
+    sentence: "Please let any of our sales associates know if you would like to test a device.",
     responseSeconds: 12,
   }),
   buildTakeInterviewItem({
@@ -880,7 +873,7 @@ export const MARS_BLUEPRINT: SeedBlueprintRow = {
   title: "Mars | Full Test",
   slug: "mars-full-test-2026",
   description:
-    "Official TOEFL iBT 2026 TestGlider Mock Exam #2 (Mars — Video Qyxo41WZwb4). Features Adaptive Reading (European Narrative Literature, Critical Thinking, Urban Heat Islands, Monarch Migration, Mesopotamian Trade), Listening (Confirmation Bias, Hero's Journey Monomyth, Pottery & Kilns, Startup Incubators), Writing (10 Build a Sentence, Yoga Schedule Email, Leaders vs. Social Forces Discussion), and Speaking (Electronics Store & Personal Finance Interview).",
+    "Independent TOEFL iBT 2026-Style Practice Test #2 (Mars — Video Qyxo41WZwb4). Features Reading (European Narrative Literature, Critical Thinking, Urban Heat Islands, Monarch Migration, Mesopotamian Trade), Listening (Confirmation Bias, Hero's Journey Monomyth, Pottery & Kilns, Startup Incubators), Writing (10 Build a Sentence, Yoga Schedule Email, Leaders vs. Social Forces Discussion), and Speaking (Electronics Store & Personal Finance Interview).",
   exam_Type: "full_mock",
   total_Duration_Seconds: 5160,
   blueprint_Json: {
@@ -922,9 +915,8 @@ export const MARS_BLUEPRINT: SeedBlueprintRow = {
     planetName: "Mars",
     videoUrl: "https://youtu.be/Qyxo41WZwb4",
     videoId: "Qyxo41WZwb4",
-    playlistUrl:
-      "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
-    difficultyLabel: "Standard 2026 Adaptive",
+    playlistUrl: "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
+    difficultyLabel: "Standard 2026 Practice",
   },
   is_Published: true,
   created_At: "2026-09-02T10:00:00.000Z",

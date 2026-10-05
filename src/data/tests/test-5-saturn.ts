@@ -71,7 +71,8 @@ export const SATURN_ITEMS: SeedQuestionItemRow[] = [
     subject: "Guest Lecture by Dr. Elena Rossi on Roman Urban Engineering",
     dateLabel: "Monday, 2:00 PM",
     stimulusText: ARCHAEOLOGY_SYMPOSIUM_EMAIL,
-    questionStem: "What opportunity will students have during the reception in the Atrium after the lecture?",
+    questionStem:
+      "What opportunity will students have during the reception in the Atrium after the lecture?",
     options: [
       "To purchase signed copies of textbooks at a discount",
       "To register for an introductory Latin grammar exam",
@@ -79,7 +80,8 @@ export const SATURN_ITEMS: SeedQuestionItemRow[] = [
       "To view a live theatrical performance of a Roman comedy",
     ],
     correctOptionId: "C",
-    explanation: "The email states that during the reception in the Atrium, 'students may speak directly with Dr. Rossi about summer fieldwork fellowships in Italy' (C).",
+    explanation:
+      "The email states that during the reception in the Atrium, 'students may speak directly with Dr. Rossi about summer fieldwork fellowships in Italy' (C).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -89,7 +91,8 @@ export const SATURN_ITEMS: SeedQuestionItemRow[] = [
     title: "Fluvial Geomorphology and Canyon Formation (Q12)",
     stimulusText: CANYON_EROSION_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 1, how does tectonic uplift contribute to the carving of deep river canyons?",
+    questionStem:
+      "According to paragraph 1, how does tectonic uplift contribute to the carving of deep river canyons?",
     options: [
       "It slows down river currents so sediment settles gently on the floodplain.",
       "It prevents freeze-thaw cycles from affecting canyon walls.",
@@ -97,7 +100,8 @@ export const SATURN_ITEMS: SeedQuestionItemRow[] = [
       "It increases the gravitational potential energy and velocity of rivers, enhancing their ability to transport abrasive sediment.",
     ],
     correctOptionId: "D",
-    explanation: "Paragraph 1 explains that when a plateau rises, 'rivers flowing across its surface gain gravitational potential energy, increasing their velocity and capacity to transport abrasive sediment' (D).",
+    explanation:
+      "Paragraph 1 explains that when a plateau rises, 'rivers flowing across its surface gain gravitational potential energy, increasing their velocity and capacity to transport abrasive sediment' (D).",
   }),
 
   // =========================================================================
@@ -132,7 +136,8 @@ export const SATURN_ITEMS: SeedQuestionItemRow[] = [
     title: "Thermohaline Circulation and Global Climate (M2 Q11)",
     stimulusText: THERMOHALINE_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 2, why does surface seawater in the North Atlantic sink into the deep ocean basin?",
+    questionStem:
+      "According to paragraph 2, why does surface seawater in the North Atlantic sink into the deep ocean basin?",
     options: [
       "Strong equatorial trade winds push warm water downward.",
       "Cooling by polar winds and salt left behind by sea ice formation make the water cold, salty, and dense.",
@@ -140,7 +145,8 @@ export const SATURN_ITEMS: SeedQuestionItemRow[] = [
       "Freshwater from melting glaciers increases the buoyancy of surface currents.",
     ],
     correctOptionId: "B",
-    explanation: "Paragraph 2 explains: 'chilly polar winds cool the surface and sea ice formation leaves dissolved salt behind, making the remaining seawater cold, salty, and dense. This dense water sinks into the deep ocean basin' (B).",
+    explanation:
+      "Paragraph 2 explains: 'chilly polar winds cool the surface and sea ice formation leaves dissolved salt behind, making the remaining seawater cold, salty, and dense. This dense water sinks into the deep ocean basin' (B).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -150,7 +156,8 @@ export const SATURN_ITEMS: SeedQuestionItemRow[] = [
     title: "Thermohaline Circulation and Global Climate (M2 Lower Q1)",
     stimulusText: THERMOHALINE_PASSAGE,
     questionSubType: "factual",
-    questionStem: "What two physical properties control seawater density in thermohaline circulation?",
+    questionStem:
+      "What two physical properties control seawater density in thermohaline circulation?",
     options: [
       "Temperature and salinity",
       "Wind speed and wave height",
@@ -158,7 +165,8 @@ export const SATURN_ITEMS: SeedQuestionItemRow[] = [
       "Tidal pull and ocean depth",
     ],
     correctOptionId: "A",
-    explanation: "Paragraph 1 states that thermohaline circulation is driven by 'differences in water density, which are controlled by temperature (thermo) and salinity (haline)' (A).",
+    explanation:
+      "Paragraph 1 states that thermohaline circulation is driven by 'differences in water density, which are controlled by temperature (thermo) and salinity (haline)' (A).",
   }),
 
   // =========================================================================
@@ -186,7 +194,8 @@ Woman: I'll be downloading it tonight and referring to it often.`,
       "Switch to a different science course",
     ],
     correctOptionId: "A",
-    explanation: "After the man mentions that the professor published the safety manual on his website, the woman says: 'I'll be downloading it tonight and referring to it often' (A).",
+    explanation:
+      "After the man mentions that the professor published the safety manual on his website, the woman says: 'I'll be downloading it tonight and referring to it often' (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -206,7 +215,8 @@ Resident Advisor: Attention residents. We have a few important reminders for you
       "Because lost items cannot be claimed from the front desk",
     ],
     correctOptionId: "A",
-    explanation: "The speaker explains that there has been an increase in broken laundry machines lately and asks residents to empty their pockets and shake out clothes before washing (A).",
+    explanation:
+      "The speaker explains that there has been an increase in broken laundry machines lately and asks residents to empty their pockets and shake out clothes before washing (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -226,7 +236,8 @@ Professor: Today, I've got a topic that might just electrify your imagination: l
       "Large rings of ice crystals orbiting the planet",
     ],
     correctOptionId: "B",
-    explanation: "The professor states that the Venera missions found 'surprising evidence of lightning in Venus's thick sulfuric-acid-laden clouds,' showing its atmosphere is highly dynamic (B).",
+    explanation:
+      "The professor states that the Venera missions found 'surprising evidence of lightning in Venus's thick sulfuric-acid-laden clouds,' showing its atmosphere is highly dynamic (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -238,7 +249,8 @@ Professor: Today, I've got a topic that might just electrify your imagination: l
     transcript: `Narrator: Listen to a talk in a history class.
 Professor: Today, let's talk about the ancient Maya civilization and explore a fascinating revelation about its decline. Recent research has brought stalagmites into the spotlight. Stalagmites—those mineral formations rising up from the floor of a cave—serve as climate records, capturing changes in precipitation over thousands of years. Scientists analyzed stalagmites from caves near the former Maya heartlands, and the data revealed a series of prolonged droughts that coincided with periods of decline for Maya society. Because the Maya were heavily dependent on agriculture, water scarcity put immense pressure on food production and social structures.`,
     academicDomain: "Ancient History & Paleoclimatology",
-    questionStem: "How did cave stalagmites help historians understand the decline of the Maya civilization?",
+    questionStem:
+      "How did cave stalagmites help historians understand the decline of the Maya civilization?",
     options: [
       "They contained ancient Mayan inscriptions carved into the stone.",
       "They served as natural climate records revealing prolonged droughts during periods of Maya decline.",
@@ -246,7 +258,8 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
       "They were used as currency in Mayan marketplaces.",
     ],
     correctOptionId: "B",
-    explanation: "The professor explains that stalagmites 'serve as climate records, capturing changes in precipitation over thousands of years' and revealed prolonged droughts coinciding with Maya decline (B).",
+    explanation:
+      "The professor explains that stalagmites 'serve as climate records, capturing changes in precipitation over thousands of years' and revealed prolonged droughts coinciding with Maya decline (B).",
   }),
 
   // =========================================================================
@@ -259,12 +272,7 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
     speakerAName: "Client",
     contextPrompt: "Did the legal department finalize the agreement yet?",
     targetSentence: "Sara called to tell me she had sent the contract.",
-    wordBank: [
-      "to tell me",
-      "Sara called",
-      "the contract",
-      "she had sent",
-    ],
+    wordBank: ["to tell me", "Sara called", "the contract", "she had sent"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -273,12 +281,7 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
     speakerAName: "Attendee",
     contextPrompt: "Did your conference registration go through?",
     targetSentence: "No, I have yet to receive the confirmation email.",
-    wordBank: [
-      "I have yet",
-      "No,",
-      "the confirmation email",
-      "to receive",
-    ],
+    wordBank: ["I have yet", "No,", "the confirmation email", "to receive"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -296,12 +299,7 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
     speakerAName: "Colleague",
     contextPrompt: "The projector in the boardroom keeps flickering.",
     targetSentence: "I will ask Rebecca in IT to take a look at it.",
-    wordBank: [
-      "Rebecca in IT",
-      "I will ask",
-      "a look at it",
-      "to take",
-    ],
+    wordBank: ["Rebecca in IT", "I will ask", "a look at it", "to take"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -310,12 +308,7 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
     speakerAName: "Classmate",
     contextPrompt: "What did you think of the orientation webinar?",
     targetSentence: "I thought it was a bit long, but very helpful.",
-    wordBank: [
-      "it was",
-      "I thought",
-      "but very helpful",
-      "a bit long,",
-    ],
+    wordBank: ["it was", "I thought", "but very helpful", "a bit long,"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -324,12 +317,7 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
     speakerAName: "Neighbor",
     contextPrompt: "Do you have any travel plans for the spring break holiday?",
     targetSentence: "I am taking my family to Rome for a week.",
-    wordBank: [
-      "my family",
-      "I am taking",
-      "for a week",
-      "to Rome",
-    ],
+    wordBank: ["my family", "I am taking", "for a week", "to Rome"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -347,12 +335,7 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
     speakerAName: "Friend",
     contextPrompt: "Were you able to see the dentist today?",
     targetSentence: "No, but I made an appointment for next week.",
-    wordBank: [
-      "but I made",
-      "No,",
-      "for next week",
-      "an appointment",
-    ],
+    wordBank: ["but I made", "No,", "for next week", "an appointment"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -361,12 +344,7 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
     speakerAName: "Student",
     contextPrompt: "Did you read the footnote on page twelve?",
     targetSentence: "Yes, I did, but I still don't understand what it meant.",
-    wordBank: [
-      "but I still",
-      "Yes, I did,",
-      "what it meant",
-      "don't understand",
-    ],
+    wordBank: ["but I still", "Yes, I did,", "what it meant", "don't understand"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -374,13 +352,8 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
     questionNumber: 10,
     speakerAName: "Visitor",
     contextPrompt: "Where is the keynote ceremony taking place?",
-    targetSentence:
-      "It will be held in the main auditorium on the third floor.",
-    wordBank: [
-      "in the main auditorium",
-      "It will be held",
-      "on the third floor",
-    ],
+    targetSentence: "It will be held in the main auditorium on the third floor.",
+    wordBank: ["in the main auditorium", "It will be held", "on the third floor"],
   }),
   buildWriteEmailItem({
     id: nextId(),
@@ -388,7 +361,8 @@ Professor: Today, let's talk about the ancient Maya civilization and explore a f
     title: "Write an Email — Requesting an Expert Interview with Dr. Rossi",
     scenarioContext:
       "You are writing a research paper on Roman civilization for your university history class. As part of the assignment, you must interview an expert in Roman archaeology and include quotations from the interview in your paper.",
-    recipientRole: "To: Dr. Elena Rossi | Subject: Interview Request — Roman Archaeology Research Paper",
+    recipientRole:
+      "To: Dr. Elena Rossi | Subject: Interview Request — Roman Archaeology Research Paper",
     bulletPoints: [
       "Introduce yourself and explain the history research paper you are writing on Roman civilization.",
       "Explain why you would like to interview Dr. Rossi based on her expertise in Roman archaeology.",
@@ -483,8 +457,7 @@ Writing by hand remains an essential skill, especially in situations where techn
     blueprintId: SATURN_BLUEPRINT_ID,
     questionNumber: 6,
     scenarioTitle: "Domestic Shipping Desk & Packaging Station",
-    sentence:
-      "You may have a seat here while you wait for your turn at the counter.",
+    sentence: "You may have a seat here while you wait for your turn at the counter.",
     responseSeconds: 11,
   }),
   buildListenRepeatItem({
@@ -536,7 +509,13 @@ Writing by hand remains an essential skill, especially in situations where techn
     interviewTopic: "Five-Year Academic & Career Goals",
     questionText:
       "Finally, do you think universities should focus more on practical job training or broad academic knowledge to prepare students for the future?",
-    expectedKeyPhrases: ["practical", "critical thinking", "combination", "internships", "adaptable"],
+    expectedKeyPhrases: [
+      "practical",
+      "critical thinking",
+      "combination",
+      "internships",
+      "adaptable",
+    ],
     sampleAnswer:
       "I believe universities should combine strong foundational theory with practical job training such as co-op internships. Specific software tools change every few years, so students need broad critical thinking skills to adapt, alongside hands-on project experience to succeed in their first job.",
   }),
@@ -547,7 +526,7 @@ export const SATURN_BLUEPRINT: SeedBlueprintRow = {
   title: "Saturn | Full Test",
   slug: "saturn-full-test-2026",
   description:
-    "Official TOEFL iBT 2026 TestGlider Mock Exam #5 (Saturn — Video fc8fOM_oVxQ). Features Adaptive Reading (Canyon Erosion, Roman Engineering Lecture, Thermohaline Ocean Currents), Listening (Lab Safety Orientation, Dormitory Reminders, Lightning on Venus, Mayan Stalagmites), Writing (10 Build a Sentence, Email to Dr. Rossi, Handwriting vs. Typing Discussion), and Speaking (Domestic Shipping Desk & Five-Year Goals Interview).",
+    "Independent TOEFL iBT 2026-Style Practice Test #5 (Saturn — Video fc8fOM_oVxQ). Features Reading (Canyon Erosion, Roman Engineering Lecture, Thermohaline Ocean Currents), Listening (Lab Safety Orientation, Dormitory Reminders, Lightning on Venus, Mayan Stalagmites), Writing (10 Build a Sentence, Email to Dr. Rossi, Handwriting vs. Typing Discussion), and Speaking (Domestic Shipping Desk & Five-Year Goals Interview).",
   exam_Type: "full_mock",
   total_Duration_Seconds: 5160,
   blueprint_Json: {
@@ -589,9 +568,8 @@ export const SATURN_BLUEPRINT: SeedBlueprintRow = {
     planetName: "Saturn",
     videoUrl: "https://youtu.be/fc8fOM_oVxQ",
     videoId: "fc8fOM_oVxQ",
-    playlistUrl:
-      "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
-    difficultyLabel: "Standard 2026 Adaptive",
+    playlistUrl: "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
+    difficultyLabel: "Standard 2026 Practice",
   },
   is_Published: true,
   created_At: "2026-09-05T10:00:00.000Z",

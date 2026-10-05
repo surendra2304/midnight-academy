@@ -50,8 +50,8 @@ export const generateAiQuestionDraft = createServerFn({ method: "POST" })
       throw new Error("Unauthorized: Admin access required");
     }
 
-    const systemPrompt = `You are the official TOEFL iBT 2026 Test Content Designer.
-Generate a high-quality, completely original TOEFL test question draft following ETS 2026 specifications.
+    const systemPrompt = `You are an independent TOEFL iBT 2026-style practice content author for Midnight Academy.
+Generate a high-quality, original practice question draft inspired by public TOEFL task formats; do not claim ETS approval or reproduce protected test content.
 Output valid JSON strictly following this schema:
 {
   "title": "<Concise passage or task title>",

@@ -25,7 +25,7 @@ export const Route = createFileRoute("/progress")({
 
 function ProgressPage() {
   const [profile, setProfile] = useState<StudentWeaknessProfile | null>(null);
-  const [targetBand, setTargetBand] = useState<number>(5.0);
+  const [targetBand, setTargetBand] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ function ProgressPage() {
         const res = await getStudentAnalyticsDashboard();
         if (res?.profile) {
           setProfile(res.profile);
-          setTargetBand(res.targetBand || 5.0);
+          setTargetBand(res.targetBand);
         }
       } catch (err) {
         console.error("Failed to load skill analytics:", err);

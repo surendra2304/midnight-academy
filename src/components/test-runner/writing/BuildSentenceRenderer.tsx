@@ -29,8 +29,7 @@ export function BuildSentenceRenderer({
   disabled = false,
 }: BuildSentenceRendererProps) {
   const payload = (item.payload || {}) as Record<string, unknown>;
-  const wordBank: string[] =
-    (payload.wordBank as string[]) || (payload.words as string[]) || [];
+  const wordBank: string[] = (payload.wordBank as string[]) || (payload.words as string[]) || [];
 
   const partnerDialogue =
     (payload.prompt as string) ||
@@ -38,32 +37,12 @@ export function BuildSentenceRenderer({
     (payload.contextPrompt as string) ||
     "Were you able to complete the project on time?";
 
-  const sentencePrefix =
-    (payload.sentencePrefix as string) ||
-    (payload.prefix as string) ||
-    "";
+  const sentencePrefix = (payload.sentencePrefix as string) || (payload.prefix as string) || "";
 
-  const targetSentence = (payload.targetSentence as string) || "";
-  const terminalPunctuation =
-    (payload.terminalPunctuation as string) ||
-    (targetSentence.trim().endsWith("?")
-      ? "?"
-      : targetSentence.trim().endsWith("!")
-        ? "!"
-        : ".");
+  const terminalPunctuation = (payload.terminalPunctuation as string) || ".";
 
-  const acceptedSeqs = payload.acceptedSequences as string[][] | undefined;
-
-  // Use explicit slotCount or ordered phrase sequence length so multi-word phrase chips match slot count 1:1
-  const totalSlots =
-    (payload.slotCount as number) ||
-    (Array.isArray(acceptedSeqs) &&
-    Array.isArray(acceptedSeqs[0]) &&
-    acceptedSeqs[0].length > 0
-      ? acceptedSeqs[0].length
-      : wordBank.length > 0
-        ? wordBank.length
-        : 4);
+  // The blueprint provides a public slot count; answer sequences remain server-only.
+  const totalSlots = (payload.slotCount as number) || (wordBank.length > 0 ? wordBank.length : 4);
 
   const [placedWords, setPlacedWords] = useState<string[]>(() => {
     if (!currentAnswer) return [];

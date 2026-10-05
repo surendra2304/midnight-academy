@@ -323,8 +323,7 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
     title: "The Power of Music (Q30)",
     stimulusText: POWER_OF_MUSIC_PASSAGE,
     questionSubType: "vocabulary",
-    questionStem:
-      "The word 'profound' in paragraph 3 is closest in meaning to:",
+    questionStem: "The word 'profound' in paragraph 3 is closest in meaning to:",
     targetWord: "profound",
     options: ["Temporary", "Superficial", "Deep and significant", "Accidental"],
     correctOptionId: "C",
@@ -374,8 +373,7 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
     title: "The Power of Music (Q33)",
     stimulusText: POWER_OF_MUSIC_PASSAGE,
     questionSubType: "inference",
-    questionStem:
-      "What can be inferred from paragraph 3 about music therapy in clinical settings?",
+    questionStem: "What can be inferred from paragraph 3 about music therapy in clinical settings?",
     options: [
       "It is only effective for professional musicians.",
       "It requires patients to compose their own original symphonies.",
@@ -460,8 +458,7 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
     title: "Coral Reefs and Symbiosis (M2 Q13)",
     stimulusText: CORAL_REEFS_PASSAGE,
     questionSubType: "factual",
-    questionStem:
-      "How do zooxanthellae benefit the coral polyps in which they live?",
+    questionStem: "How do zooxanthellae benefit the coral polyps in which they live?",
     options: [
       "They capture solar energy and convert it into organic nutrients for the coral.",
       "They secrete a hard calcium carbonate skeleton around the colony.",
@@ -480,8 +477,7 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
     title: "Coral Reefs and Symbiosis (M2 Q14)",
     stimulusText: CORAL_REEFS_PASSAGE,
     questionSubType: "factual",
-    questionStem:
-      "What directly causes a coral to turn white during a coral bleaching event?",
+    questionStem: "What directly causes a coral to turn white during a coral bleaching event?",
     options: [
       "A coat of white sand settling over the reef",
       "Rapid overgrowth of white algae on the ocean floor",
@@ -500,8 +496,7 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
     title: "Coral Reefs and Symbiosis (M2 Q15)",
     stimulusText: CORAL_REEFS_PASSAGE,
     questionSubType: "vocabulary",
-    questionStem:
-      "The word 'acutely' in paragraph 3 is closest in meaning to:",
+    questionStem: "The word 'acutely' in paragraph 3 is closest in meaning to:",
     targetWord: "acutely",
     options: ["Severely", "Rarely", "Slightly", "Temporarily"],
     correctOptionId: "A",
@@ -516,8 +511,7 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
     title: "Coral Reefs and Symbiosis (M2 Q16)",
     stimulusText: CORAL_REEFS_PASSAGE,
     questionSubType: "inference",
-    questionStem:
-      "What can be inferred from paragraph 3 about bleached corals?",
+    questionStem: "What can be inferred from paragraph 3 about bleached corals?",
     options: [
       "They can never recover even if water temperatures return to normal quickly.",
       "They immediately dissolve into the surrounding seawater.",
@@ -536,8 +530,7 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
     title: "Coral Reefs and Symbiosis (M2 Lower Q12)",
     stimulusText: CORAL_REEFS_PASSAGE,
     questionSubType: "factual",
-    questionStem:
-      "According to paragraph 1, what builds the structural foundation of coral reefs?",
+    questionStem: "According to paragraph 1, what builds the structural foundation of coral reefs?",
     options: [
       "Deep-sea volcanic vents",
       "Colonies of coral polyps that secrete calcium carbonate skeletons",
@@ -568,7 +561,8 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
       "No, I haven't read that chapter yet.",
     ],
     correctOptionId: "B",
-    explanation: "The speaker asks what time the library closes tonight; 'I believe it stays open until midnight on weekdays' directly answers the question (B).",
+    explanation:
+      "The speaker asks what time the library closes tonight; 'I believe it stays open until midnight on weekdays' directly answers the question (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -577,7 +571,8 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
     moduleNumber: 1,
     difficultyBand: "lower",
     title: "Listen and Choose a Response — Lab Report (Q2)",
-    transcript: "Man: Have you finished writing the discussion section for our chemistry lab report?",
+    transcript:
+      "Man: Have you finished writing the discussion section for our chemistry lab report?",
     questionStem: "Choose the best response to what you heard.",
     options: [
       "The chemistry lab is in Building C.",
@@ -586,7 +581,8 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
       "No, I don't have a lab coat.",
     ],
     correctOptionId: "C",
-    explanation: "The man asks about progress on the lab report draft; saying 'I'm almost done, and I'll email you my draft in an hour' is the natural response (C).",
+    explanation:
+      "The man asks about progress on the lab report draft; saying 'I'm almost done, and I'll email you my draft in an hour' is the natural response (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -595,7 +591,8 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
     moduleNumber: 1,
     difficultyBand: "lower",
     title: "Listen and Choose a Response — Seminar Room (Q3)",
-    transcript: "Woman: Where is Professor Miller's economics review session being held this afternoon?",
+    transcript:
+      "Woman: Where is Professor Miller's economics review session being held this afternoon?",
     questionStem: "Choose the best response to what you heard.",
     options: [
       "It was moved to Room 304 in the business building.",
@@ -604,7 +601,8 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
       "Yes, she is a great lecturer.",
     ],
     correctOptionId: "A",
-    explanation: "'Where' asks for a location; 'It was moved to Room 304 in the business building' provides the location (A).",
+    explanation:
+      "'Where' asks for a location; 'It was moved to Room 304 in the business building' provides the location (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -622,7 +620,8 @@ export const MOON_ITEMS: SeedQuestionItemRow[] = [
       "The paper size is standard letter.",
     ],
     correctOptionId: "C",
-    explanation: "Suggesting an alternative working printer on the second floor of the library directly addresses the problem (C).",
+    explanation:
+      "Suggesting an alternative working printer on the second floor of the library directly addresses the problem (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -660,7 +659,8 @@ Woman: There's a sporting goods store just a few blocks from the studio.
 Man: Perfect. I'll stop by on my way. Hopefully, they have a decent selection.
 Woman: Well, if not, the studio has plenty you can borrow. That's what I always do. See you there!`,
     campusContext: "Recreation & Wellness",
-    questionStem: "What does the woman say the man can do if the store does not have a good selection?",
+    questionStem:
+      "What does the woman say the man can do if the store does not have a good selection?",
     options: [
       "Order a mat online for next week",
       "Take a spinning class instead",
@@ -668,7 +668,8 @@ Woman: Well, if not, the studio has plenty you can borrow. That's what I always 
       "Borrow a mat from the yoga studio",
     ],
     correctOptionId: "D",
-    explanation: "The woman says: 'Well, if not, the studio has plenty you can borrow. That's what I always do' (D).",
+    explanation:
+      "The woman says: 'Well, if not, the studio has plenty you can borrow. That's what I always do' (D).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -688,7 +689,8 @@ Speaker: Attention everyone. We are thrilled to announce that the university's a
       "To reschedule a concert in the main hall",
     ],
     correctOptionId: "C",
-    explanation: "The speaker announces that the university's annual charity auction will be held next Saturday at 6:00 p.m. in the main hall (C).",
+    explanation:
+      "The speaker announces that the university's annual charity auction will be held next Saturday at 6:00 p.m. in the main hall (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -728,7 +730,8 @@ Speaker: Welcome everyone. Just a reminder that our club's annual hiking trip wi
       "At the recreation gym",
     ],
     correctOptionId: "C",
-    explanation: "The speaker states: 'We'll meet at 8:00 a.m. at the student center and head out to the trails together' (C).",
+    explanation:
+      "The speaker states: 'We'll meet at 8:00 a.m. at the student center and head out to the trails together' (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -748,7 +751,8 @@ Speaker: Welcome everyone. Just a reminder that our club's annual hiking trip wi
       "Water, snacks, and comfortable shoes",
     ],
     correctOptionId: "D",
-    explanation: "The speaker reminds everyone: 'Make sure to bring water, snacks, and comfortable shoes' (D).",
+    explanation:
+      "The speaker reminds everyone: 'Make sure to bring water, snacks, and comfortable shoes' (D).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -767,7 +771,8 @@ Speaker: Welcome everyone. Just a reminder that our club's annual hiking trip wi
       "Why ethnocentrism is beneficial for modern societies",
     ],
     correctOptionId: "B",
-    explanation: "The talk defines cultural relativism, contrasts it with ethnocentrism, and discusses its benefits and ethical challenges (B).",
+    explanation:
+      "The talk defines cultural relativism, contrasts it with ethnocentrism, and discusses its benefits and ethical challenges (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -786,7 +791,8 @@ Speaker: Welcome everyone. Just a reminder that our club's annual hiking trip wi
       "Rejecting all forms of traditional social institutions",
     ],
     correctOptionId: "A",
-    explanation: "The professor states that ethnocentrism 'is the practice of evaluating other cultures according to the standards of one's own culture' (A).",
+    explanation:
+      "The professor states that ethnocentrism 'is the practice of evaluating other cultures according to the standards of one's own culture' (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -805,7 +811,8 @@ Speaker: Welcome everyone. Just a reminder that our club's annual hiking trip wi
       "To show how laws regulate family size",
     ],
     correctOptionId: "A",
-    explanation: "Arranged marriages are cited as an example of a practice that may seem unfamiliar to outsiders but is a norm serving important social functions in many cultures (A).",
+    explanation:
+      "Arranged marriages are cited as an example of a practice that may seem unfamiliar to outsiders but is a norm serving important social functions in many cultures (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -816,7 +823,8 @@ Speaker: Welcome everyone. Just a reminder that our club's annual hiking trip wi
     title: "Sociology Lecture — Cultural Relativism (Q14)",
     transcript: CULTURAL_RELATIVISM_TRANSCRIPT,
     academicDomain: "Sociology",
-    questionStem: "According to critics mentioned in the talk, what is a potential danger of cultural relativism?",
+    questionStem:
+      "According to critics mentioned in the talk, what is a potential danger of cultural relativism?",
     options: [
       "It makes field research too expensive to conduct.",
       "It can lead to moral relativism that excuses practices violating human rights.",
@@ -824,7 +832,8 @@ Speaker: Welcome everyone. Just a reminder that our club's annual hiking trip wi
       "It encourages ethnocentrism among sociologists.",
     ],
     correctOptionId: "B",
-    explanation: "The speaker notes: 'Critics argue that it can lead to moral relativism where all cultural practices are seen as equally valid, potentially excusing practices that violate human rights' (B).",
+    explanation:
+      "The speaker notes: 'Critics argue that it can lead to moral relativism where all cultural practices are seen as equally valid, potentially excusing practices that violate human rights' (B).",
   }),
 
   // =========================================================================
@@ -846,7 +855,8 @@ Speaker: Welcome everyone. Just a reminder that our club's annual hiking trip wi
       "Yes, the professor signed the form.",
     ],
     correctOptionId: "A",
-    explanation: "Offering to look at the instructions together after lunch directly responds to the request for help (A).",
+    explanation:
+      "Offering to look at the instructions together after lunch directly responds to the request for help (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -864,7 +874,8 @@ Speaker: Welcome everyone. Just a reminder that our club's annual hiking trip wi
       "Yes, the ticket machine accepts credit cards.",
     ],
     correctOptionId: "B",
-    explanation: "Giving the direction ('two blocks north, right across from the post office') directly answers 'Where is the nearest subway station?' (B).",
+    explanation:
+      "Giving the direction ('two blocks north, right across from the post office') directly answers 'Where is the nearest subway station?' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -929,7 +940,8 @@ Man: Great. Let's meet up there around 10:00.`,
       "To select a new queen bee for the colony",
     ],
     correctOptionId: "B",
-    explanation: "The podcast explains that worker bees use the waggle dance 'to convey information about the location of food sources... The duration and angle of the waggle phase relative to the hive's vertical axis communicate the distance and direction of the food source' (B).",
+    explanation:
+      "The podcast explains that worker bees use the waggle dance 'to convey information about the location of food sources... The duration and angle of the waggle phase relative to the hive's vertical axis communicate the distance and direction of the food source' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -940,7 +952,8 @@ Man: Great. Let's meet up there around 10:00.`,
     title: "Science Podcast — Honeybee Waggle Dance (M2 Q6)",
     transcript: HONEYBEE_TALK_TRANSCRIPT,
     academicDomain: "Biology / Entomology",
-    questionStem: "According to the speaker, what environmental factor can disrupt honeybee communication?",
+    questionStem:
+      "According to the speaker, what environmental factor can disrupt honeybee communication?",
     options: [
       "Heavy autumn rainfall",
       "Competition from migrating birds",
@@ -948,7 +961,8 @@ Man: Great. Let's meet up there around 10:00.`,
       "Changes in the Earth's magnetic field",
     ],
     correctOptionId: "C",
-    explanation: "The speaker notes: 'studies have shown that environmental factors like the presence of pesticides can disrupt these communication methods' (C).",
+    explanation:
+      "The speaker notes: 'studies have shown that environmental factors like the presence of pesticides can disrupt these communication methods' (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -967,7 +981,8 @@ Man: Great. Let's meet up there around 10:00.`,
       "Jazz originated in nineteenth-century Vienna.",
     ],
     correctOptionId: "B",
-    explanation: "The professor states: 'One of the key characteristics of jazz is its emphasis on improvisation... This contrasts with classical music, where compositions are typically played as written' (B).",
+    explanation:
+      "The professor states: 'One of the key characteristics of jazz is its emphasis on improvisation... This contrasts with classical music, where compositions are typically played as written' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -986,7 +1001,8 @@ Man: Great. Let's meet up there around 10:00.`,
       "Recording music in an outdoor amphitheater",
     ],
     correctOptionId: "B",
-    explanation: "The professor defines syncopation as 'shifting the normal accents in the rhythm to create an unexpected and exciting sound' (B).",
+    explanation:
+      "The professor defines syncopation as 'shifting the normal accents in the rhythm to create an unexpected and exciting sound' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -1000,7 +1016,8 @@ Man: Great. Let's meet up there around 10:00.`,
     questionStem: "In which city did jazz originate in the early twentieth century?",
     options: ["Chicago", "New York City", "New Orleans", "Boston"],
     correctOptionId: "C",
-    explanation: "The professor states: 'It originated in the early twentieth century in the city of New Orleans' (C).",
+    explanation:
+      "The professor states: 'It originated in the early twentieth century in the city of New Orleans' (C).",
   }),
 
   // =========================================================================
@@ -1031,13 +1048,7 @@ Man: Great. Let's meet up there around 10:00.`,
     speakerAName: "Sam",
     contextPrompt: "Did you hear about the new research collaboration?",
     targetSentence: "I heard they will be working with the biology department.",
-    wordBank: [
-      "will be",
-      "I heard",
-      "the biology department",
-      "they",
-      "working with",
-    ],
+    wordBank: ["will be", "I heard", "the biology department", "they", "working with"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -1046,12 +1057,7 @@ Man: Great. Let's meet up there around 10:00.`,
     speakerAName: "Alex",
     contextPrompt: "Why was the morning train delayed today?",
     targetSentence: "The train was delayed because of a signal failure.",
-    wordBank: [
-      "because of",
-      "was delayed",
-      "a signal failure",
-      "The train",
-    ],
+    wordBank: ["because of", "was delayed", "a signal failure", "The train"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -1060,14 +1066,7 @@ Man: Great. Let's meet up there around 10:00.`,
     speakerAName: "Morgan",
     contextPrompt: "Did the coordinator mention anything about the presentation?",
     targetSentence: "Yes, she wanted to know if we needed extra slides.",
-    wordBank: [
-      "if we",
-      "wanted to know",
-      "Yes,",
-      "needed",
-      "she",
-      "extra slides",
-    ],
+    wordBank: ["if we", "wanted to know", "Yes,", "needed", "she", "extra slides"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -1075,14 +1074,8 @@ Man: Great. Let's meet up there around 10:00.`,
     questionNumber: 6,
     speakerAName: "Riley",
     contextPrompt: "Has Marcus prepared for the client meeting tomorrow?",
-    targetSentence:
-      "He was wondering if he needs to bring the financial reports.",
-    wordBank: [
-      "if he",
-      "He was wondering",
-      "the financial reports",
-      "needs to bring",
-    ],
+    targetSentence: "He was wondering if he needs to bring the financial reports.",
+    wordBank: ["if he", "He was wondering", "the financial reports", "needs to bring"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -1091,13 +1084,7 @@ Man: Great. Let's meet up there around 10:00.`,
     speakerAName: "Casey",
     contextPrompt: "Were there any technical issues during the webinar?",
     targetSentence: "Yes, there were, but the support team resolved them quickly.",
-    wordBank: [
-      "but",
-      "Yes, there were,",
-      "resolved them",
-      "the support team",
-      "quickly",
-    ],
+    wordBank: ["but", "Yes, there were,", "resolved them", "the support team", "quickly"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -1235,8 +1222,7 @@ Education undoubtedly equips individuals with technical qualifications and criti
     blueprintId: MOON_BLUEPRINT_ID,
     questionNumber: 7,
     scenarioTitle: "Art Museum Tour Guide Training",
-    sentence:
-      "Our gift shop is running a special promotion on a wide selection of books.",
+    sentence: "Our gift shop is running a special promotion on a wide selection of books.",
     responseSeconds: 12,
   }),
   buildTakeInterviewItem({
@@ -1290,7 +1276,7 @@ export const MOON_BLUEPRINT: SeedBlueprintRow = {
   title: "Moon | Full Test",
   slug: "moon-full-test-2026",
   description:
-    "Official TOEFL iBT 2026 TestGlider Mock Exam #1 (Moon). Features Adaptive Reading (Paleontology, Fungi, Job & Webinar Emails, Team Chat, Power of Music, Coral Reefs), Listening (Charity Auction, Cultural Relativism, Honeybee Waggle Dance, History of Jazz), Writing (10 Build a Sentence, Email to Jake, Social Mobility Discussion), and Speaking (Art Museum Tour Guide & Outdoor Activities Interview).",
+    "Independent TOEFL iBT 2026-Style Practice Test #1 (Moon). Features Reading (Paleontology, Fungi, Job & Webinar Emails, Team Chat, Power of Music, Coral Reefs), Listening (Charity Auction, Cultural Relativism, Honeybee Waggle Dance, History of Jazz), Writing (10 Build a Sentence, Email to Jake, Social Mobility Discussion), and Speaking (Art Museum Tour Guide & Outdoor Activities Interview).",
   exam_Type: "full_mock",
   total_Duration_Seconds: 5160,
   blueprint_Json: {
@@ -1332,9 +1318,8 @@ export const MOON_BLUEPRINT: SeedBlueprintRow = {
     planetName: "Moon",
     videoUrl: "https://youtu.be/5giZh7nDyfk",
     videoId: "5giZh7nDyfk",
-    playlistUrl:
-      "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
-    difficultyLabel: "Standard 2026 Adaptive",
+    playlistUrl: "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
+    difficultyLabel: "Standard 2026 Practice",
   },
   is_Published: true,
   created_At: "2026-09-01T10:00:00.000Z",

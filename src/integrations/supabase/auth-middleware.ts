@@ -37,6 +37,11 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(
+          "Missing Supabase auth configuration. Configure the public Supabase URL and key.",
+        );
+      }
       const localSupabase = createLocalSupabaseClient() as ReturnType<
         typeof createClient<Database>
       >;
@@ -74,7 +79,7 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       throw new Error("Unauthorized: No token provided");
     }
 
-    if (token === "local-testglider-access-token") {
+    if (token === "local-testglider-access-token" && process.env.NODE_ENV !== "production") {
       const localSupabase = createLocalSupabaseClient() as ReturnType<
         typeof createClient<Database>
       >;

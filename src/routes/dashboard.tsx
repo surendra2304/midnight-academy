@@ -34,7 +34,7 @@ export const Route = createFileRoute("/dashboard")({
 function Dashboard() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<StudentWeaknessProfile | null>(null);
-  const [targetBand, setTargetBand] = useState<number>(5.0);
+  const [targetBand, setTargetBand] = useState<number | null>(null);
   const [queue, setQueue] = useState<RecommendationItem[]>([]);
   const [membership, setMembership] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +49,7 @@ function Dashboard() {
         ]);
         if (analyticsRes?.profile) {
           setProfile(analyticsRes.profile);
-          setTargetBand(analyticsRes.targetBand || 5.0);
+          setTargetBand(analyticsRes.targetBand);
         }
         if (queueRes?.queue) {
           setQueue(queueRes.queue);

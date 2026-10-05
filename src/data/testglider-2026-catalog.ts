@@ -1,6 +1,6 @@
 /**
- * Complete TOEFL iBT 2026 TestGlider Catalog
- * Aggregates all 8 full-length mock tests from the official playlist
+ * TOEFL iBT 2026-Style Practice Test Catalog
+ * Aggregates eight practice sets based on the supplied public mock-test references
  * (https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV)
  * and video https://youtu.be/5giZh7nDyfk, plus Dictation, Shadowing,
  * Vocabulary, Lessons, and Practice banks.

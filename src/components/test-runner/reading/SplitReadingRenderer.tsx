@@ -31,10 +31,7 @@ function renderPassageWithHighlight(text: string, highlightedWord?: string): Rea
   const parts = text.split(regex);
   return parts.map((part, idx) =>
     part.toLowerCase() === highlightedWord.toLowerCase() ? (
-      <mark
-        key={idx}
-        className="bg-amber-200 text-slate-900 font-bold px-1 py-0.5 rounded-xs"
-      >
+      <mark key={idx} className="bg-amber-200 text-slate-900 font-bold px-1 py-0.5 rounded-xs">
         {part}
       </mark>
     ) : (
@@ -55,13 +52,10 @@ export function SplitReadingRenderer({
 }: SplitReadingRendererProps) {
   const payload = (item.payload || {}) as Record<string, unknown>;
   const passageTitle =
-    (payload.title as string) ||
-    (item.sectionType === "reading" ? "Reading Passage" : "Text");
+    (payload.title as string) || (item.sectionType === "reading" ? "Reading Passage" : "Text");
   const rawPassage = (payload.passage as string) || (payload.context as string) || "";
   const questionPrompt =
-    (payload.prompt as string) ||
-    (payload.questionText as string) ||
-    "Choose the best answer:";
+    (payload.prompt as string) || (payload.questionText as string) || "Choose the best answer:";
   const highlightedWord = payload.highlightedWord as string | undefined;
 
   const isChat =
@@ -154,18 +148,18 @@ export function SplitReadingRenderer({
       const matchWithTime = line.match(/^([^:(]+?)\s*\(([^)]+)\)\s*:\s*(.+)$/);
       if (matchWithTime) {
         parsed.push({
-          sender: matchWithTime[1].trim(),
-          time: matchWithTime[2].trim(),
-          text: matchWithTime[3].trim(),
+          sender: matchWithTime[1]!.trim(),
+          time: matchWithTime[2]!.trim(),
+          text: matchWithTime[3]!.trim(),
         });
         continue;
       }
       const matchSimple = line.match(/^([^:]{1,35}):\s*(.+)$/);
       if (matchSimple) {
         parsed.push({
-          sender: matchSimple[1].trim(),
+          sender: matchSimple[1]!.trim(),
           time: "",
-          text: matchSimple[2].trim(),
+          text: matchSimple[2]!.trim(),
         });
       }
     }
@@ -281,9 +275,7 @@ export function SplitReadingRenderer({
 
         {/* Right Column: Comprehension Question & Authentic Borderless Radio Choices */}
         <div className="flex flex-col justify-start space-y-5 max-w-lg">
-          <h3 className="text-base font-bold text-slate-900 leading-relaxed">
-            {questionPrompt}
-          </h3>
+          <h3 className="text-base font-bold text-slate-900 leading-relaxed">{questionPrompt}</h3>
 
           {/* Borderless Radio Choices (Matches q21.jpg & ts_750.jpg) */}
           <div className="space-y-4">

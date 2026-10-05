@@ -21,8 +21,8 @@ export interface CompleteWordsRendererProps {
 interface BlankMeta {
   blankIndex: number;
   prefix?: string;
-  answer?: string;
-  hint?: string;
+  charCount?: number;
+  weight?: number;
 }
 
 export function CompleteWordsRenderer({
@@ -36,7 +36,6 @@ export function CompleteWordsRenderer({
   const passageTemplate =
     (item.payload?.passage as string) || (item.payload?.prompt as string) || "";
   const blanks = (item.payload?.blanks as BlankMeta[]) || [];
-  const correctTokens = (item.payload?.correctTokens as string[]) || [];
 
   // Parse existing answers if already saved
   const [tokens, setTokens] = useState<string[]>(() => {
@@ -76,12 +75,7 @@ export function CompleteWordsRenderer({
     });
 
     // Auto-advance to next blank when expected length is reached
-    const expected =
-      blanks[index]?.answer ||
-      correctTokens[index] ||
-      blanks[index]?.hint ||
-      "";
-    const targetLen = expected.length;
+    const targetLen = blanks[index]?.charCount ?? 0;
     if (targetLen > 0 && sanitized.length >= targetLen && index < blanks.length - 1) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -129,22 +123,14 @@ export function CompleteWordsRenderer({
     if (match && match[1]) {
       const blankIdx = parseInt(match[1], 10);
       const blankData = blanks.find((b) => b.blankIndex === blankIdx) || blanks[blankIdx];
-      const expectedAnswer =
-        blankData?.answer ||
-        correctTokens[blankIdx] ||
-        blankData?.hint ||
-        "";
-      const expectedLen = expectedAnswer.length || 3;
+      const expectedLen = blankData?.charCount || 3;
       const explicitPrefix = blankData?.prefix;
 
       // Extract prefix from pendingPreText
       let prefixToRender = explicitPrefix ?? "";
       let textBeforePrefix = pendingPreText;
 
-      if (
-        prefixToRender &&
-        pendingPreText.toLowerCase().endsWith(prefixToRender.toLowerCase())
-      ) {
+      if (prefixToRender && pendingPreText.toLowerCase().endsWith(prefixToRender.toLowerCase())) {
         textBeforePrefix = pendingPreText.slice(0, pendingPreText.length - prefixToRender.length);
       } else if (explicitPrefix === undefined) {
         // Fallback: extract letters immediately preceding [blankIdx]

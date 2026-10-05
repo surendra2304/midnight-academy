@@ -219,20 +219,20 @@ export interface ScoreReport {
   id: string;
   attemptId: string;
   studentId: string;
-  overallBand: number; // 1.0 - 6.0 scale in 0.5 increments
-  readingBand: number;
-  listeningBand: number;
-  writingBand: number;
-  speakingBand: number;
-  comparableScore: number; // 0 - 120 scale equivalent
+  overallBand: number | null; // practice estimate; null when no section was scored
+  readingBand: number | null;
+  listeningBand: number | null;
+  writingBand: number | null;
+  speakingBand: number | null;
+  comparableScore: number | null; // available only when all four sections were scored
   targetScore: number | null;
   targetGap: number | null;
   summary: string | null;
   skillBreakdown: {
-    reading?: Record<string, number>;
-    listening?: Record<string, number>;
-    writing?: Record<string, number>;
-    speaking?: Record<string, number>;
+    reading?: Record<string, unknown>;
+    listening?: Record<string, unknown>;
+    writing?: Record<string, unknown>;
+    speaking?: Record<string, unknown>;
     [key: string]: unknown;
   };
   generatedAt: string;

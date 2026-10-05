@@ -85,7 +85,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
     subject: "Updated Group Study Room Reservation Policy",
     dateLabel: "Friday, 1:30 PM",
     stimulusText: LIBRARY_BOOKING_EMAIL,
-    questionStem: "What happens if students do not check in at the front desk within 15 minutes of their reservation start time?",
+    questionStem:
+      "What happens if students do not check in at the front desk within 15 minutes of their reservation start time?",
     options: [
       "Their booking is automatically canceled and released to waiting students.",
       "They are charged a ten-dollar late fee on their student account.",
@@ -93,7 +94,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
       "They are barred from using the library for one month.",
     ],
     correctOptionId: "A",
-    explanation: "The second guideline states that if a minimum of 2 students do not check in within 15 minutes, 'the booking will be automatically canceled and released to waiting students' (A).",
+    explanation:
+      "The second guideline states that if a minimum of 2 students do not check in within 15 minutes, 'the booking will be automatically canceled and released to waiting students' (A).",
   }),
   buildDailyLifeItem({
     id: nextId(),
@@ -110,7 +112,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
     questionStem: "What is the maximum duration a student group may reserve a study room per day?",
     options: ["1 hour", "90 minutes", "2 hours", "4 hours"],
     correctOptionId: "C",
-    explanation: "The first bullet states: 'Students may reserve a room for up to 2 hours per day, up to 7 days in advance' (C).",
+    explanation:
+      "The first bullet states: 'Students may reserve a room for up to 2 hours per day, up to 7 days in advance' (C).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -120,7 +123,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
     title: "The Rise of Printed Books in Renaissance Europe (Q13)",
     stimulusText: RENAISSANCE_PRINTING_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 1, why were books rare luxury items in Europe prior to the mid-fifteenth century?",
+    questionStem:
+      "According to paragraph 1, why were books rare luxury items in Europe prior to the mid-fifteenth century?",
     options: [
       "They had to be painstakingly copied by hand by skilled scribes and parchment makers.",
       "Paper and parchment were illegal to import into European cities.",
@@ -128,7 +132,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
       "Monasteries destroyed manuscripts after reading them once.",
     ],
     correctOptionId: "A",
-    explanation: "Paragraph 1 explains that books were copied by hand in monastic scriptoria and urban workshops, requiring months of labor (A).",
+    explanation:
+      "Paragraph 1 explains that books were copied by hand in monastic scriptoria and urban workshops, requiring months of labor (A).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -138,7 +143,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
     title: "The Rise of Printed Books in Renaissance Europe (Q14)",
     stimulusText: RENAISSANCE_PRINTING_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 3, how did the printing press contribute to the Scientific Revolution?",
+    questionStem:
+      "According to paragraph 3, how did the printing press contribute to the Scientific Revolution?",
     options: [
       "It allowed scientists to share empirical diagrams and mathematical tables without copying errors.",
       "It replaced Latin with German as the sole language of mathematics.",
@@ -146,7 +152,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
       "It eliminated the study of classical Greek and Roman treatises.",
     ],
     correctOptionId: "A",
-    explanation: "Paragraph 3 states that 'scientists could share empirical diagrams and mathematical tables without the copying errors that had plagued handwritten manuscripts, laying the groundwork for the Scientific Revolution' (A).",
+    explanation:
+      "Paragraph 3 states that 'scientists could share empirical diagrams and mathematical tables without the copying errors that had plagued handwritten manuscripts, laying the groundwork for the Scientific Revolution' (A).",
   }),
 
   // =========================================================================
@@ -181,7 +188,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
     title: "Geothermal Energy Systems (M2 Q11)",
     stimulusText: GEOTHERMAL_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 1, what is a key advantage of geothermal energy over solar and wind power?",
+    questionStem:
+      "According to paragraph 1, what is a key advantage of geothermal energy over solar and wind power?",
     options: [
       "It requires no drilling or underground equipment.",
       "It generates electricity only during peak afternoon hours.",
@@ -189,7 +197,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
       "It provides a stable, continuous baseload electricity supply regardless of weather or daylight.",
     ],
     correctOptionId: "D",
-    explanation: "Paragraph 1 states that unlike solar and wind power, 'geothermal power plants provide a stable, continuous baseload electricity supply twenty-four hours a day' (D).",
+    explanation:
+      "Paragraph 1 states that unlike solar and wind power, 'geothermal power plants provide a stable, continuous baseload electricity supply twenty-four hours a day' (D).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -199,7 +208,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
     title: "Geothermal Energy Systems (M2 Lower Q1)",
     stimulusText: GEOTHERMAL_PASSAGE,
     questionSubType: "factual",
-    questionStem: "According to paragraph 2, why is cooled water reinjected into the underground reservoir in hydrothermal plants?",
+    questionStem:
+      "According to paragraph 2, why is cooled water reinjected into the underground reservoir in hydrothermal plants?",
     options: [
       "To sustain reservoir pressure and thermal output",
       "To freeze surrounding volcanic magma",
@@ -207,7 +217,8 @@ export const VENUS_ITEMS: SeedQuestionItemRow[] = [
       "To clean the blades of wind turbines",
     ],
     correctOptionId: "A",
-    explanation: "Paragraph 2 states that 'the cooled water is reinjected into the reservoir to sustain pressure and thermal output' (A).",
+    explanation:
+      "Paragraph 2 states that 'the cooled water is reinjected into the reservoir to sustain pressure and thermal output' (A).",
   }),
 
   // =========================================================================
@@ -231,7 +242,8 @@ Speaker: Attention everyone. We are excited to announce that the university's an
       "Next Saturday afternoon",
     ],
     correctOptionId: "A",
-    explanation: "The announcer states that the job fair will take place 'next Wednesday from 10:00 a.m. to 4:00 p.m. in the main hall' (A).",
+    explanation:
+      "The announcer states that the job fair will take place 'next Wednesday from 10:00 a.m. to 4:00 p.m. in the main hall' (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -262,7 +274,8 @@ Speaker: Welcome everyone. Today we'll be discussing the schedule for our upcomi
     title: "Sociology Class — Social Capital (Q3)",
     transcript: SOCIAL_CAPITAL_TRANSCRIPT,
     academicDomain: "Sociology",
-    questionStem: "Why does the professor mention Boston's community policing and hurricane mutual aid groups?",
+    questionStem:
+      "Why does the professor mention Boston's community policing and hurricane mutual aid groups?",
     options: [
       "To argue that government emergency agencies are no longer needed",
       "To provide real-world examples of how social capital builds trust, cooperation, and community resilience",
@@ -270,7 +283,8 @@ Speaker: Welcome everyone. Today we'll be discussing the schedule for our upcomi
       "To explain how police officers are trained at the university",
     ],
     correctOptionId: "B",
-    explanation: "The professor uses Boston's community policing and hurricane mutual aid groups to illustrate how social capital produces real-world trust, cooperation, and resilience (B).",
+    explanation:
+      "The professor uses Boston's community policing and hurricane mutual aid groups to illustrate how social capital produces real-world trust, cooperation, and resilience (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -281,7 +295,8 @@ Speaker: Welcome everyone. Today we'll be discussing the schedule for our upcomi
     title: "Sociology Class — Social Capital (Q4)",
     transcript: SOCIAL_CAPITAL_TRANSCRIPT,
     academicDomain: "Sociology",
-    questionStem: "According to the professor, what is a potential downside of excessive bonding within a group?",
+    questionStem:
+      "According to the professor, what is a potential downside of excessive bonding within a group?",
     options: [
       "It reduces cooperation among members of the same group.",
       "It can lead to the exclusion of outsiders and an 'us and them' mentality.",
@@ -289,7 +304,8 @@ Speaker: Welcome everyone. Today we'll be discussing the schedule for our upcomi
       "It lowers financial capital in the banking sector.",
     ],
     correctOptionId: "B",
-    explanation: "The professor warns: 'Excessive bonding within a group can lead to exclusion of outsiders, a kind of us and them mentality' (B).",
+    explanation:
+      "The professor warns: 'Excessive bonding within a group can lead to exclusion of outsiders, a kind of us and them mentality' (B).",
   }),
 
   // =========================================================================
@@ -311,7 +327,8 @@ Speaker: Welcome everyone. Today we'll be discussing the schedule for our upcomi
       "No, I didn't attend the lecture yesterday.",
     ],
     correctOptionId: "A",
-    explanation: "Thanking the speaker for offering to help is the direct and natural response (A).",
+    explanation:
+      "Thanking the speaker for offering to help is the direct and natural response (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -333,7 +350,8 @@ Woman: I get that. Just make sure you pace yourself. Take breaks so you don't bu
       "All quiet study areas have been moved to the cafeteria.",
     ],
     correctOptionId: "B",
-    explanation: "Anna states: 'It's still open until 10:00 p.m. on weekdays, even during the renovations. They've just relocated the study areas to the east wing temporarily' (B).",
+    explanation:
+      "Anna states: 'It's still open until 10:00 p.m. on weekdays, even during the renovations. They've just relocated the study areas to the east wing temporarily' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -357,7 +375,8 @@ Man: Make sure to let them know about that. Maybe they can prioritize your reque
       "Switch to a different internet company next month",
     ],
     correctOptionId: "C",
-    explanation: "The man advises: 'Make sure to let them know about that. Maybe they can prioritize your request' (C).",
+    explanation:
+      "The man advises: 'Make sure to let them know about that. Maybe they can prioritize your request' (C).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -368,7 +387,8 @@ Man: Make sure to let them know about that. Maybe they can prioritize your reque
     title: "Art Podcast — Analytical vs. Synthetic Cubism (M2 Q4)",
     transcript: CUBISM_TRANSCRIPT,
     academicDomain: "Art History",
-    questionStem: "According to the speaker, how did Synthetic Cubism differ from Analytical Cubism?",
+    questionStem:
+      "According to the speaker, how did Synthetic Cubism differ from Analytical Cubism?",
     options: [
       "Synthetic Cubism returned to traditional single-viewpoint Renaissance perspective.",
       "Synthetic Cubism introduced brighter colors and collage techniques using materials like newspapers and fabric.",
@@ -376,7 +396,8 @@ Man: Make sure to let them know about that. Maybe they can prioritize your reque
       "Synthetic Cubism was practiced exclusively in nineteenth-century Italy.",
     ],
     correctOptionId: "B",
-    explanation: "The speaker states: 'Analytical Cubism focused on deconstructing objects into basic geometric forms and muted colors, whereas Synthetic Cubism introduced brighter colors and collage techniques, integrating different materials like newspapers and fabric into the artwork' (B).",
+    explanation:
+      "The speaker states: 'Analytical Cubism focused on deconstructing objects into basic geometric forms and muted colors, whereas Synthetic Cubism introduced brighter colors and collage techniques, integrating different materials like newspapers and fabric into the artwork' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -395,7 +416,8 @@ Man: Make sure to let them know about that. Maybe they can prioritize your reque
       "A lack of color receptors in the retina",
     ],
     correctOptionId: "B",
-    explanation: "The podcast host explains: 'Neurologists theorize that synesthesia stems from heightened neural connections between sensory regions, allowing stimulation of one sense to trigger involuntary experiences with another' (B).",
+    explanation:
+      "The podcast host explains: 'Neurologists theorize that synesthesia stems from heightened neural connections between sensory regions, allowing stimulation of one sense to trigger involuntary experiences with another' (B).",
   }),
 
   // =========================================================================
@@ -425,14 +447,8 @@ Man: Make sure to let them know about that. Maybe they can prioritize your reque
     questionNumber: 3,
     speakerAName: "David",
     contextPrompt: "How did your manuscript peer review go?",
-    targetSentence:
-      "The feedback that the reviewers gave me was very constructive.",
-    wordBank: [
-      "that the reviewers",
-      "The feedback",
-      "was very constructive",
-      "gave me",
-    ],
+    targetSentence: "The feedback that the reviewers gave me was very constructive.",
+    wordBank: ["that the reviewers", "The feedback", "was very constructive", "gave me"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -458,14 +474,8 @@ Man: Make sure to let them know about that. Maybe they can prioritize your reque
     questionNumber: 6,
     speakerAName: "Olivia",
     contextPrompt: "Course registration opens tomorrow morning.",
-    targetSentence:
-      "I have not decided what classes I will take next semester.",
-    wordBank: [
-      "what classes",
-      "I have not decided",
-      "next semester",
-      "I will take",
-    ],
+    targetSentence: "I have not decided what classes I will take next semester.",
+    wordBank: ["what classes", "I have not decided", "next semester", "I will take"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -474,12 +484,7 @@ Man: Make sure to let them know about that. Maybe they can prioritize your reque
     speakerAName: "Lucas",
     contextPrompt: "Did Sarah call you about the volunteer shift?",
     targetSentence: "She asked me whether I would be available this weekend.",
-    wordBank: [
-      "whether",
-      "She asked me",
-      "this weekend",
-      "I would be available",
-    ],
+    wordBank: ["whether", "She asked me", "this weekend", "I would be available"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -487,14 +492,8 @@ Man: Make sure to let them know about that. Maybe they can prioritize your reque
     questionNumber: 8,
     speakerAName: "Emma",
     contextPrompt: "Why are you at the computer repair shop?",
-    targetSentence:
-      "The laptop that I bought last week is already having issues.",
-    wordBank: [
-      "that I bought",
-      "The laptop",
-      "is already having issues",
-      "last week",
-    ],
+    targetSentence: "The laptop that I bought last week is already having issues.",
+    wordBank: ["that I bought", "The laptop", "is already having issues", "last week"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -512,12 +511,7 @@ Man: Make sure to let them know about that. Maybe they can prioritize your reque
     speakerAName: "Grace",
     contextPrompt: "The department chair stopped by our lab earlier.",
     targetSentence: "He wants to know who is responsible for the project.",
-    wordBank: [
-      "who is",
-      "He wants to know",
-      "for the project",
-      "responsible",
-    ],
+    wordBank: ["who is", "He wants to know", "for the project", "responsible"],
   }),
   buildWriteEmailItem({
     id: nextId(),
@@ -622,8 +616,7 @@ Human culture is not merely a sequence of external actions; it is rooted in shar
     blueprintId: VENUS_BLUEPRINT_ID,
     questionNumber: 6,
     scenarioTitle: "Community Center Visitor Orientation",
-    sentence:
-      "We have a notice board for updates on community events and important announcements.",
+    sentence: "We have a notice board for updates on community events and important announcements.",
     responseSeconds: 12,
   }),
   buildListenRepeatItem({
@@ -631,8 +624,7 @@ Human culture is not merely a sequence of external actions; it is rooted in shar
     blueprintId: VENUS_BLUEPRINT_ID,
     questionNumber: 7,
     scenarioTitle: "Community Center Visitor Orientation",
-    sentence:
-      "If you're interested in learning more about our new courses, pick up a free flyer.",
+    sentence: "If you're interested in learning more about our new courses, pick up a free flyer.",
     responseSeconds: 12,
   }),
   buildTakeInterviewItem({
@@ -686,7 +678,7 @@ export const VENUS_BLUEPRINT: SeedBlueprintRow = {
   title: "Venus | Full Test",
   slug: "venus-full-test-2026",
   description:
-    "Official TOEFL iBT 2026 TestGlider Mock Exam #3 (Venus — Video uBBSiFNUemM). Features Adaptive Reading (Plant Pollination, Study Room Policy, Renaissance Printing Press, Public Health, Geothermal Energy), Listening (Job Fair, Charity Bake Sale, Social Capital, Cubism, Synesthesia in Music), Writing (10 Build a Sentence, Email to Dr. Jones, Anthropology Fieldwork Discussion), and Speaking (Community Center Tour & Dietary Habits Interview).",
+    "Independent TOEFL iBT 2026-Style Practice Test #3 (Venus — Video uBBSiFNUemM). Features Reading (Plant Pollination, Study Room Policy, Renaissance Printing Press, Public Health, Geothermal Energy), Listening (Job Fair, Charity Bake Sale, Social Capital, Cubism, Synesthesia in Music), Writing (10 Build a Sentence, Email to Dr. Jones, Anthropology Fieldwork Discussion), and Speaking (Community Center Tour & Dietary Habits Interview).",
   exam_Type: "full_mock",
   total_Duration_Seconds: 5160,
   blueprint_Json: {
@@ -728,9 +720,8 @@ export const VENUS_BLUEPRINT: SeedBlueprintRow = {
     planetName: "Venus",
     videoUrl: "https://youtu.be/uBBSiFNUemM",
     videoId: "uBBSiFNUemM",
-    playlistUrl:
-      "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
-    difficultyLabel: "Standard 2026 Adaptive",
+    playlistUrl: "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
+    difficultyLabel: "Standard 2026 Practice",
   },
   is_Published: true,
   created_At: "2026-09-03T10:00:00.000Z",

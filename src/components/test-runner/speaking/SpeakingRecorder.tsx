@@ -5,15 +5,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import type { ClientContentItem } from "@/lib/tests/session-state";
-import {
-  Mic,
-  RotateCcw,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  Keyboard,
-} from "lucide-react";
+import { Mic, RotateCcw, AlertCircle, CheckCircle2, Clock, Loader2, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AudioPlayer } from "../listening/AudioPlayer";
 import { uploadSpeakingAudio } from "@/lib/speaking/speaking.functions";
@@ -66,7 +58,7 @@ export function SpeakingRecorder({
     : (payload.responseLimitSeconds as number) || responseLimitSeconds;
   const actualPrepSeconds = isListenRepeat
     ? 0
-    : (payload.preparationSeconds as number) ?? preparationSeconds;
+    : ((payload.preparationSeconds as number) ?? preparationSeconds);
 
   const [prepRemaining, setPrepRemaining] = useState(actualPrepSeconds);
   const [recordRemaining, setRecordRemaining] = useState(actualResponseLimit);
@@ -150,7 +142,8 @@ export function SpeakingRecorder({
       mediaStreamRef.current = stream;
 
       const mimeType =
-        typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        typeof MediaRecorder !== "undefined" &&
+        MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
           ? "audio/webm;codecs=opus"
           : typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/webm")
             ? "audio/webm"
@@ -308,9 +301,7 @@ export function SpeakingRecorder({
 
   const promptText =
     (payload.prompt as string) ||
-    (isListenRepeat
-      ? "Listen and repeat only once."
-      : "Please answer the interviewer's question.");
+    (isListenRepeat ? "Listen and repeat only once." : "Please answer the interviewer's question.");
 
   const formatTimerClock = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -387,28 +378,8 @@ export function SpeakingRecorder({
           <div className="rounded-xl border border-blue-200 bg-slate-50/70 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold text-slate-800">
-                Spoken Response Transcript (for AI Rubric Evaluation):
+                Optional transcript entry for practice feedback:
               </p>
-              {speechText && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const sample =
-                      (payload.modelAnswer as string) ||
-                      (payload.sampleAnswer as string) ||
-                      speechText;
-                    setManualText(sample);
-                    onAnswerChange(sample, {
-                      mimeType: "text/plain",
-                      durationSeconds: actualResponseLimit,
-                    });
-                    setStage("recorded");
-                  }}
-                  className="text-[11px] font-semibold text-[#0f3b82] hover:underline cursor-pointer"
-                >
-                  Fill Sample Response
-                </button>
-              )}
             </div>
             <textarea
               className="w-full h-24 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0f3b82]"
@@ -481,9 +452,7 @@ export function SpeakingRecorder({
               <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-bold text-amber-700">
                 <Clock className="size-3.5 animate-pulse" /> Preparation Time
               </div>
-              <div className="text-4xl font-black text-slate-900 font-mono">
-                {prepRemaining}s
-              </div>
+              <div className="text-4xl font-black text-slate-900 font-mono">{prepRemaining}s</div>
               <p className="text-xs text-slate-500">
                 Organize your thoughts. Recording starts in {prepRemaining} seconds.
               </p>
@@ -533,9 +502,7 @@ export function SpeakingRecorder({
           {stage === "uploading" && (
             <div className="space-y-3">
               <Loader2 className="size-7 animate-spin text-[#0f3b82] mx-auto" />
-              <p className="text-xs font-semibold text-slate-700">
-                Saving speech response...
-              </p>
+              <p className="text-xs font-semibold text-slate-700">Saving speech response...</p>
             </div>
           )}
 
@@ -554,12 +521,7 @@ export function SpeakingRecorder({
                 </p>
               )}
               <div className="pt-2 flex justify-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRerecord}
-                  className="text-xs"
-                >
+                <Button variant="outline" size="sm" onClick={handleRerecord} className="text-xs">
                   <RotateCcw className="size-3 mr-1.5" /> Re-record Response
                 </Button>
               </div>

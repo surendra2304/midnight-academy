@@ -86,7 +86,8 @@ export const NEPTUNE_ITEMS: SeedQuestionItemRow[] = [
     title: "Acoustic Amplification Before Electricity (Q21)",
     stimulusText: PHONOFIDDLE_PASSAGE,
     questionSubType: "factual",
-    questionStem: "How did the phonofiddle amplify the sound of vibrating strings without electricity?",
+    questionStem:
+      "How did the phonofiddle amplify the sound of vibrating strings without electricity?",
     options: [
       "It transmitted string vibrations from the bridge to a diaphragm attached to a flared conical metal horn.",
       "It used a battery-powered vacuum tube hidden inside the neck.",
@@ -94,7 +95,8 @@ export const NEPTUNE_ITEMS: SeedQuestionItemRow[] = [
       "It connected the violin strings to a grand piano soundboard.",
     ],
     correctOptionId: "A",
-    explanation: "Paragraph 2 states that 'the phonofiddle transmitted string vibrations from the bridge directly to a flexible mica or aluminum diaphragm attached to a flared conical metal horn' (A).",
+    explanation:
+      "Paragraph 2 states that 'the phonofiddle transmitted string vibrations from the bridge directly to a flexible mica or aluminum diaphragm attached to a flared conical metal horn' (A).",
   }),
 
   // =========================================================================
@@ -129,7 +131,8 @@ export const NEPTUNE_ITEMS: SeedQuestionItemRow[] = [
     title: "Baroque Chiaroscuro and Georges de La Tour (M2 Q11)",
     stimulusText: CHIAROSCURO_PASSAGE,
     questionSubType: "factual",
-    questionStem: "What is a distinctive feature of Georges de La Tour's Baroque paintings described in paragraph 2?",
+    questionStem:
+      "What is a distinctive feature of Georges de La Tour's Baroque paintings described in paragraph 2?",
     options: [
       "Bright outdoor landscapes painted at midday",
       "Nocturnal interior scenes illuminated by a single candle flame with simplified geometric forms",
@@ -137,7 +140,8 @@ export const NEPTUNE_ITEMS: SeedQuestionItemRow[] = [
       "Abstract collages made from newsprint and fabric",
     ],
     correctOptionId: "B",
-    explanation: "Paragraph 2 explains that De La Tour's nocturnal scenes 'frequently feature a single visible or concealed candle flame as the sole source of illumination... across smooth, simplified geometric forms' (B).",
+    explanation:
+      "Paragraph 2 explains that De La Tour's nocturnal scenes 'frequently feature a single visible or concealed candle flame as the sole source of illumination... across smooth, simplified geometric forms' (B).",
   }),
   buildAcademicReadingItem({
     id: nextId(),
@@ -155,7 +159,8 @@ export const NEPTUNE_ITEMS: SeedQuestionItemRow[] = [
       "Painting frescoes on wet plaster ceilings",
     ],
     correctOptionId: "B",
-    explanation: "Paragraph 1 defines chiaroscuro as 'an Italian term meaning light-dark—which used strong tonal contrasts between brightly illuminated figures and deeply shaded backgrounds to create the illusion of three-dimensional volume' (B).",
+    explanation:
+      "Paragraph 1 defines chiaroscuro as 'an Italian term meaning light-dark—which used strong tonal contrasts between brightly illuminated figures and deeply shaded backgrounds to create the illusion of three-dimensional volume' (B).",
   }),
 
   // =========================================================================
@@ -179,7 +184,8 @@ Speaker: Hello everyone. Just a quick reminder that the university's annual Cult
       "Because performers need help setting up chairs",
     ],
     correctOptionId: "B",
-    explanation: "The speaker says: 'There are special door prizes for the first 50 students, so try to arrive early' (B).",
+    explanation:
+      "The speaker says: 'There are special door prizes for the first 50 students, so try to arrive early' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -199,7 +205,8 @@ Advisor: Students, next Monday will be the first day you may begin selecting you
       "For off-campus community service",
     ],
     correctOptionId: "B",
-    explanation: "The advisor states: 'in-person classes will be held Monday through Thursday, and Fridays will be reserved for e-learning and attending office hours' (B).",
+    explanation:
+      "The advisor states: 'in-person classes will be held Monday through Thursday, and Fridays will be reserved for e-learning and attending office hours' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -210,7 +217,8 @@ Advisor: Students, next Monday will be the first day you may begin selecting you
     title: "Biology Podcast — Centipedes vs. Millipedes (Q3)",
     transcript: CENTIPEDES_TRANSCRIPT,
     academicDomain: "Biology / Zoology",
-    questionStem: "According to the speaker, how can you distinguish a millipede from a centipede by looking at its legs?",
+    questionStem:
+      "According to the speaker, how can you distinguish a millipede from a centipede by looking at its legs?",
     options: [
       "Millipedes have two sets of legs per body segment positioned underneath their body, whereas centipedes have one set per segment on the side.",
       "Centipedes have wings in addition to their legs.",
@@ -218,7 +226,8 @@ Advisor: Students, next Monday will be the first day you may begin selecting you
       "Centipedes have no legs on the front half of their body.",
     ],
     correctOptionId: "A",
-    explanation: "The host explains that millipedes have two sets of legs per segment underneath their body, while centipedes have one set of legs per segment positioned on the side (A).",
+    explanation:
+      "The host explains that millipedes have two sets of legs per segment underneath their body, while centipedes have one set of legs per segment positioned on the side (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -242,7 +251,8 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
       "Buy him English muffins from the bakery",
     ],
     correctOptionId: "B",
-    explanation: "At the end of the conversation, Laura says: 'I'll show you how to make them!' (B).",
+    explanation:
+      "At the end of the conversation, Laura says: 'I'll show you how to make them!' (B).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -253,7 +263,8 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
     title: "Education Lecture — Modeling vs. Scaffolding (M2 Q2)",
     transcript: MODELING_SCAFFOLDING_TRANSCRIPT,
     academicDomain: "Education & Pedagogy",
-    questionStem: "According to the professor, what is the key difference between modeling and scaffolding in instruction?",
+    questionStem:
+      "According to the professor, what is the key difference between modeling and scaffolding in instruction?",
     options: [
       "Modeling demonstrates a process by example, whereas scaffolding provides temporary supports that are gradually removed as students gain independence.",
       "Scaffolding is used only in university courses, while modeling is only for elementary schools.",
@@ -261,7 +272,8 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
       "Scaffolding is a permanent grading rubric used on final exams.",
     ],
     correctOptionId: "A",
-    explanation: "The professor states: 'Modeling shows the process—it's about demonstration. Scaffolding, on the other hand, is about temporary support that helps students take steps toward independence' (A).",
+    explanation:
+      "The professor states: 'Modeling shows the process—it's about demonstration. Scaffolding, on the other hand, is about temporary support that helps students take steps toward independence' (A).",
   }),
   buildListeningItem({
     id: nextId(),
@@ -280,7 +292,8 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
       "It is named after the town where the first textbook was printed.",
     ],
     correctOptionId: "B",
-    explanation: "The professor explains: 'The term comes from construction. Just as scaffolds support workers until a building can stand on its own, instructional scaffolds support students until they gain mastery' (B).",
+    explanation:
+      "The professor explains: 'The term comes from construction. Just as scaffolds support workers until a building can stand on its own, instructional scaffolds support students until they gain mastery' (B).",
   }),
 
   // =========================================================================
@@ -293,12 +306,7 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
     speakerAName: "Classmate",
     contextPrompt: "Which campus library branch do you prefer studying in?",
     targetSentence: "The library that has private study rooms is the best.",
-    wordBank: [
-      "that has",
-      "The library",
-      "is the best",
-      "private study rooms",
-    ],
+    wordBank: ["that has", "The library", "is the best", "private study rooms"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -316,12 +324,7 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
     speakerAName: "Neighbor",
     contextPrompt: "I'm looking for fresh local produce this weekend.",
     targetSentence: "Make sure to check out the farmer's market on Saturday.",
-    wordBank: [
-      "to check out",
-      "Make sure",
-      "on Saturday",
-      "the farmer's market",
-    ],
+    wordBank: ["to check out", "Make sure", "on Saturday", "the farmer's market"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -339,12 +342,7 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
     speakerAName: "Roommate",
     contextPrompt: "Have you finished setting up your home office?",
     targetSentence: "The desk that I ordered last month still hasn't arrived.",
-    wordBank: [
-      "that I ordered",
-      "The desk",
-      "still hasn't arrived",
-      "last month",
-    ],
+    wordBank: ["that I ordered", "The desk", "still hasn't arrived", "last month"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -353,12 +351,7 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
     speakerAName: "Coworker",
     contextPrompt: "Elena is taking two weeks off in August.",
     targetSentence: "Did she tell you where she is going for her vacation?",
-    wordBank: [
-      "where she",
-      "Did she tell you",
-      "for her vacation",
-      "is going",
-    ],
+    wordBank: ["where she", "Did she tell you", "for her vacation", "is going"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -376,12 +369,7 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
     speakerAName: "Resident",
     contextPrompt: "I'd like to start working out at the community center.",
     targetSentence: "Do you know if there is a fee to use the gym?",
-    wordBank: [
-      "if there is",
-      "Do you know",
-      "to use the gym",
-      "a fee",
-    ],
+    wordBank: ["if there is", "Do you know", "to use the gym", "a fee"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -389,14 +377,8 @@ Woman: I like mine with honey, or I'll use them to make sandwiches for lunch. I'
     questionNumber: 9,
     speakerAName: "Applicant",
     contextPrompt: "I'm preparing my application for the lab assistant role.",
-    targetSentence:
-      "I want to know what requirements are needed for the position.",
-    wordBank: [
-      "what requirements",
-      "I want to know",
-      "for the position",
-      "are needed",
-    ],
+    targetSentence: "I want to know what requirements are needed for the position.",
+    wordBank: ["what requirements", "I want to know", "for the position", "are needed"],
   }),
   buildSentenceItem({
     id: nextId(),
@@ -494,8 +476,7 @@ While Marcus is correct that tools like artificial intelligence are new, the soc
     blueprintId: NEPTUNE_BLUEPRINT_ID,
     questionNumber: 4,
     scenarioTitle: "Woodworking Workshop — Building a Birdhouse",
-    sentence:
-      "Make a round hole that the bird will use as the entrance to the house.",
+    sentence: "Make a round hole that the bird will use as the entrance to the house.",
     responseSeconds: 10,
   }),
   buildListenRepeatItem({
@@ -503,8 +484,7 @@ While Marcus is correct that tools like artificial intelligence are new, the soc
     blueprintId: NEPTUNE_BLUEPRINT_ID,
     questionNumber: 5,
     scenarioTitle: "Woodworking Workshop — Building a Birdhouse",
-    sentence:
-      "Glue each side of the house together and give it some time to dry.",
+    sentence: "Glue each side of the house together and give it some time to dry.",
     responseSeconds: 10,
   }),
   buildListenRepeatItem({
@@ -512,8 +492,7 @@ While Marcus is correct that tools like artificial intelligence are new, the soc
     blueprintId: NEPTUNE_BLUEPRINT_ID,
     questionNumber: 6,
     scenarioTitle: "Woodworking Workshop — Building a Birdhouse",
-    sentence:
-      "To attach the roof, hammer the nails in gently so the wood doesn't split or crack.",
+    sentence: "To attach the roof, hammer the nails in gently so the wood doesn't split or crack.",
     responseSeconds: 12,
   }),
   buildListenRepeatItem({
@@ -521,8 +500,7 @@ While Marcus is correct that tools like artificial intelligence are new, the soc
     blueprintId: NEPTUNE_BLUEPRINT_ID,
     questionNumber: 7,
     scenarioTitle: "Woodworking Workshop — Building a Birdhouse",
-    sentence:
-      "To protect the birdhouse from weather, seal it well so it will last for years.",
+    sentence: "To protect the birdhouse from weather, seal it well so it will last for years.",
     responseSeconds: 12,
   }),
   buildTakeInterviewItem({
@@ -576,7 +554,7 @@ export const NEPTUNE_BLUEPRINT: SeedBlueprintRow = {
   title: "Neptune | Full Test",
   slug: "neptune-full-test-2026",
   description:
-    "Official TOEFL iBT 2026 TestGlider Mock Exam #7 (Neptune — Video ZXDFqmJg9n0). Features Adaptive Reading (Artisanal Craftwork, Folk Music & Lyrics, Phonofiddle Acoustic Amplification, Neural Networks, Baroque Chiaroscuro), Listening (Cultural Night, New E-Learning Friday Schedule, Centipedes vs. Millipedes, Instructional Modeling vs. Scaffolding), Writing (10 Build a Sentence, Leaking Coffeemaker Email, Dr. Achebe History Discussion), and Speaking (Building a Wooden Birdhouse & DIY Interview).",
+    "Independent TOEFL iBT 2026-Style Practice Test #7 (Neptune — Video ZXDFqmJg9n0). Features Reading (Artisanal Craftwork, Folk Music & Lyrics, Phonofiddle Acoustic Amplification, Neural Networks, Baroque Chiaroscuro), Listening (Cultural Night, New E-Learning Friday Schedule, Centipedes vs. Millipedes, Instructional Modeling vs. Scaffolding), Writing (10 Build a Sentence, Leaking Coffeemaker Email, Dr. Achebe History Discussion), and Speaking (Building a Wooden Birdhouse & DIY Interview).",
   exam_Type: "full_mock",
   total_Duration_Seconds: 5160,
   blueprint_Json: {
@@ -618,9 +596,8 @@ export const NEPTUNE_BLUEPRINT: SeedBlueprintRow = {
     planetName: "Neptune",
     videoUrl: "https://youtu.be/ZXDFqmJg9n0",
     videoId: "ZXDFqmJg9n0",
-    playlistUrl:
-      "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
-    difficultyLabel: "Standard 2026 Adaptive",
+    playlistUrl: "https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV",
+    difficultyLabel: "Standard 2026 Practice",
   },
   is_Published: true,
   created_At: "2026-09-07T10:00:00.000Z",
