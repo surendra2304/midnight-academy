@@ -124,6 +124,23 @@ export class MockEvaluationPipelineService {
       throw new Error(`Failed to load attempt responses: ${respErr.message}`);
     }
 
+    // Re-evaluation (retry after a failed/stale scoring run) must be idempotent:
+    // clear any prior constructed-response evaluations for this attempt's
+    // responses so each response carries exactly one fresh feedback row.
+    const attemptRespIds = (responses ?? []).map((r) => r.id);
+    if (attemptRespIds.length > 0) {
+      const { error: staleDelErr } = await supabaseAdmin
+        .from("evaluations")
+        .delete()
+        .in("response_id", attemptRespIds);
+      if (staleDelErr) {
+        console.warn(
+          "[EvaluationPipeline] Could not clear stale evaluations:",
+          staleDelErr.message,
+        );
+      }
+    }
+
     const contentItemIds = (responses ?? []).map((r) => r.content_item_id);
 
     const { data: allOptions } = await supabaseAdmin
@@ -264,7 +281,9 @@ export class MockEvaluationPipelineService {
 
         sectionSummaries[secType].rawScore += sentScore.earnedPoints;
         sectionSummaries[secType].maxScore += sentScore.maxPoints;
-        sectionBands[secType].push(sentScore.isCorrect ? 6.0 : 1.0);
+        // Build-a-Sentence partial credit (0.5) maps to a middle band instead of
+        // collapsing to the floor, so the writing band reflects near-correct grammar.
+        sectionBands[secType].push(sentScore.isCorrect ? 6.0 : sentScore.score >= 0.4 ? 3.5 : 1.0);
       }
       // C. AI-Evaluated Writing Tasks (Write an Email, Academic Discussion)
       else if (itemType === "write_email" || itemType === "academic_discussion") {

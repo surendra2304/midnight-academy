@@ -4,6 +4,7 @@
  */
 
 import type { ToeflExamMode, ToeflSectionType, ToeflItemType } from "@/types/toefl";
+import type { JsonRecord } from "@/types/serializable";
 
 export type SessionStateStatus =
   | "idle"
@@ -22,7 +23,7 @@ export interface ClientContentItem {
   itemType: ToeflItemType;
   difficulty: string;
   skillTags: string[];
-  payload: Record<string, any>;
+  payload: JsonRecord;
   options: Array<{
     id: string;
     optionKey: string;
@@ -53,7 +54,7 @@ export interface ClientTestBlueprint {
 
 export interface ItemResponseState {
   rawAnswer: string | null;
-  normalizedAnswer: Record<string, any>;
+  normalizedAnswer: JsonRecord;
   isAnswered: boolean;
   isFlagged: boolean;
   timeSpentMs: number;
@@ -80,7 +81,7 @@ export type SessionEvent =
       type: "SAVE_RESPONSE";
       contentItemId: string;
       rawAnswer: string | null;
-      normalizedAnswer?: Record<string, unknown>;
+      normalizedAnswer?: JsonRecord;
       timeSpentMs?: number;
       timestamp: string;
     }

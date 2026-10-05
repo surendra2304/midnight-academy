@@ -9,6 +9,7 @@ import { speakingEvaluationService } from "@/lib/evaluation/speaking-evaluation.
 import { speechToTextProvider } from "@/lib/speaking/transcription-service.server";
 import { sanitizeStudentPayload } from "@/lib/tests/blueprint-sanitizer";
 import type { ToeflItemType, ToeflSectionType } from "@/types/toefl";
+import type { JsonRecord } from "@/types/serializable";
 
 const taskTypeSchema = z.enum([
   "complete_words",
@@ -31,7 +32,7 @@ export interface PracticeItemDetail {
   sectionType: ToeflSectionType;
   difficulty: string;
   skillTags: string[];
-  payload: Record<string, any>;
+  payload: JsonRecord;
   options: Array<{
     id: string;
     optionKey: string;

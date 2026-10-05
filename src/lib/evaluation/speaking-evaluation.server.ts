@@ -5,6 +5,7 @@ import {
   type EvaluationRequest,
   type StructuredEvaluationResult,
 } from "./evaluation-service.server";
+import { analyzeSubstantiveText } from "./rubric-guards";
 
 export interface SpeakingEvaluationRequest extends Omit<EvaluationRequest, "studentResponse"> {
   transcript: string;
@@ -89,7 +90,9 @@ function buildDeterministicSpeakingEvaluation(
 
     return {
       score_band: band,
-      task_score: Math.round((band / 6) * 100),
+      // A transcript that reproduces none of the target earns zero credit, so a
+      // wrong answer can never outscore a skipped item (which also maps to 0).
+      task_score: accuracy === 0 ? 0 : Math.round((band / 6) * 100),
       traits: { task_fulfillment: band, language_use: band },
       strengths:
         accuracy >= 0.85
@@ -122,6 +125,33 @@ function buildDeterministicSpeakingEvaluation(
   // Transcript-only estimate: audio delivery and pronunciation are deliberately not scored here.
   const wordCount = studentWords.length;
   const targetWordsMin = 45;
+  // Anti-gaming guard: a transcript must read as connected, substantive speech.
+  // Random keyword dumps (no grammar words) or fragments shorter than a
+  // one-turn answer receive the rubric floor with zero credit instead of
+  // harvesting length/diversity points.
+  const substance = analyzeSubstantiveText(transcript, 10);
+  if (!substance.hasMinimumLength || !substance.looksCoherent) {
+    return {
+      score_band: 1,
+      task_score: 0,
+      traits: { task_fulfillment: 1, language_use: 1 },
+      strengths: [],
+      issues: [
+        substance.hasMinimumLength
+          ? "The transcript does not read as connected spoken prose, so no rubric credit could be awarded."
+          : `The transcript contains only ${substance.wordCount} usable words; extend the answer to develop a clear response.`,
+      ],
+      corrections: [],
+      improved_response: modelAnswer,
+      next_actions: [
+        "Speak for the full response window and develop one idea with a reason and an example.",
+      ],
+      confidence: 0.4,
+      rubric_version: request.rubricVersion ?? "2026.1",
+      model: "midnight-rule-based-speaking-v1",
+    };
+  }
+
   const lengthFactor = Math.min(1, wordCount / targetWordsMin);
   const uniqueRatio = wordCount > 0 ? new Set(studentWords).size / wordCount : 0;
   const taskFulfillment = Math.max(1, Math.min(6, Math.round((1 + lengthFactor * 5) * 2) / 2));
@@ -162,8 +192,8 @@ function buildDeterministicSpeakingEvaluation(
 export class SpeakingEvaluationService {
   async evaluateSpeaking(request: SpeakingEvaluationRequest): Promise<StructuredEvaluationResult> {
     const transcript = request.transcript.trim();
-
-    if (!transcript) {
+    // Placeholders like "{}" and punctuation-only input are non-responses.
+    if (!transcript || analyzeSubstantiveText(transcript, 1).wordCount === 0) {
       return {
         score_band: 1,
         task_score: 0,

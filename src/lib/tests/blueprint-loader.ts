@@ -10,6 +10,7 @@ import type {
   ClientContentItem,
 } from "./session-state";
 import type { ToeflExamMode, ToeflSectionType, ToeflItemType } from "@/types/toefl";
+import type { JsonRecord } from "@/types/serializable";
 
 function fail(message: string): never {
   throw new Error(`Invalid published assessment blueprint: ${message}`);
@@ -121,7 +122,7 @@ export async function loadTestBlueprint(
         itemType: item.item_type as ToeflItemType,
         difficulty: item.difficulty,
         skillTags: item.skill_tags ?? [],
-        payload: sanitizeStudentPayload(item.payload),
+        payload: sanitizeStudentPayload(item.payload) as JsonRecord,
         options: (optionsByItem.get(item.id) ?? []).map((option) => ({
           id: option.id,
           optionKey: option.option_key,

@@ -6,11 +6,12 @@
 import React, { useState, useRef } from "react";
 import type { ClientContentItem } from "@/lib/tests/session-state";
 import { Eye, EyeOff, Scissors, Clipboard, Undo, Redo } from "lucide-react";
+import type { JsonRecord } from "@/types/serializable";
 
 export interface WritingEditorRendererProps {
   item: ClientContentItem;
   currentAnswer: string | null;
-  onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
+  onAnswerChange: (rawAnswer: string, normalizedAnswer?: JsonRecord) => void;
   onNext?: () => void;
   nextLabel?: string;
   disabled?: boolean;
@@ -26,11 +27,9 @@ export function WritingEditorRenderer({
 }: WritingEditorRendererProps) {
   const isEmail = item.itemType === "write_email";
   const payload = (item.payload || {}) as Record<string, unknown>;
-  const title =
-    (payload.title as string) || (isEmail ? "Write an Email" : "Academic Discussion");
+  const title = (payload.title as string) || (isEmail ? "Write an Email" : "Academic Discussion");
   const prompt = (payload.prompt as string) || "";
-  const recipient =
-    (payload.recipient as string) || (isEmail ? "Professor / Campus Office" : "");
+  const recipient = (payload.recipient as string) || (isEmail ? "Professor / Campus Office" : "");
   const subject = (payload.subject as string) || "";
 
   const rawProfessor = (payload.professor || {}) as {
@@ -206,9 +205,7 @@ export function WritingEditorRenderer({
             </div>
             <div className="space-y-1 text-xs">
               <span className="font-bold text-[#0f3b82] text-sm">{professorData.name}</span>
-              <p className="text-slate-800 leading-relaxed text-xs pt-0.5">
-                {professorData.text}
-              </p>
+              <p className="text-slate-800 leading-relaxed text-xs pt-0.5">{professorData.text}</p>
             </div>
           </div>
         )}

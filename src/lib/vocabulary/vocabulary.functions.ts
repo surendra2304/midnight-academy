@@ -353,7 +353,7 @@ function buildSeededWords(): VocabWord[] {
       definition: def as string,
       exampleSentence: ex as string,
       synonyms: syns as string[],
-      difficulty: diff as any,
+      difficulty: diff as "lower" | "middle" | "upper",
       tags: ["academic_core", "toefl_reading", "analytical"],
     });
   });
@@ -467,7 +467,7 @@ function buildSeededWords(): VocabWord[] {
       definition: def as string,
       exampleSentence: ex as string,
       synonyms: syns as string[],
-      difficulty: diff as any,
+      difficulty: diff as "lower" | "middle" | "upper",
       tags: ["campus_life", "toefl_listening", "administration"],
     });
   });

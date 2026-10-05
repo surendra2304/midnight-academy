@@ -13,8 +13,8 @@ import { z } from "zod";
 const uuidSchema = z.string().uuid();
 
 describe("TestGlider 2026 Complete Mock Tests & Evaluation Pipeline", () => {
-  it("seeds all 8 complete TestGlider 2026 mock tests with valid UUIDs and 4 sections each", async () => {
-    expect(ALL_TESTGLIDER_BLUEPRINTS).toHaveLength(8);
+  it("seeds all 9 complete full-catalog mock tests with valid UUIDs and 4 sections each", async () => {
+    expect(ALL_TESTGLIDER_BLUEPRINTS).toHaveLength(9);
 
     const supabase = createLocalSupabaseClient();
     const { data: versions, error } = await supabase
@@ -26,7 +26,7 @@ describe("TestGlider 2026 Complete Mock Tests & Evaluation Pipeline", () => {
 
     expect(error).toBeNull();
     expect(versions).toBeDefined();
-    expect(versions!.length).toBeGreaterThanOrEqual(8);
+    expect(versions!.length).toBeGreaterThanOrEqual(9);
 
     for (const v of versions!) {
       expect(uuidSchema.safeParse(v.id).success).toBe(true);

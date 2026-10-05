@@ -4,11 +4,7 @@
  */
 
 import React from "react";
-import {
-  Sparkles,
-  ShieldCheck,
-  Infinity as InfinityIcon,
-} from "lucide-react";
+import { Sparkles, ShieldCheck, Infinity as InfinityIcon } from "lucide-react";
 
 export interface MembershipCardProps {
   currentTier: "free" | "member";
@@ -22,7 +18,6 @@ export interface MembershipCardProps {
 }
 
 export function MembershipCard({ quotas }: MembershipCardProps) {
-
   return (
     <div className="rounded-3xl border border-border bg-card/60 p-6 md:p-8 space-y-6 shadow-sm">
       {/* Header Banner */}
@@ -38,7 +33,8 @@ export function MembershipCard({ quotas }: MembershipCardProps) {
             Standardized TOEFL Examination Portal
           </h3>
           <p className="text-xs text-muted-foreground">
-            Complete full-length mock tests, natural voice synthesis, and rubric-calibrated AI evaluations.
+            Complete full-length mock tests, natural voice synthesis, and rubric-calibrated AI
+            evaluations.
           </p>
         </div>
 

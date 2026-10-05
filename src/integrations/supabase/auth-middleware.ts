@@ -1,6 +1,14 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
+
+/**
+ * Claims shape produced by `supabase.auth.getClaims`. The local-preview branches
+ * forge this shape, so it is cast once here instead of scattering `any`.
+ */
+type AuthClaims = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof createClient<Database>>["auth"]["getClaims"]>>["data"]
+>["claims"];
 import type { Database } from "./types";
 import { createLocalSupabaseClient, DEFAULT_LOCAL_USER } from "./local-db";
 
@@ -53,7 +61,7 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
             sub: DEFAULT_LOCAL_USER.id,
             email: DEFAULT_LOCAL_USER.email,
             role: "authenticated",
-          } as any,
+          } as AuthClaims,
         },
       });
     }
@@ -91,7 +99,7 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
             sub: DEFAULT_LOCAL_USER.id,
             email: DEFAULT_LOCAL_USER.email,
             role: "authenticated",
-          } as any,
+          } as AuthClaims,
         },
       });
     }

@@ -46,7 +46,7 @@ function LessonsIndexPage() {
       setLoading(true);
       try {
         const res = await getLessons({ data: { section: selectedSection } });
-        setLessons((res as any) || []);
+        setLessons((res as unknown as (LessonItem & { isCompleted: boolean })[]) || []);
       } catch (err) {
         console.error("Failed to load lessons:", err);
       } finally {

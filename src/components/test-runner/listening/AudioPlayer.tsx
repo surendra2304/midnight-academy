@@ -121,9 +121,7 @@ export function AudioPlayer({
       let nextFallbackGender: "male" | "female" = gender === "male" ? "male" : "female";
 
       for (const line of lines) {
-        const genericLabelMatch = line.match(
-          /^([A-Za-z][A-Za-z0-9\s.]{0,24}):\s*(.+)$/,
-        );
+        const genericLabelMatch = line.match(/^([A-Za-z][A-Za-z0-9\s.]{0,24}):\s*(.+)$/);
 
         if (genericLabelMatch) {
           const rawSpeaker = genericLabelMatch[1]!.trim();
@@ -134,9 +132,7 @@ export function AudioPlayer({
           if (speakerGenderMap.has(lowerSpeaker)) {
             resolvedGender = speakerGenderMap.get(lowerSpeaker)!;
           } else if (
-            /\b(man|male|boy|mr\.|dr\.|father|brother|husband|son|speaker 1)\b/i.test(
-              lowerSpeaker,
-            )
+            /\b(man|male|boy|mr\.|dr\.|father|brother|husband|son|speaker 1)\b/i.test(lowerSpeaker)
           ) {
             resolvedGender = "male";
             speakerGenderMap.set(lowerSpeaker, resolvedGender);
@@ -481,13 +477,15 @@ export function AudioPlayer({
 
   // Automatic single playback after a short settling delay (550ms)
   const hasAutoPlayedRef = useRef(false);
+  const handlePlayRef = useRef(handlePlay);
+  handlePlayRef.current = handlePlay;
   useEffect(() => {
     if (disabled || !autoPlay || hasAutoPlayedRef.current) return;
 
     const timer = setTimeout(() => {
       if (!hasAutoPlayedRef.current && !isPlayingRef.current && playCount === 0) {
         hasAutoPlayedRef.current = true;
-        handlePlay();
+        handlePlayRef.current();
       }
     }, 550);
 
@@ -548,7 +546,9 @@ export function AudioPlayer({
           <div className="flex-1 space-y-1">
             <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
               <span className="flex items-center gap-1.5">
-                <Volume2 className={`size-3.5 text-[#0f3b82] ${isPlaying ? "animate-pulse" : ""}`} />
+                <Volume2
+                  className={`size-3.5 text-[#0f3b82] ${isPlaying ? "animate-pulse" : ""}`}
+                />
                 {isPlaying
                   ? "Playing audio..."
                   : playCount > 0

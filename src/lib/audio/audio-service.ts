@@ -18,14 +18,14 @@ export interface AudioAssetMetadata {
   isHealthy: boolean;
 }
 
-export interface AudioInteractionLog {
+export type AudioInteractionLog = {
   playCount: number;
   replayCount: number;
   completedListen: boolean;
   timeListenedMs: number;
   firstPlayedAt?: string;
   lastPlayedAt?: string;
-}
+};
 
 export class AudioAssetService {
   /**

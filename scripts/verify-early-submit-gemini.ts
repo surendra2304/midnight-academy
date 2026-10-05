@@ -9,10 +9,7 @@ import { createClient } from "@supabase/supabase-js";
 import { attemptSessionService } from "../src/lib/tests/session-service.server";
 import { loadTestBlueprint } from "../src/lib/tests/blueprint-loader";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!
-);
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!);
 
 const MOON_VERSION_ID = "f2000000-0000-0000-0000-000000000000";
 
@@ -56,7 +53,18 @@ async function verifyEarlySubmitWithGemini() {
     attemptId,
     studentId: student.id,
     contentItemId: q0.id,
-    rawAnswer: JSON.stringify(["bones", "million", "rocks", "found", "ancient", "history", "planet", "past", "buried", "sediment"]),
+    rawAnswer: JSON.stringify([
+      "bones",
+      "million",
+      "rocks",
+      "found",
+      "ancient",
+      "history",
+      "planet",
+      "past",
+      "buried",
+      "sediment",
+    ]),
     timeSpentMs: 45000,
   });
   console.log(`-> Answered Reading Cloze (${q0.id})`);
@@ -66,7 +74,18 @@ async function verifyEarlySubmitWithGemini() {
     attemptId,
     studentId: student.id,
     contentItemId: q1.id,
-    rawAnswer: JSON.stringify(["plants", "nutrients", "soil", "growing", "forest", "ecosystem", "decay", "matter", "vital", "nature"]),
+    rawAnswer: JSON.stringify([
+      "plants",
+      "nutrients",
+      "soil",
+      "growing",
+      "forest",
+      "ecosystem",
+      "decay",
+      "matter",
+      "vital",
+      "nature",
+    ]),
     timeSpentMs: 40000,
   });
   console.log(`-> Answered Reading Fungi Cloze (${q1.id})`);
@@ -79,13 +98,16 @@ async function verifyEarlySubmitWithGemini() {
   console.log("-> Advanced from Listening (1) to Writing (2)");
 
   // 5. In Writing section, answer the Academic Discussion essay
-  const qWriting = writingSec.items.find((it) => it.itemType === "academic_discussion") || writingSec.items[writingSec.items.length - 1];
+  const qWriting =
+    writingSec.items.find((it) => it.itemType === "academic_discussion") ||
+    writingSec.items[writingSec.items.length - 1];
   console.log(`\n4. Submitting essay for item: ${qWriting.id}...`);
   await attemptSessionService.saveResponse({
     attemptId,
     studentId: student.id,
     contentItemId: qWriting.id,
-    rawAnswer: "In my opinion, expanding equitable access to high-quality higher education and vocational training is the single most powerful driver of upward social mobility. When governments invest in subsidized tuition and digital apprenticeships, talented youth from low-income backgrounds can acquire specialized technological skills that immediately open higher-paying career opportunities. As Andrew highlighted, economic safety nets matter, but without marketable skills, long-term upward mobility remains constrained. Therefore, public policy must prioritize targeted educational funding.",
+    rawAnswer:
+      "In my opinion, expanding equitable access to high-quality higher education and vocational training is the single most powerful driver of upward social mobility. When governments invest in subsidized tuition and digital apprenticeships, talented youth from low-income backgrounds can acquire specialized technological skills that immediately open higher-paying career opportunities. As Andrew highlighted, economic safety nets matter, but without marketable skills, long-term upward mobility remains constrained. Therefore, public policy must prioritize targeted educational funding.",
     normalizedAnswer: {
       wordCount: 78,
       submittedAt: new Date().toISOString(),
@@ -100,7 +122,9 @@ async function verifyEarlySubmitWithGemini() {
   const finalResult = await attemptSessionService.finalizeAttempt(attemptId, student.id);
   const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
 
-  console.log(`-> Finalize & AI Evaluation completed in ${elapsedSec}s! Status: ${finalResult.status}`);
+  console.log(
+    `-> Finalize & AI Evaluation completed in ${elapsedSec}s! Status: ${finalResult.status}`,
+  );
 
   // 7. Query PostgreSQL score report to verify real persisted results
   console.log("\n6. Verifying persisted score report in PostgreSQL...");

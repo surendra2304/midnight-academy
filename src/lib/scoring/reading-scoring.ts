@@ -59,7 +59,9 @@ export class ReadingScoringService {
       const selectedKey = trimmed.toUpperCase();
       const correctOpt = rule.options.find((o) => o.isCorrect);
       const selectedOpt = rule.options.find(
-        (o) => o.optionKey.toUpperCase() === selectedKey || o.optionText.trim() === trimmed,
+        (o) =>
+          o.optionKey.toUpperCase() === selectedKey ||
+          o.optionText.trim().toLowerCase() === trimmed.toLowerCase(),
       );
 
       if (!correctOpt) {
@@ -105,8 +107,8 @@ export class ReadingScoringService {
         const acceptedList =
           blank.acceptedAnswers && blank.acceptedAnswers.length > 0
             ? blank.acceptedAnswers
-            : (blank as any).hint
-              ? [((blank as any).hint as string).replace(/\s*\(.*?\)/, "").trim()]
+            : (blank as { hint?: string }).hint
+              ? [((blank as { hint?: string }).hint as string).replace(/\s*\(.*?\)/, "").trim()]
               : [];
 
         const isMatch = acceptedList.some((accepted) => {

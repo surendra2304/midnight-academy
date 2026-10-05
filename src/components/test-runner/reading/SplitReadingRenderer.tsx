@@ -10,12 +10,13 @@
 import React from "react";
 import type { ClientContentItem } from "@/lib/tests/session-state";
 import { Flag } from "lucide-react";
+import type { JsonRecord } from "@/types/serializable";
 
 export interface SplitReadingRendererProps {
   item: ClientContentItem;
   currentAnswer: string | null;
   isFlagged?: boolean;
-  onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
+  onAnswerChange: (rawAnswer: string, normalizedAnswer?: JsonRecord) => void;
   onToggleFlag?: () => void;
   onNext?: () => void;
   nextLabel?: string;
@@ -50,7 +51,10 @@ export function SplitReadingRenderer({
   nextLabel,
   disabled = false,
 }: SplitReadingRendererProps) {
-  const payload = (item.payload || {}) as Record<string, unknown>;
+  const payload = React.useMemo(
+    () => (item.payload || {}) as Record<string, unknown>,
+    [item.payload],
+  );
   const passageTitle =
     (payload.title as string) || (item.sectionType === "reading" ? "Reading Passage" : "Text");
   const rawPassage = (payload.passage as string) || (payload.context as string) || "";

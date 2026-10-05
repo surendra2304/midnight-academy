@@ -127,7 +127,15 @@ export const SEED_SHADOWING_DRILLS = [
     script_Text:
       "We offer group tours of gallery highlights at no extra charge. Unfortunately, the sculpture hall is currently under renovation, but our gift shop is running a special promotion on a wide selection of books.",
     phonetic_Guide_Json: {
-      stressWords: ["group", "highlights", "extra", "sculpture", "renovation", "special", "promotion"],
+      stressWords: [
+        "group",
+        "highlights",
+        "extra",
+        "sculpture",
+        "renovation",
+        "special",
+        "promotion",
+      ],
       pauseMarkers: ["charge.", "Unfortunately,", "renovation,"],
       intonationType: "falling",
     },
@@ -391,8 +399,7 @@ export const SEED_COMPREHENSION_QUESTIONS = [
     id: "91000000-0000-4000-8000-000000000002",
     title: "Academic Reading Inference: Coral Bleaching Recovery",
     slug: "coral-bleaching-inference",
-    prompt:
-      "Based on the excerpt below, what can be validly inferred about bleached corals?",
+    prompt: "Based on the excerpt below, what can be validly inferred about bleached corals?",
     content:
       "'When water temperatures exceed normal seasonal thresholds by even one or two degrees Celsius for extended periods, corals expel their symbiotic algae, causing their tissues to turn transparent and expose the white limestone skeleton beneath—a phenomenon known as coral bleaching. While bleached corals are not immediately dead, prolonged thermal stress deprives them of their primary energy source, leading to widespread mortality.'",
     question_type: "multiple_choice",

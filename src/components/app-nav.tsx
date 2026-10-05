@@ -63,7 +63,10 @@ function ProfileMenu({ admin }: { admin?: boolean | undefined }) {
             <User className="size-4 text-blue-600" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg text-slate-800">
+        <DropdownMenuContent
+          align="end"
+          className="w-56 bg-white border border-slate-200 shadow-lg text-slate-800"
+        >
           <DropdownMenuLabel>
             <div className="flex flex-col space-y-1">
               <p className="text-xs font-semibold leading-none text-slate-900">

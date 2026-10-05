@@ -4,6 +4,7 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
+import type { JsonRecord } from "@/types/serializable";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -66,7 +67,7 @@ Output valid JSON strictly following this schema:
   "keyConcepts": ["<concept1>", "<concept2>"]
 }`;
 
-    const draft = await chatJson<Record<string, any>>([
+    const draft = await chatJson<JsonRecord>([
       { role: "system", content: systemPrompt },
       {
         role: "user",
@@ -102,20 +103,41 @@ export const validateTestVersion = createServerFn({ method: "POST" })
       )
       .eq("test_version_id", version.id);
 
+    interface StudioOptionRow {
+      option_key: string;
+      option_text: string;
+      is_correct: boolean;
+    }
+    interface StudioItemRow {
+      id: string;
+      item_type: string;
+      section_type: string;
+      question_options?: StudioOptionRow[] | null;
+    }
+    interface StudioModuleRow {
+      content_items?: StudioItemRow[] | null;
+    }
+    interface StudioSectionRow {
+      id: string;
+      section_type: string;
+      timing_seconds: number;
+      modules?: StudioModuleRow[] | null;
+    }
+
     const spec: ValidationBlueprintSpec = {
       testVersionId: version.id,
       name: (version.tests as { name?: string })?.name || "Untitled Test",
-      sections: (sections || []).map((s: any) => {
-        const items = (s.modules || []).flatMap((m: any) => m.content_items || []);
+      sections: ((sections ?? []) as unknown as StudioSectionRow[]).map((s) => {
+        const items = (s.modules ?? []).flatMap((m) => m.content_items ?? []);
         return {
           id: s.id,
           sectionType: s.section_type as ToeflSectionType,
           timingSeconds: s.timing_seconds,
-          items: items.map((i: any) => ({
+          items: items.map((i) => ({
             id: i.id,
             itemType: i.item_type as ToeflItemType,
             sectionType: i.section_type as ToeflSectionType,
-            options: (i.question_options || []).map((o: any) => ({
+            options: (i.question_options ?? []).map((o) => ({
               optionKey: o.option_key,
               optionText: o.option_text,
               isCorrect: o.is_correct,

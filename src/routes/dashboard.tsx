@@ -36,7 +36,9 @@ function Dashboard() {
   const [profile, setProfile] = useState<StudentWeaknessProfile | null>(null);
   const [targetBand, setTargetBand] = useState<number | null>(null);
   const [queue, setQueue] = useState<RecommendationItem[]>([]);
-  const [membership, setMembership] = useState<any>(null);
+  const [membership, setMembership] = useState<Awaited<
+    ReturnType<typeof getUserMembership>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

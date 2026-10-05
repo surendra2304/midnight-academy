@@ -56,7 +56,7 @@ function VocabularyPage() {
     async function loadOverview() {
       try {
         const [lRes, qRes] = await Promise.all([getVocabLists(), getDailyReviewQueue()]);
-        setLists((lRes as any) || []);
+        setLists((lRes as unknown as VocabList[]) || []);
         setDueCount(qRes?.dueCount || 0);
       } catch (err) {
         console.error("Failed to load vocab lists:", err);
@@ -71,7 +71,7 @@ function VocabularyPage() {
     setLoading(true);
     try {
       const wRes = await getVocabWordsByList({ data: { listId, dueOnly } });
-      setWords((wRes as any) || []);
+      setWords((wRes as unknown as VocabWord[]) || []);
       setActiveListId(listId);
       setActiveMode("flashcards");
     } finally {
@@ -83,7 +83,7 @@ function VocabularyPage() {
     setLoading(true);
     try {
       const qRes = await getVocabQuiz({ data: { listId, count: 10 } });
-      setQuizQuestions((qRes as any) || []);
+      setQuizQuestions((qRes as unknown as QuizQuestion[]) || []);
       setActiveListId(listId);
       setActiveMode("quiz");
     } finally {

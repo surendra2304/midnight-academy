@@ -1,3 +1,5 @@
+import type { JsonRecord } from "@/types/serializable";
+
 /**
  * Shared types and deterministic item builders for eight TOEFL 2026-style practice sets
  * based on the supplied public mock-test playlist (https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV)
@@ -56,9 +58,9 @@ export interface SeedQuestionItemRow {
   audio_Url: string | null;
   audio_Duration_Seconds: number | null;
   image_Url: string | null;
-  prompt_Json: Record<string, any>;
-  answer_Key_Json: Record<string, any>;
-  rubric_Json: Record<string, any> | null;
+  prompt_Json: JsonRecord;
+  answer_Key_Json: JsonRecord;
+  rubric_Json: JsonRecord | null;
   points_Value: number;
   is_Active: boolean;
   created_At: string;

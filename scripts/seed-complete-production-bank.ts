@@ -540,7 +540,8 @@ export async function seedCompleteProductionBank() {
           key: "D",
           text: "The City Safety Board is in it.",
           isCorrect: false,
-          distractor: "The City Safety Board conducts the annual inspection; their office is not in the building.",
+          distractor:
+            "The City Safety Board conducts the annual inspection; their office is not in the building.",
         },
       ],
     },
@@ -634,7 +635,8 @@ export async function seedCompleteProductionBank() {
           key: "A",
           text: "To suggest that they have the longest lifespan of all animals",
           isCorrect: false,
-          distractor: "The author mentions them to contrast with shrews, not claiming the longest of all.",
+          distractor:
+            "The author mentions them to contrast with shrews, not claiming the longest of all.",
         },
         {
           key: "B",
@@ -1006,13 +1008,7 @@ export async function seedCompleteProductionBank() {
           "offers",
         ],
         acceptedSequences: [
-          [
-            "The library",
-            "offers",
-            "quiet study spaces",
-            "for students",
-            "preparing for exams.",
-          ],
+          ["The library", "offers", "quiet study spaces", "for students", "preparing for exams."],
         ],
       },
       options: [],
@@ -1031,21 +1027,18 @@ export async function seedCompleteProductionBank() {
         professor: {
           name: "Professor Takata",
           avatar: "PT",
-          text:
-            "Today we are going to cover the topic of sin taxes. These are taxes that the government adds to products, goods, or services that are harmful to individuals or society as a whole. Recently, these taxes have been applied to sugary drinks, fast food, and junk foods. Proponents say these taxes could discourage people from consuming such items and reduce health issues like obesity. Critics argue that these taxes unfairly target low-income consumers who cannot afford healthier foods. Which opinion do you agree with and why?",
+          text: "Today we are going to cover the topic of sin taxes. These are taxes that the government adds to products, goods, or services that are harmful to individuals or society as a whole. Recently, these taxes have been applied to sugary drinks, fast food, and junk foods. Proponents say these taxes could discourage people from consuming such items and reduce health issues like obesity. Critics argue that these taxes unfairly target low-income consumers who cannot afford healthier foods. Which opinion do you agree with and why?",
         },
         discussionPosts: [
           {
             author: "Mikhail",
             avatar: "M",
-            text:
-              "I do not agree with applying sin taxes to unhealthy food items. As the professor mentioned, these taxes may unfairly affect poor people who rely on those foods. There are areas in the United States called food deserts where many people without cars live too far from a supermarket to walk there. So, they often have to eat fast food and junk food just to have any kind of food. Their diets aren't healthy, but they have to eat what is available. Sin taxes would really hurt these people.",
+            text: "I do not agree with applying sin taxes to unhealthy food items. As the professor mentioned, these taxes may unfairly affect poor people who rely on those foods. There are areas in the United States called food deserts where many people without cars live too far from a supermarket to walk there. So, they often have to eat fast food and junk food just to have any kind of food. Their diets aren't healthy, but they have to eat what is available. Sin taxes would really hurt these people.",
           },
           {
             author: "Kaitlyn",
             avatar: "K",
-            text:
-              "I definitely support adding taxes to unhealthy products. Fast food and junk food often contain high amounts of sugar, fat, and salt, which can cause many health problems including heart disease and obesity. Taxes will discourage people from buying them, and the money from these taxes can be used by the government to help people with those problems. They could also provide incentives to supermarkets to move into food deserts and sell healthier foods.",
+            text: "I definitely support adding taxes to unhealthy products. Fast food and junk food often contain high amounts of sugar, fat, and salt, which can cause many health problems including heart disease and obesity. Taxes will discourage people from buying them, and the money from these taxes can be used by the government to help people with those problems. They could also provide incentives to supermarkets to move into food deserts and sell healthier foods.",
           },
         ],
       },
@@ -1124,10 +1117,8 @@ export async function seedCompleteProductionBank() {
         scenario: "You are training to assist visitors to a natural history museum.",
         prompt: "Listen and repeat only once.",
         audioUrl: "https://actions.google.com/sounds/v1/human_voices/applause_cheering.ogg",
-        targetSentence:
-          "Guided tours depart from the information desk every half hour.",
-        stimulusText:
-          "Guided tours depart from the information desk every half hour.",
+        targetSentence: "Guided tours depart from the information desk every half hour.",
+        stimulusText: "Guided tours depart from the information desk every half hour.",
       },
       options: [],
     },
