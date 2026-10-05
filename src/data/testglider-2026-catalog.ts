@@ -1,9 +1,12 @@
 /**
  * TOEFL iBT 2026-Style Practice Test Catalog
- * Aggregates eight practice sets based on the supplied public mock-test references
- * (https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV)
- * and video https://youtu.be/5giZh7nDyfk, plus Dictation, Shadowing,
- * Vocabulary, Lessons, and Practice banks.
+ * Aggregates nine original practice sets written for Midnight Academy in the
+ * TOEFL iBT 2026 task format (structure and item types only; every passage,
+ * transcript, prompt, option, and answer key is authored in-repo and none of
+ * it is copied from ETS, TestGlider, or the public mock-test playlist once
+ * used as a format reference:
+ * https://youtube.com/playlist?list=PLoDNaUsnugSqgJGJKo59X49nkQbwcksMV),
+ * plus Dictation, Shadowing, Vocabulary, Lessons, and Practice banks.
  */
 
 import type { SeedBlueprintRow, SeedQuestionItemRow } from "./tests/types";
@@ -15,6 +18,7 @@ import { SATURN_BLUEPRINT, SATURN_ITEMS, SATURN_BLUEPRINT_ID } from "./tests/tes
 import { MERCURY_BLUEPRINT, MERCURY_ITEMS, MERCURY_BLUEPRINT_ID } from "./tests/test-6-mercury";
 import { NEPTUNE_BLUEPRINT, NEPTUNE_ITEMS, NEPTUNE_BLUEPRINT_ID } from "./tests/test-7-neptune";
 import { URANUS_BLUEPRINT, URANUS_ITEMS, URANUS_BLUEPRINT_ID } from "./tests/test-8-uranus";
+import { PLUTO_BLUEPRINT, PLUTO_ITEMS, PLUTO_BLUEPRINT_ID } from "./tests/test-9-pluto";
 import {
   SEED_DICTATION_PASSAGES,
   SEED_SHADOWING_DRILLS,
@@ -32,6 +36,7 @@ export {
   MERCURY_BLUEPRINT_ID,
   NEPTUNE_BLUEPRINT_ID,
   URANUS_BLUEPRINT_ID,
+  PLUTO_BLUEPRINT_ID,
   SEED_DICTATION_PASSAGES,
   SEED_SHADOWING_DRILLS,
   SEED_VOCABULARY_WORDS,
@@ -48,6 +53,7 @@ export const ALL_TESTGLIDER_BLUEPRINTS: SeedBlueprintRow[] = [
   MERCURY_BLUEPRINT,
   NEPTUNE_BLUEPRINT,
   URANUS_BLUEPRINT,
+  PLUTO_BLUEPRINT,
 ];
 
 export const ALL_TESTGLIDER_QUESTION_ITEMS: SeedQuestionItemRow[] = [
@@ -59,4 +65,5 @@ export const ALL_TESTGLIDER_QUESTION_ITEMS: SeedQuestionItemRow[] = [
   ...MERCURY_ITEMS,
   ...NEPTUNE_ITEMS,
   ...URANUS_ITEMS,
+  ...PLUTO_ITEMS,
 ];
