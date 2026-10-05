@@ -36,6 +36,15 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  // The local Supabase emulator mirrors the PostgREST JSON-over-HTTP contract, where
+  // rows are arbitrary key/value maps by design. Production client typing is enforced
+  // in src/integrations/supabase/types.ts, so explicit any is intrinsic to this file.
+  {
+    files: ["src/integrations/supabase/local-db.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
   // shadcn/ui boilerplate mixes component and helper exports by design
   {
     files: ["src/components/ui/**/*.{ts,tsx}", "src/hooks/**/*.{ts,tsx}"],

@@ -105,8 +105,8 @@ export class ReadingScoringService {
         const acceptedList =
           blank.acceptedAnswers && blank.acceptedAnswers.length > 0
             ? blank.acceptedAnswers
-            : (blank as any).hint
-              ? [((blank as any).hint as string).replace(/\s*\(.*?\)/, "").trim()]
+            : (blank as { hint?: string }).hint
+              ? [((blank as { hint?: string }).hint as string).replace(/\s*\(.*?\)/, "").trim()]
               : [];
 
         const isMatch = acceptedList.some((accepted) => {

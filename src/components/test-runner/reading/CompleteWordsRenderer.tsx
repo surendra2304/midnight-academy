@@ -8,11 +8,12 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import type { ClientContentItem } from "@/lib/tests/session-state";
+import type { JsonRecord } from "@/types/serializable";
 
 export interface CompleteWordsRendererProps {
   item: ClientContentItem;
   currentAnswer: string | null;
-  onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
+  onAnswerChange: (rawAnswer: string, normalizedAnswer?: JsonRecord) => void;
   onNext?: () => void;
   nextLabel?: string;
   disabled?: boolean;
@@ -35,7 +36,7 @@ export function CompleteWordsRenderer({
 }: CompleteWordsRendererProps) {
   const passageTemplate =
     (item.payload?.passage as string) || (item.payload?.prompt as string) || "";
-  const blanks = (item.payload?.blanks as BlankMeta[]) || [];
+  const blanks = (item.payload?.blanks as unknown as BlankMeta[]) || [];
 
   // Parse existing answers if already saved
   const [tokens, setTokens] = useState<string[]>(() => {

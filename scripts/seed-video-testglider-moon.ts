@@ -79,7 +79,8 @@ export async function seedTestGliderMoon() {
       section_type: "reading",
       section_order: 0,
       timing_seconds: 1800,
-      instructions: "Reading Section: Read the passages and complete the cloze and comprehension questions.",
+      instructions:
+        "Reading Section: Read the passages and complete the cloze and comprehension questions.",
     },
     {
       id: secListeningId,
@@ -87,7 +88,8 @@ export async function seedTestGliderMoon() {
       section_type: "listening",
       section_order: 1,
       timing_seconds: 1740,
-      instructions: "Listening Section: Listen to academic lectures, campus conversations, and answer the questions.",
+      instructions:
+        "Listening Section: Listen to academic lectures, campus conversations, and answer the questions.",
     },
     {
       id: secWritingId,
@@ -95,7 +97,8 @@ export async function seedTestGliderMoon() {
       section_type: "writing",
       section_order: 2,
       timing_seconds: 1380,
-      instructions: "Writing Section: Complete sentence building, email writing, and academic discussion writing.",
+      instructions:
+        "Writing Section: Complete sentence building, email writing, and academic discussion writing.",
     },
     {
       id: secSpeakingId,
@@ -103,7 +106,8 @@ export async function seedTestGliderMoon() {
       section_type: "speaking",
       section_order: 3,
       timing_seconds: 480,
-      instructions: "Speaking Section: Listen and repeat sentences, and answer the interview questions.",
+      instructions:
+        "Speaking Section: Listen and repeat sentences, and answer the interview questions.",
     },
   ]);
 
@@ -114,10 +118,34 @@ export async function seedTestGliderMoon() {
   const modS1Id = "f4000000-0000-0000-0000-000000000104";
 
   await supabase.from("modules").upsert([
-    { id: modR1Id, section_id: secReadingId, stage_index: 1, difficulty_band: "middle", module_order: 0 },
-    { id: modL1Id, section_id: secListeningId, stage_index: 1, difficulty_band: "middle", module_order: 0 },
-    { id: modW1Id, section_id: secWritingId, stage_index: 1, difficulty_band: "middle", module_order: 0 },
-    { id: modS1Id, section_id: secSpeakingId, stage_index: 1, difficulty_band: "middle", module_order: 0 },
+    {
+      id: modR1Id,
+      section_id: secReadingId,
+      stage_index: 1,
+      difficulty_band: "middle",
+      module_order: 0,
+    },
+    {
+      id: modL1Id,
+      section_id: secListeningId,
+      stage_index: 1,
+      difficulty_band: "middle",
+      module_order: 0,
+    },
+    {
+      id: modW1Id,
+      section_id: secWritingId,
+      stage_index: 1,
+      difficulty_band: "middle",
+      module_order: 0,
+    },
+    {
+      id: modS1Id,
+      section_id: secSpeakingId,
+      stage_index: 1,
+      difficulty_band: "middle",
+      module_order: 0,
+    },
   ]);
 
   // ==========================================
@@ -206,10 +234,34 @@ export async function seedTestGliderMoon() {
     item_order: 2,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR3, option_key: "A", option_text: "To request details about a job application", is_correct: false, option_order: 0 },
-    { content_item_id: itemR3, option_key: "B", option_text: "To make an offer of employment", is_correct: false, option_order: 1 },
-    { content_item_id: itemR3, option_key: "C", option_text: "To provide information about a job interview", is_correct: true, option_order: 2 },
-    { content_item_id: itemR3, option_key: "D", option_text: "To apologize for a scheduling error", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR3,
+      option_key: "A",
+      option_text: "To request details about a job application",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR3,
+      option_key: "B",
+      option_text: "To make an offer of employment",
+      is_correct: false,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR3,
+      option_key: "C",
+      option_text: "To provide information about a job interview",
+      is_correct: true,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR3,
+      option_key: "D",
+      option_text: "To apologize for a scheduling error",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // R4: Daily Life Email 1 - Website
@@ -231,10 +283,34 @@ export async function seedTestGliderMoon() {
     item_order: 3,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR4, option_key: "A", option_text: "To provide job requirements", is_correct: false, option_order: 0 },
-    { content_item_id: itemR4, option_key: "B", option_text: "To give directions", is_correct: true, option_order: 1 },
-    { content_item_id: itemR4, option_key: "C", option_text: "To schedule an appointment", is_correct: false, option_order: 2 },
-    { content_item_id: itemR4, option_key: "D", option_text: "To answer an earlier question", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR4,
+      option_key: "A",
+      option_text: "To provide job requirements",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR4,
+      option_key: "B",
+      option_text: "To give directions",
+      is_correct: true,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR4,
+      option_key: "C",
+      option_text: "To schedule an appointment",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR4,
+      option_key: "D",
+      option_text: "To answer an earlier question",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // R5: Daily Life Email 2 - Purpose
@@ -258,10 +334,34 @@ export async function seedTestGliderMoon() {
     item_order: 4,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR5, option_key: "A", option_text: "To announce changes to the management team", is_correct: false, option_order: 0 },
-    { content_item_id: itemR5, option_key: "B", option_text: "To request details about a project", is_correct: false, option_order: 1 },
-    { content_item_id: itemR5, option_key: "C", option_text: "To introduce a new webinar", is_correct: false, option_order: 2 },
-    { content_item_id: itemR5, option_key: "D", option_text: "To provide information about a change to an event", is_correct: true, option_order: 3 },
+    {
+      content_item_id: itemR5,
+      option_key: "A",
+      option_text: "To announce changes to the management team",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR5,
+      option_key: "B",
+      option_text: "To request details about a project",
+      is_correct: false,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR5,
+      option_key: "C",
+      option_text: "To introduce a new webinar",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR5,
+      option_key: "D",
+      option_text: "To provide information about a change to an event",
+      is_correct: true,
+      option_order: 3,
+    },
   ]);
 
   // R6: Daily Life Email 2 - Participants
@@ -282,10 +382,34 @@ export async function seedTestGliderMoon() {
     item_order: 5,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR6, option_key: "A", option_text: "They can view the webinar content offline.", is_correct: false, option_order: 0 },
-    { content_item_id: itemR6, option_key: "B", option_text: "They work on the same team as Mr. Thompson.", is_correct: false, option_order: 1 },
-    { content_item_id: itemR6, option_key: "C", option_text: "They requested that the webinar be delayed.", is_correct: false, option_order: 2 },
-    { content_item_id: itemR6, option_key: "D", option_text: "They will have a chance to talk to others during the webinar.", is_correct: true, option_order: 3 },
+    {
+      content_item_id: itemR6,
+      option_key: "A",
+      option_text: "They can view the webinar content offline.",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR6,
+      option_key: "B",
+      option_text: "They work on the same team as Mr. Thompson.",
+      is_correct: false,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR6,
+      option_key: "C",
+      option_text: "They requested that the webinar be delayed.",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR6,
+      option_key: "D",
+      option_text: "They will have a chance to talk to others during the webinar.",
+      is_correct: true,
+      option_order: 3,
+    },
   ]);
 
   // R7: Daily Life Email 2 - Coordinator
@@ -306,10 +430,34 @@ export async function seedTestGliderMoon() {
     item_order: 6,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR7, option_key: "A", option_text: "contact Mr. Thompson", is_correct: false, option_order: 0 },
-    { content_item_id: itemR7, option_key: "B", option_text: "collect questions and give them to the presenter", is_correct: true, option_order: 1 },
-    { content_item_id: itemR7, option_key: "C", option_text: "confirm computer and internet access", is_correct: false, option_order: 2 },
-    { content_item_id: itemR7, option_key: "D", option_text: "host the webinar", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR7,
+      option_key: "A",
+      option_text: "contact Mr. Thompson",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR7,
+      option_key: "B",
+      option_text: "collect questions and give them to the presenter",
+      is_correct: true,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR7,
+      option_key: "C",
+      option_text: "confirm computer and internet access",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR7,
+      option_key: "D",
+      option_text: "host the webinar",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // R8: Daily Life Text Chain - Carlos
@@ -333,10 +481,34 @@ export async function seedTestGliderMoon() {
     item_order: 7,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR8, option_key: "A", option_text: "Finishing usability testing", is_correct: false, option_order: 0 },
-    { content_item_id: itemR8, option_key: "B", option_text: "Checking device compatibility", is_correct: true, option_order: 1 },
-    { content_item_id: itemR8, option_key: "C", option_text: "Emailing about last-minute issues", is_correct: false, option_order: 2 },
-    { content_item_id: itemR8, option_key: "D", option_text: "Monitoring progress", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR8,
+      option_key: "A",
+      option_text: "Finishing usability testing",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR8,
+      option_key: "B",
+      option_text: "Checking device compatibility",
+      is_correct: true,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR8,
+      option_key: "C",
+      option_text: "Emailing about last-minute issues",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR8,
+      option_key: "D",
+      option_text: "Monitoring progress",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // R9: Daily Life Text Chain - Yuki
@@ -357,10 +529,34 @@ export async function seedTestGliderMoon() {
     item_order: 8,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR9, option_key: "A", option_text: "By preparing the final report", is_correct: false, option_order: 0 },
-    { content_item_id: itemR9, option_key: "B", option_text: "By identifying suitable platforms", is_correct: false, option_order: 1 },
-    { content_item_id: itemR9, option_key: "C", option_text: "By monitoring her inbox for urgent matters", is_correct: true, option_order: 2 },
-    { content_item_id: itemR9, option_key: "D", option_text: "By reviewing a colleague's work", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR9,
+      option_key: "A",
+      option_text: "By preparing the final report",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR9,
+      option_key: "B",
+      option_text: "By identifying suitable platforms",
+      is_correct: false,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR9,
+      option_key: "C",
+      option_text: "By monitoring her inbox for urgent matters",
+      is_correct: true,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR9,
+      option_key: "D",
+      option_text: "By reviewing a colleague's work",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // Academic Passage: The Power of Music (Questions 10-14)
@@ -380,15 +576,39 @@ export async function seedTestGliderMoon() {
       title: "The Power of Music",
       passage: musicPassage,
       highlightedWord: "alleviate",
-      prompt: "The word \"alleviate\" in the passage is closest in meaning to",
+      prompt: 'The word "alleviate" in the passage is closest in meaning to',
     },
     item_order: 9,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR10, option_key: "A", option_text: "delay", is_correct: false, option_order: 0 },
-    { content_item_id: itemR10, option_key: "B", option_text: "ease", is_correct: true, option_order: 1 },
-    { content_item_id: itemR10, option_key: "C", option_text: "monitor", is_correct: false, option_order: 2 },
-    { content_item_id: itemR10, option_key: "D", option_text: "predict", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR10,
+      option_key: "A",
+      option_text: "delay",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR10,
+      option_key: "B",
+      option_text: "ease",
+      is_correct: true,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR10,
+      option_key: "C",
+      option_text: "monitor",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR10,
+      option_key: "D",
+      option_text: "predict",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // R11: The Power of Music - Neurotransmitters
@@ -408,10 +628,34 @@ export async function seedTestGliderMoon() {
     item_order: 10,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR11, option_key: "A", option_text: "To provide some examples of chemicals in our bodies", is_correct: false, option_order: 0 },
-    { content_item_id: itemR11, option_key: "B", option_text: "To identify the mechanisms by which music influences pleasure and mood", is_correct: true, option_order: 1 },
-    { content_item_id: itemR11, option_key: "C", option_text: "To explain how music increases physical health", is_correct: false, option_order: 2 },
-    { content_item_id: itemR11, option_key: "D", option_text: "To imply that music affects social interactions", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR11,
+      option_key: "A",
+      option_text: "To provide some examples of chemicals in our bodies",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR11,
+      option_key: "B",
+      option_text: "To identify the mechanisms by which music influences pleasure and mood",
+      is_correct: true,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR11,
+      option_key: "C",
+      option_text: "To explain how music increases physical health",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR11,
+      option_key: "D",
+      option_text: "To imply that music affects social interactions",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // R12: The Power of Music - Fast-paced
@@ -426,15 +670,40 @@ export async function seedTestGliderMoon() {
     payload: {
       title: "The Power of Music",
       passage: musicPassage,
-      prompt: "The passage suggests that fast-paced music might be included in workout playlists for which of the following reasons?",
+      prompt:
+        "The passage suggests that fast-paced music might be included in workout playlists for which of the following reasons?",
     },
     item_order: 11,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR12, option_key: "A", option_text: "It helps to calm down the listener.", is_correct: false, option_order: 0 },
-    { content_item_id: itemR12, option_key: "B", option_text: "It reduces stress levels.", is_correct: false, option_order: 1 },
-    { content_item_id: itemR12, option_key: "C", option_text: "It energizes the listener.", is_correct: true, option_order: 2 },
-    { content_item_id: itemR12, option_key: "D", option_text: "It improves cognitive function.", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR12,
+      option_key: "A",
+      option_text: "It helps to calm down the listener.",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR12,
+      option_key: "B",
+      option_text: "It reduces stress levels.",
+      is_correct: false,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR12,
+      option_key: "C",
+      option_text: "It energizes the listener.",
+      is_correct: true,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR12,
+      option_key: "D",
+      option_text: "It improves cognitive function.",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // R13: The Power of Music - Social Movements
@@ -454,10 +723,34 @@ export async function seedTestGliderMoon() {
     item_order: 12,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR13, option_key: "A", option_text: "It helps to create a shared emotional experience among participants", is_correct: true, option_order: 0 },
-    { content_item_id: itemR13, option_key: "B", option_text: "It distracts people from the goals of the movement", is_correct: false, option_order: 1 },
-    { content_item_id: itemR13, option_key: "C", option_text: "It prevents protests from becoming violent", is_correct: false, option_order: 2 },
-    { content_item_id: itemR13, option_key: "D", option_text: "It is only effective in small groups", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR13,
+      option_key: "A",
+      option_text: "It helps to create a shared emotional experience among participants",
+      is_correct: true,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR13,
+      option_key: "B",
+      option_text: "It distracts people from the goals of the movement",
+      is_correct: false,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR13,
+      option_key: "C",
+      option_text: "It prevents protests from becoming violent",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR13,
+      option_key: "D",
+      option_text: "It is only effective in small groups",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // R14: The Power of Music - Paragraph Relationship
@@ -477,10 +770,38 @@ export async function seedTestGliderMoon() {
     item_order: 13,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemR14, option_key: "A", option_text: "Paragraph 2 describes how music affects physical health, while Paragraph 3 focuses on the emotional benefits of music", is_correct: false, option_order: 0 },
-    { content_item_id: itemR14, option_key: "B", option_text: "Paragraph 2 explains the scientific effects of music, while Paragraph 3 discusses how music influences social interactions", is_correct: true, option_order: 1 },
-    { content_item_id: itemR14, option_key: "C", option_text: "Paragraph 2 explores the benefits of music in individual well-being, while Paragraph 3 examines its use in public settings", is_correct: false, option_order: 2 },
-    { content_item_id: itemR14, option_key: "D", option_text: "Paragraph 2 explains the brain's reaction to music, while Paragraph 3 provides examples of music's social impact", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemR14,
+      option_key: "A",
+      option_text:
+        "Paragraph 2 describes how music affects physical health, while Paragraph 3 focuses on the emotional benefits of music",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemR14,
+      option_key: "B",
+      option_text:
+        "Paragraph 2 explains the scientific effects of music, while Paragraph 3 discusses how music influences social interactions",
+      is_correct: true,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemR14,
+      option_key: "C",
+      option_text:
+        "Paragraph 2 explores the benefits of music in individual well-being, while Paragraph 3 examines its use in public settings",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemR14,
+      option_key: "D",
+      option_text:
+        "Paragraph 2 explains the brain's reaction to music, while Paragraph 3 provides examples of music's social impact",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // ==========================================
@@ -629,10 +950,34 @@ export async function seedTestGliderMoon() {
     item_order: 8,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemL9, option_key: "A", option_text: "She forgot the date of the concert.", is_correct: false, option_order: 0 },
-    { content_item_id: itemL9, option_key: "B", option_text: "She had to assist a family member with moving.", is_correct: true, option_order: 1 },
-    { content_item_id: itemL9, option_key: "C", option_text: "She had to study for a music examination.", is_correct: false, option_order: 2 },
-    { content_item_id: itemL9, option_key: "D", option_text: "Her car broke down on the way to the hall.", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemL9,
+      option_key: "A",
+      option_text: "She forgot the date of the concert.",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemL9,
+      option_key: "B",
+      option_text: "She had to assist a family member with moving.",
+      is_correct: true,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemL9,
+      option_key: "C",
+      option_text: "She had to study for a music examination.",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemL9,
+      option_key: "D",
+      option_text: "Her car broke down on the way to the hall.",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // L10: Academic Lecture - Cultural Relativism
@@ -657,10 +1002,38 @@ export async function seedTestGliderMoon() {
     item_order: 9,
   });
   await supabase.from("question_options").upsert([
-    { content_item_id: itemL10, option_key: "A", option_text: "Cultural relativism evaluates cultures using universal criteria, whereas ethnocentrism focuses on diversity.", is_correct: false, option_order: 0 },
-    { content_item_id: itemL10, option_key: "B", option_text: "Cultural relativism evaluates practices within their cultural context, whereas ethnocentrism judges others by one's own cultural standards.", is_correct: true, option_order: 1 },
-    { content_item_id: itemL10, option_key: "C", option_text: "Cultural relativism ignores history, while ethnocentrism is rooted entirely in modern sociological research.", is_correct: false, option_order: 2 },
-    { content_item_id: itemL10, option_key: "D", option_text: "Both concepts reject the idea of subjective morality in diverse human communities.", is_correct: false, option_order: 3 },
+    {
+      content_item_id: itemL10,
+      option_key: "A",
+      option_text:
+        "Cultural relativism evaluates cultures using universal criteria, whereas ethnocentrism focuses on diversity.",
+      is_correct: false,
+      option_order: 0,
+    },
+    {
+      content_item_id: itemL10,
+      option_key: "B",
+      option_text:
+        "Cultural relativism evaluates practices within their cultural context, whereas ethnocentrism judges others by one's own cultural standards.",
+      is_correct: true,
+      option_order: 1,
+    },
+    {
+      content_item_id: itemL10,
+      option_key: "C",
+      option_text:
+        "Cultural relativism ignores history, while ethnocentrism is rooted entirely in modern sociological research.",
+      is_correct: false,
+      option_order: 2,
+    },
+    {
+      content_item_id: itemL10,
+      option_key: "D",
+      option_text:
+        "Both concepts reject the idea of subjective morality in diverse human communities.",
+      is_correct: false,
+      option_order: 3,
+    },
   ]);
 
   // ==========================================
@@ -720,7 +1093,13 @@ export async function seedTestGliderMoon() {
       partnerDialogue: "How do you compare your new job with the previous one?",
       prefix: "I found",
       target: "I found the work environment at this company to be much more relaxed.",
-      wordBank: ["the work environment", "at this company", "to be", "much more relaxed", "relaxing"],
+      wordBank: [
+        "the work environment",
+        "at this company",
+        "to be",
+        "much more relaxed",
+        "relaxing",
+      ],
     },
     {
       partnerDialogue: "Are you coming to the dinner tonight?",
@@ -901,7 +1280,9 @@ export async function seedTestGliderMoon() {
     });
   }
 
-  console.log("Successfully seeded 100% Authentic TestGlider Moon Exam blueprint with 37 real items!");
+  console.log(
+    "Successfully seeded 100% Authentic TestGlider Moon Exam blueprint with 37 real items!",
+  );
 }
 
 if (process.argv[1]?.includes("seed-video-testglider-moon")) {

@@ -10,11 +10,12 @@
 import React, { useState, useEffect } from "react";
 import type { ClientContentItem } from "@/lib/tests/session-state";
 import { RotateCcw } from "lucide-react";
+import type { JsonRecord } from "@/types/serializable";
 
 export interface BuildSentenceRendererProps {
   item: ClientContentItem;
   currentAnswer: string | null;
-  onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
+  onAnswerChange: (rawAnswer: string, normalizedAnswer?: JsonRecord) => void;
   onNext?: () => void;
   nextLabel?: string;
   disabled?: boolean;

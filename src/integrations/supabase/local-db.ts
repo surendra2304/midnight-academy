@@ -101,9 +101,7 @@ function createInitialStore(): LocalDatabaseStore {
   const legacyQuestionsTable: Array<Record<string, any>> = [];
 
   for (const bp of ALL_TESTGLIDER_BLUEPRINTS) {
-    const bpItems = ALL_TESTGLIDER_QUESTION_ITEMS.filter(
-      (item) => item.blueprint_Id === bp.id,
-    );
+    const bpItems = ALL_TESTGLIDER_QUESTION_ITEMS.filter((item) => item.blueprint_Id === bp.id);
     const planetUpper = (bp.blueprint_Json.planetName || bp.slug || "MOON").toUpperCase();
 
     // 1. `tests` row
@@ -210,7 +208,8 @@ function createInitialStore(): LocalDatabaseStore {
 
       const mod2Id = toDeterministicUuid(`${bp.id}-module-${secDef.sectionType}-2`);
       const hasSecondModule =
-        (blueprintSection?.moduleCount ?? 1) > 1 || secItems.some((item) => item.module_Number === 2);
+        (blueprintSection?.moduleCount ?? 1) > 1 ||
+        secItems.some((item) => item.module_Number === 2);
       if (hasSecondModule) {
         modulesTable.push({
           id: mod2Id,
@@ -261,8 +260,7 @@ function createInitialStore(): LocalDatabaseStore {
 
         // Populate `question_options` for MCQ items
         const rawOptions = item.prompt_Json?.options as
-          | Array<{ id: string; text: string }>
-          | undefined;
+          Array<{ id: string; text: string }> | undefined;
         if (Array.isArray(rawOptions) && rawOptions.length > 0) {
           const correctKey = item.answer_Key_Json?.correctOptionId;
           const explanation = item.answer_Key_Json?.explanation || null;
@@ -447,7 +445,6 @@ function isVitestRuntime(): boolean {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __MIDNIGHT_LOCAL_DB_STORE__: LocalDatabaseStore | undefined;
 }
 
@@ -534,9 +531,7 @@ function enrichJoinedRow(
   // 1. `test_versions` joins: `tests(...)`, `sections(...)`
   if (lowerTable === "test_versions") {
     if (s.includes("tests")) {
-      const testRow = (store.tables.tests ?? []).find(
-        (t) => t.id === getFieldCI(row, "test_id"),
-      );
+      const testRow = (store.tables.tests ?? []).find((t) => t.id === getFieldCI(row, "test_id"));
       result.tests = testRow ? structuredClone(testRow) : null;
     }
     if (s.includes("sections")) {
@@ -550,9 +545,7 @@ function enrichJoinedRow(
   // 2. `attempts` joins: `tests(...)`
   if (lowerTable === "attempts") {
     if (s.includes("tests")) {
-      const testRow = (store.tables.tests ?? []).find(
-        (t) => t.id === getFieldCI(row, "test_id"),
-      );
+      const testRow = (store.tables.tests ?? []).find((t) => t.id === getFieldCI(row, "test_id"));
       result.tests = testRow ? structuredClone(testRow) : null;
     }
   }
@@ -648,10 +641,7 @@ function enrichJoinedRow(
   }
 
   if (lowerTable === "user_answers" || lowerTable === "bookmarks") {
-    if (
-      s.includes("comprehension_Questions") ||
-      s.includes("comprehension_questions")
-    ) {
+    if (s.includes("comprehension_Questions") || s.includes("comprehension_questions")) {
       const q = (store.tables.comprehension_Questions ?? []).find(
         (item) => item.id === getFieldCI(row, "question_id"),
       );
@@ -667,8 +657,7 @@ type FilterFn = (row: Record<string, any>) => boolean;
 
 class LocalQueryBuilder implements PromiseLike<any> {
   private tableName: string;
-  private operation: "select" | "insert" | "upsert" | "update" | "delete" =
-    "select";
+  private operation: "select" | "insert" | "upsert" | "update" | "delete" = "select";
   private selectColumns = "*";
   private selectOptions?: { count?: "exact" | "planned" | "estimated"; head?: boolean };
   private filters: FilterFn[] = [];
@@ -697,10 +686,7 @@ class LocalQueryBuilder implements PromiseLike<any> {
     return store.tables[this.tableName]!;
   }
 
-  private setTable(
-    store: LocalDatabaseStore,
-    rows: Array<Record<string, any>>,
-  ): void {
+  private setTable(store: LocalDatabaseStore, rows: Array<Record<string, any>>): void {
     const lower = this.tableName.toLowerCase();
     for (const key of Object.keys(store.tables)) {
       if (key.toLowerCase() === lower) {
@@ -779,18 +765,13 @@ class LocalQueryBuilder implements PromiseLike<any> {
   }
 
   like(column: string, pattern: string): this {
-    const regex = new RegExp(
-      "^" + pattern.replace(/%/g, ".*").replace(/_/g, ".") + "$",
-    );
+    const regex = new RegExp("^" + pattern.replace(/%/g, ".*").replace(/_/g, ".") + "$");
     this.filters.push((row) => regex.test(String(getFieldCI(row, column) ?? "")));
     return this;
   }
 
   ilike(column: string, pattern: string): this {
-    const regex = new RegExp(
-      "^" + pattern.replace(/%/g, ".*").replace(/_/g, ".") + "$",
-      "i",
-    );
+    const regex = new RegExp("^" + pattern.replace(/%/g, ".*").replace(/_/g, ".") + "$", "i");
     this.filters.push((row) => regex.test(String(getFieldCI(row, column) ?? "")));
     return this;
   }
@@ -848,10 +829,7 @@ class LocalQueryBuilder implements PromiseLike<any> {
         const rowVal = getFieldCI(row, col!);
         if (op === "eq") return String(rowVal) === valStr;
         if (op === "ilike") {
-          const regex = new RegExp(
-            "^" + valStr.replace(/%/g, ".*").replace(/_/g, ".") + "$",
-            "i",
-          );
+          const regex = new RegExp("^" + valStr.replace(/%/g, ".*").replace(/_/g, ".") + "$", "i");
           return regex.test(String(rowVal ?? ""));
         }
         return true;
@@ -860,10 +838,7 @@ class LocalQueryBuilder implements PromiseLike<any> {
     return this;
   }
 
-  order(
-    column: string,
-    options?: { ascending?: boolean; nullsFirst?: boolean },
-  ): this {
+  order(column: string, options?: { ascending?: boolean; nullsFirst?: boolean }): this {
     this.orderSpecs.push({
       column,
       ascending: options?.ascending ?? true,
@@ -910,8 +885,7 @@ class LocalQueryBuilder implements PromiseLike<any> {
     const store = getLocalStore();
     const table = this.getTable(store);
 
-    const matchesFilters = (row: Record<string, any>) =>
-      this.filters.every((fn) => fn(row));
+    const matchesFilters = (row: Record<string, any>) => this.filters.every((fn) => fn(row));
 
     let resultRows: Array<Record<string, any>> = [];
 
@@ -1004,10 +978,7 @@ class LocalQueryBuilder implements PromiseLike<any> {
 
     // Apply range / limit
     if (this.rangeSpec) {
-      resultRows = resultRows.slice(
-        this.rangeSpec.from,
-        this.rangeSpec.to + 1,
-      );
+      resultRows = resultRows.slice(this.rangeSpec.from, this.rangeSpec.to + 1);
     } else if (typeof this.limitCount === "number") {
       resultRows = resultRows.slice(0, this.limitCount);
     }
@@ -1060,7 +1031,11 @@ class LocalQueryBuilder implements PromiseLike<any> {
 
   then<TResult1 = any, TResult2 = never>(
     onfulfilled?:
-      | ((value: { data: any; error: any; count?: number | null }) => TResult1 | PromiseLike<TResult1>)
+      | ((value: {
+          data: any;
+          error: any;
+          count?: number | null;
+        }) => TResult1 | PromiseLike<TResult1>)
       | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null,
   ): Promise<TResult1 | TResult2> {
@@ -1099,18 +1074,13 @@ export function createLocalSupabaseClient(): any {
             try {
               if (typeof fileBody === "string") {
                 store.storageBlobs[key] = fileBody;
-              } else if (
-                typeof Buffer !== "undefined" &&
-                Buffer.isBuffer(fileBody)
-              ) {
+              } else if (typeof Buffer !== "undefined" && Buffer.isBuffer(fileBody)) {
                 const mime = options?.contentType || "audio/webm";
                 store.storageBlobs[key] = `data:${mime};base64,${fileBody.toString("base64")}`;
               } else if (fileBody instanceof Uint8Array) {
                 const mime = options?.contentType || "audio/webm";
                 const b64 =
-                  typeof Buffer !== "undefined"
-                    ? Buffer.from(fileBody).toString("base64")
-                    : "";
+                  typeof Buffer !== "undefined" ? Buffer.from(fileBody).toString("base64") : "";
                 store.storageBlobs[key] = `data:${mime};base64,${b64}`;
               } else {
                 store.storageBlobs[key] = `data:audio/webm;base64,`;
@@ -1179,9 +1149,7 @@ export function createLocalSupabaseClient(): any {
       },
       async signInWithPassword({ email }: { email: string; password?: string }) {
         const store = getLocalStore();
-        let found = store.users.find(
-          (u) => u.email.toLowerCase() === email.toLowerCase(),
-        );
+        let found = store.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
         if (!found) {
           found = {
             ...structuredClone(DEFAULT_LOCAL_USER),
@@ -1282,8 +1250,7 @@ export function createLocalSupabaseClient(): any {
         },
         async getUserById(uid: string) {
           const store = getLocalStore();
-          const u =
-            store.users.find((user) => user.id === uid) || DEFAULT_LOCAL_USER;
+          const u = store.users.find((user) => user.id === uid) || DEFAULT_LOCAL_USER;
           return { data: { user: u }, error: null };
         },
         async createUser(attrs: Record<string, any>) {

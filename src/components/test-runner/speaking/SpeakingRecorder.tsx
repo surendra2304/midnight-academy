@@ -9,11 +9,12 @@ import { Mic, RotateCcw, AlertCircle, CheckCircle2, Clock, Loader2, Keyboard } f
 import { Button } from "@/components/ui/button";
 import { AudioPlayer } from "../listening/AudioPlayer";
 import { uploadSpeakingAudio } from "@/lib/speaking/speaking.functions";
+import type { JsonRecord } from "@/types/serializable";
 
 export interface SpeakingRecorderProps {
   item: ClientContentItem;
   currentAnswer: string | null;
-  onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
+  onAnswerChange: (rawAnswer: string, normalizedAnswer?: JsonRecord) => void;
   disabled?: boolean;
   preparationSeconds?: number;
   responseLimitSeconds?: number;

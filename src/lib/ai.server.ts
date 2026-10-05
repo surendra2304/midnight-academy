@@ -38,9 +38,7 @@ function getApiKeys(): string[] {
     .filter(Boolean);
   if (pool.length > 0) return [...new Set(pool)];
 
-  const legacy = [process.env["GEMINI_API_KEY"]]
-    .map((k) => (k || "").trim())
-    .filter(Boolean);
+  const legacy = [process.env["GEMINI_API_KEY"]].map((k) => (k || "").trim()).filter(Boolean);
   return [...new Set(legacy)];
 }
 

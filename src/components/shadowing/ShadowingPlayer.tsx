@@ -46,13 +46,27 @@ export function ShadowingPlayer({ items, onCompleteSession }: ShadowingPlayerPro
   const [bestScores, setBestScores] = useState<Record<string, number>>({});
 
   const currentItem = items[currentIndex];
-  const recognitionRef = useRef<any>(null);
-  const timerRef = useRef<any>(null);
+
+  interface SpeechRecognitionEventLike {
+    results: ArrayLike<ArrayLike<{ transcript: string }>>;
+  }
+  interface SpeechRecognitionLike {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+    onerror: (() => void) | null;
+    start: () => void;
+    stop: () => void;
+  }
+
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Initialize SpeechRecognition if available in browser
   useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const w = window as unknown as Record<string, (new () => SpeechRecognitionLike) | undefined>;
+    const SpeechRecognition = w["SpeechRecognition"] ?? w["webkitSpeechRecognition"];
 
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -60,10 +74,11 @@ export function ShadowingPlayer({ items, onCompleteSession }: ShadowingPlayerPro
       recognition.interimResults = true;
       recognition.lang = "en-US";
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEventLike) => {
         let transcript = "";
         for (let i = 0; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+          const alternative = event.results[i]?.[0]?.transcript;
+          if (alternative) transcript += alternative;
         }
         setSpeechTranscript(transcript);
       };

@@ -8,10 +8,7 @@ import { computeWordDiff } from "../src/lib/dictation/word-diff-engine";
 import { calculateNextSRSState } from "../src/lib/vocabulary/srs-engine";
 import { contentValidator } from "../src/lib/admin/content-validator";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!
-);
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!);
 
 async function runCompleteWebsiteVerification() {
   console.log("================================================================");
@@ -41,19 +38,27 @@ async function runCompleteWebsiteVerification() {
     .select("id, status, test_id")
     .eq("status", "published");
 
-  assert(Boolean(dbVersions && dbVersions.length > 0), `Found ${dbVersions?.length} published test versions in DB`);
+  assert(
+    Boolean(dbVersions && dbVersions.length > 0),
+    `Found ${dbVersions?.length} published test versions in DB`,
+  );
   const testVersionIds = dbVersions!.map((v) => v.id);
 
   for (const vId of testVersionIds) {
     const bp = await loadTestBlueprint(vId, "full");
     assert(bp.sections.length > 0, `Blueprint ${vId} has ${bp.sections.length} sections`);
     for (const sec of bp.sections) {
-      assert(sec.items.length > 0, `Section ${sec.sectionType} in ${vId} has ${sec.items.length} items`);
+      assert(
+        sec.items.length > 0,
+        `Section ${sec.sectionType} in ${vId} has ${sec.items.length} items`,
+      );
       for (const item of sec.items) {
         assert(Boolean(item.id && item.itemType), `Item ${item.id} has valid type`);
         if (sec.sectionType === "listening") {
-          const payload = item.payload as any;
-          const hasSpeechText = Boolean(payload?.stimulusText || payload?.prompt || payload?.transcript);
+          const payload = item.payload as Record<string, unknown> | null;
+          const hasSpeechText = Boolean(
+            payload?.stimulusText || payload?.prompt || payload?.transcript,
+          );
           assert(hasSpeechText, `Listening item ${item.id} contains audio stimulus / speech text`);
         }
       }
@@ -104,7 +109,7 @@ async function runCompleteWebsiteVerification() {
       section_id: sec.id,
       status: idx === 0 ? "in_progress" : "not_started",
       started_at: idx === 0 ? now : null,
-    }))
+    })),
   );
 
   // Resume attempt
@@ -114,7 +119,7 @@ async function runCompleteWebsiteVerification() {
 
   // --- SECTION 1: READING ---
   console.log("\n-> Testing Section 1: Reading");
-  let readingSec = session.blueprint.sections[0];
+  const readingSec = session.blueprint.sections[0];
   assert(readingSec.items.length >= 6, `Reading section has ${readingSec.items.length} items`);
 
   // Navigate through every question in Reading
@@ -122,12 +127,13 @@ async function runCompleteWebsiteVerification() {
     const navState = sessionReducer(
       session.snapshot,
       { type: "NAVIGATE_ITEM", itemIndex: i },
-      session.blueprint
+      session.blueprint,
     );
     assert(navState.currentItemIndex === i, `Navigated to Reading question ${i + 1}`);
 
     const item = readingSec.items[i];
-    const answer = item.options.length > 0 ? item.options[0].optionKey : "Sample complete words answer";
+    const answer =
+      item.options.length > 0 ? item.options[0].optionKey : "Sample complete words answer";
     await attemptSessionService.saveResponse({
       attemptId,
       studentId: testStudentId,
@@ -148,14 +154,17 @@ async function runCompleteWebsiteVerification() {
 
   // --- SECTION 2: LISTENING ---
   console.log("\n-> Testing Section 2: Listening");
-  let listeningSec = session.blueprint.sections[1];
-  assert(listeningSec.items.length >= 6, `Listening section has ${listeningSec.items.length} items`);
+  const listeningSec = session.blueprint.sections[1];
+  assert(
+    listeningSec.items.length >= 6,
+    `Listening section has ${listeningSec.items.length} items`,
+  );
 
   for (let i = 0; i < listeningSec.items.length; i++) {
     const navState = sessionReducer(
       session.snapshot,
       { type: "NAVIGATE_ITEM", itemIndex: i },
-      session.blueprint
+      session.blueprint,
     );
     assert(navState.currentItemIndex === i, `Navigated to Listening question ${i + 1}`);
 
@@ -191,14 +200,14 @@ async function runCompleteWebsiteVerification() {
 
   // --- SECTION 3: WRITING ---
   console.log("\n-> Testing Section 3: Writing");
-  let writingSec = session.blueprint.sections[2];
+  const writingSec = session.blueprint.sections[2];
   assert(writingSec.items.length >= 3, `Writing section has ${writingSec.items.length} items`);
 
   for (let i = 0; i < writingSec.items.length; i++) {
     const navState = sessionReducer(
       session.snapshot,
       { type: "NAVIGATE_ITEM", itemIndex: i },
-      session.blueprint
+      session.blueprint,
     );
     assert(navState.currentItemIndex === i, `Navigated to Writing question ${i + 1}`);
 
@@ -226,14 +235,14 @@ async function runCompleteWebsiteVerification() {
 
   // --- SECTION 4: SPEAKING ---
   console.log("\n-> Testing Section 4: Speaking");
-  let speakingSec = session.blueprint.sections[3];
+  const speakingSec = session.blueprint.sections[3];
   assert(speakingSec.items.length >= 4, `Speaking section has ${speakingSec.items.length} items`);
 
   for (let i = 0; i < speakingSec.items.length; i++) {
     const navState = sessionReducer(
       session.snapshot,
       { type: "NAVIGATE_ITEM", itemIndex: i },
-      session.blueprint
+      session.blueprint,
     );
     assert(navState.currentItemIndex === i, `Navigated to Speaking question ${i + 1}`);
 
@@ -270,12 +279,17 @@ async function runCompleteWebsiteVerification() {
   console.log("finalAttempt fetched from DB:", finalAttempt);
   assert(finalAttempt?.status === "evaluated", "Final attempt status is evaluated");
   assert(finalAttempt?.evaluation_status === "completed", "Evaluation status is completed");
-  assert(typeof finalAttempt?.score === "number" && finalAttempt?.score >= 0, `Persisted overall score is valid: ${finalAttempt?.score}`);
+  assert(
+    typeof finalAttempt?.score === "number" && finalAttempt?.score >= 0,
+    `Persisted overall score is valid: ${finalAttempt?.score}`,
+  );
 
   // Verify score report exists in DB
   const { data: report } = await supabase
     .from("score_reports")
-    .select("overall_band, reading_band, listening_band, writing_band, speaking_band, comparable_score")
+    .select(
+      "overall_band, reading_band, listening_band, writing_band, speaking_band, comparable_score",
+    )
     .eq("attempt_id", attemptId)
     .single();
 
@@ -293,9 +307,12 @@ async function runCompleteWebsiteVerification() {
   // Dictation Engine Word Diff
   const diffResult = computeWordDiff(
     "The registrars office is accepting late course drop forms today.",
-    "The registrar's office is still accepting late course drop forms today."
+    "The registrar's office is still accepting late course drop forms today.",
   );
-  assert(diffResult.accuracyPercent > 80, `Dictation word diff accuracy: ${diffResult.accuracyPercent}%`);
+  assert(
+    diffResult.accuracyPercent > 80,
+    `Dictation word diff accuracy: ${diffResult.accuracyPercent}%`,
+  );
 
   // SRS Engine Interval
   const srs1 = calculateNextSRSState({ intervalDays: 1, easeFactor: 2.5, repetitions: 1 }, "good");

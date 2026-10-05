@@ -13,8 +13,14 @@ async function testNavigate() {
     console.log("Snapshot status:", res.snapshot.status);
     console.log("CurrentSectionIndex:", res.snapshot.currentSectionIndex);
     console.log("CurrentItemIndex:", res.snapshot.currentItemIndex);
-    console.log("Current Section Name:", res.blueprint.sections[res.snapshot.currentSectionIndex]?.sectionType);
-    console.log("Items in section:", res.blueprint.sections[res.snapshot.currentSectionIndex]?.items.length);
+    console.log(
+      "Current Section Name:",
+      res.blueprint.sections[res.snapshot.currentSectionIndex]?.sectionType,
+    );
+    console.log(
+      "Items in section:",
+      res.blueprint.sections[res.snapshot.currentSectionIndex]?.items.length,
+    );
 
     console.log("Attempting NAVIGATE_ITEM to index 1...");
     const nextState = sessionReducer(

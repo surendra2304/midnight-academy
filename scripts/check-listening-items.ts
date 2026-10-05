@@ -5,7 +5,10 @@ const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SE
 
 async function checkListeningItems() {
   const sectionId = "c3000002-0000-0000-0000-000000000020";
-  const { data: modules, error: modErr } = await supabase.from("modules").select("*").eq("section_id", sectionId);
+  const { data: modules, error: modErr } = await supabase
+    .from("modules")
+    .select("*")
+    .eq("section_id", sectionId);
   console.log("Modules:", modules, "Error:", modErr);
 
   const moduleIds = (modules ?? []).map((m) => m.id);
@@ -15,7 +18,16 @@ async function checkListeningItems() {
     .in("module_id", moduleIds)
     .order("item_order", { ascending: true });
 
-  console.log("Items in Listening section:", items?.map(i => ({ id: i.id, order: i.item_order, type: i.item_type, audioUrl: (i.payload as any)?.audioUrl, promptAudioUrl: (i.payload as any)?.promptAudioUrl })));
+  console.log(
+    "Items in Listening section:",
+    items?.map((i) => ({
+      id: i.id,
+      order: i.item_order,
+      type: i.item_type,
+      audioUrl: (i.payload as { audioUrl?: string } | null | undefined)?.audioUrl,
+      promptAudioUrl: (i.payload as { promptAudioUrl?: string } | null | undefined)?.promptAudioUrl,
+    })),
+  );
 }
 
 checkListeningItems();

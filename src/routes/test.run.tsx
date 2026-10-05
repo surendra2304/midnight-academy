@@ -40,9 +40,11 @@ function RunTest() {
 
     async function hydrate() {
       try {
-        const res = await resumeToeflAttempt({ data: { attemptId: attemptId! } });
-        const resolvedBlueprint = (res as any)?.blueprint;
-        const resolvedState = (res as any)?.snapshot || (res as any)?.state;
+        const res = (await resumeToeflAttempt({ data: { attemptId: attemptId! } })) as
+          | { blueprint?: ClientTestBlueprint; snapshot?: SessionSnapshot; state?: SessionSnapshot }
+          | undefined;
+        const resolvedBlueprint = res?.blueprint;
+        const resolvedState = res?.snapshot || res?.state;
         if (resolvedBlueprint && resolvedState) {
           setBlueprint(resolvedBlueprint);
           setInitialState(resolvedState);

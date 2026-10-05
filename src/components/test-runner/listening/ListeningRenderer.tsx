@@ -9,12 +9,13 @@ import type { ClientContentItem } from "@/lib/tests/session-state";
 import { AudioPlayer } from "./AudioPlayer";
 import { Flag, ChevronUp, ChevronDown } from "lucide-react";
 import type { AudioInteractionLog } from "@/lib/audio/audio-service";
+import type { JsonRecord } from "@/types/serializable";
 
 export interface ListeningRendererProps {
   item: ClientContentItem;
   currentAnswer: string | null;
   isFlagged?: boolean;
-  onAnswerChange: (rawAnswer: string, normalizedAnswer?: Record<string, unknown>) => void;
+  onAnswerChange: (rawAnswer: string, normalizedAnswer?: JsonRecord) => void;
   onToggleFlag?: () => void;
   onNext?: () => void;
   nextLabel?: string;
@@ -95,10 +96,26 @@ export function ListeningRenderer({
     // Default rotation across questions: alternating Female Student, Male Student, Female Professor, Male Professor
     const idx = item.itemOrder ?? 0;
     const roster = [
-      { imageUrl: "/images/speakers/student-female-1.jpg", gender: "female" as const, alt: "Female Student" },
-      { imageUrl: "/images/speakers/student-male-1.jpg", gender: "male" as const, alt: "Male Student" },
-      { imageUrl: "/images/speakers/professor-female.jpg", gender: "female" as const, alt: "Female Professor" },
-      { imageUrl: "/images/speakers/professor-male.jpg", gender: "male" as const, alt: "Male Professor" },
+      {
+        imageUrl: "/images/speakers/student-female-1.jpg",
+        gender: "female" as const,
+        alt: "Female Student",
+      },
+      {
+        imageUrl: "/images/speakers/student-male-1.jpg",
+        gender: "male" as const,
+        alt: "Male Student",
+      },
+      {
+        imageUrl: "/images/speakers/professor-female.jpg",
+        gender: "female" as const,
+        alt: "Female Professor",
+      },
+      {
+        imageUrl: "/images/speakers/professor-male.jpg",
+        gender: "male" as const,
+        alt: "Male Professor",
+      },
     ];
 
     return roster[Math.abs(idx) % roster.length]!;
@@ -219,7 +236,9 @@ export function ListeningRenderer({
                 <Flag className="size-3.5" />
                 {isFlagged ? "Flagged for Review" : "Flag Question"}
               </button>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
           </div>
         </div>
       </div>

@@ -11,10 +11,7 @@ import {
 } from "@tanstack/react-router";
 import { UnifiedScoreReportView } from "../src/components/test-runner/UnifiedScoreReportView";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!
-);
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!);
 
 async function verifyScoreReportRender() {
   console.log("========================================================================");
@@ -61,8 +58,14 @@ async function verifyScoreReportRender() {
     .select("*")
     .in("content_item_id", itemIds);
 
-  const optionsByItem = new Map<string, any[]>();
-  for (const opt of options || []) {
+  interface OptionRow {
+    content_item_id: string;
+    option_key: string;
+    option_text: string;
+    is_correct: boolean;
+  }
+  const optionsByItem = new Map<string, OptionRow[]>();
+  for (const opt of (options ?? []) as unknown as OptionRow[]) {
     const list = optionsByItem.get(opt.content_item_id) || [];
     list.push(opt);
     optionsByItem.set(opt.content_item_id, list);
@@ -89,7 +92,9 @@ async function verifyScoreReportRender() {
   const rootRoute = createRootRoute({
     component: () =>
       React.createElement(UnifiedScoreReportView, {
-        reportData: reportData as any,
+        reportData: reportData as unknown as React.ComponentProps<
+          typeof UnifiedScoreReportView
+        >["reportData"],
       }),
   });
 
@@ -102,15 +107,19 @@ async function verifyScoreReportRender() {
   await router.load();
 
   console.log("Calling ReactDOMServer.renderToString(RouterProvider)...");
-  const html = ReactDOMServer.renderToString(
-    React.createElement(RouterProvider, { router })
-  );
+  const html = ReactDOMServer.renderToString(React.createElement(RouterProvider, { router }));
 
   console.log("-> SUCCESS: UnifiedScoreReportView rendered cleanly without error!");
   console.log(`-> Generated HTML length: ${html.length} characters`);
   console.log("-> Contains 'Elevator Maintenance':", html.includes("Elevator Maintenance"));
-  console.log("-> Contains 'All tenants of Millhouse Tower':", html.includes("All tenants of Millhouse Tower"));
-  console.log("-> Contains 'bwrightson@MTowermail.com':", html.includes("bwrightson@MTowermail.com"));
+  console.log(
+    "-> Contains 'All tenants of Millhouse Tower':",
+    html.includes("All tenants of Millhouse Tower"),
+  );
+  console.log(
+    "-> Contains 'bwrightson@MTowermail.com':",
+    html.includes("bwrightson@MTowermail.com"),
+  );
   console.log("-> Contains '15/07/2025':", html.includes("15/07/2025"));
 
   console.log("\n>>> MINIFIED REACT ERROR #31 FIX 100% VERIFIED! <<<");
